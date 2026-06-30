@@ -24,13 +24,15 @@ const submitLimiter = rateLimit({
   message: { success: false, error: 'יותר מדי בקשות. נסה שוב בעוד מספר דקות.' },
 });
 
-// OAuth2 setup
-const oauth2 = new jsforce.OAuth2({
-  loginUrl: process.env.SF_LOGIN_URL || 'https://test.salesforce.com',
-  clientId: process.env.SF_CLIENT_ID,
-  clientSecret: process.env.SF_CLIENT_SECRET,
-  redirectUri: process.env.SF_CALLBACK_URL,
-});
+// OAuth2 setup (lazy — reads env vars at call time)
+function getOAuth2() {
+  return new jsforce.OAuth2({
+    loginUrl: process.env.SF_LOGIN_URL || 'https://test.salesforce.com',
+    clientId: process.env.SF_CLIENT_ID,
+    clientSecret: process.env.SF_CLIENT_SECRET,
+    redirectUri: process.env.SF_CALLBACK_URL || 'https://sfform-production.up.railway.app/auth/callback',
+  });
+}
 
 // Salesforce connection using refresh token
 let sfConnection = null;
@@ -50,7 +52,7 @@ async function getSFConnection() {
   }
 
   const conn = new jsforce.Connection({
-    oauth2,
+    oauth2: getOAuth2(),
     instanceUrl: process.env.SF_INSTANCE_URL,
     accessToken: '',
     refreshToken: process.env.SF_REFRESH_TOKEN,
@@ -69,9 +71,9 @@ async function getSFConnection() {
 
 // Step 1: Redirect admin to Salesforce login
 app.get('/auth', (req, res) => {
-  const url = oauth2.getAuthorizationUrl({ scope: 'api refresh_token offline_access' });
+  const o = getOAuth2();
+  const url = o.getAuthorizationUrl({ scope: 'api refresh_token offline_access' });
   console.log('Auth URL:', url);
-  console.log('Callback URL env:', process.env.SF_CALLBACK_URL);
   res.redirect(url);
 });
 
@@ -81,7 +83,7 @@ app.get('/auth/callback', async (req, res) => {
   if (!code) return res.status(400).send('Missing code');
 
   try {
-    const conn = new jsforce.Connection({ oauth2 });
+    const conn = new jsforce.Connection({ oauth2: getOAuth2() });
     await conn.authorize(code);
 
     res.send(`
