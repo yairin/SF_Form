@@ -8,6 +8,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -32,10 +33,40 @@ async function getSFConnection() {
     }
   }
 
-  const conn = new jsforce.Connection({
-    loginUrl: process.env.SF_LOGIN_URL || 'https://test.salesforce.com',
-  });
+  const loginUrl = process.env.SF_LOGIN_URL || 'https://test.salesforce.com';
 
+  // OAuth2 Connected App flow (bypasses MFA)
+  if (process.env.SF_CLIENT_ID && process.env.SF_CLIENT_SECRET) {
+    const params = new URLSearchParams({
+      grant_type: 'password',
+      client_id: process.env.SF_CLIENT_ID,
+      client_secret: process.env.SF_CLIENT_SECRET,
+      username: process.env.SF_USERNAME,
+      password: process.env.SF_PASSWORD + (process.env.SF_SECURITY_TOKEN || ''),
+    });
+
+    const tokenRes = await fetch(`${loginUrl}/services/oauth2/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+
+    const tokenData = await tokenRes.json();
+    if (!tokenRes.ok) {
+      throw new Error(tokenData.error_description || tokenData.error || 'OAuth2 login failed');
+    }
+
+    const conn = new jsforce.Connection({
+      instanceUrl: tokenData.instance_url,
+      accessToken: tokenData.access_token,
+    });
+
+    sfConnection = conn;
+    return conn;
+  }
+
+  // Fallback: username + password + security token
+  const conn = new jsforce.Connection({ loginUrl });
   await conn.login(
     process.env.SF_USERNAME,
     process.env.SF_PASSWORD + (process.env.SF_SECURITY_TOKEN || '')
