@@ -60,7 +60,9 @@ app.post('/api/submit', submitLimiter, async (req, res) => {
       redirect: 'manual',
     });
 
+    console.log('SF response status:', sfRes.status);
     if (sfRes.status === 302 || sfRes.status === 200) {
+      console.log('Lead submitted successfully');
       res.json({ success: true });
     } else {
       throw new Error(`SF status ${sfRes.status}`);
