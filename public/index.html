@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>פנייה אנונימית</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page-wrapper">
+    <div class="card" id="form-card">
+      <div class="card-header">
+        <div class="logo">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="36" height="36" rx="10" fill="#0176D3"/>
+            <path d="M18 8C13.03 8 9 12.03 9 17c0 2.76 1.27 5.23 3.26 6.87L11 28l4.72-1.58A9 9 0 1018 8z" fill="white"/>
+          </svg>
+        </div>
+        <div>
+          <h1>פנייה אנונימית</h1>
+          <p class="subtitle">הפנייה נשמרת בצורה מאובטחת. לא נדרשת הזדהות.</p>
+        </div>
+      </div>
+
+      <!-- Step indicators -->
+      <div class="steps" id="steps">
+        <div class="step active" data-step="1">
+          <span class="step-num">1</span>
+          <span class="step-label">פרטים</span>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step" data-step="2">
+          <span class="step-num">2</span>
+          <span class="step-label">פנייה</span>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step" data-step="3">
+          <span class="step-num">3</span>
+          <span class="step-label">סיכום</span>
+        </div>
+      </div>
+
+      <form id="main-form" novalidate>
+        <!-- Step 1: Personal Info -->
+        <div class="form-step active" id="step-1">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">שם פרטי <span class="required">*</span></label>
+              <input type="text" id="firstName" name="firstName" placeholder="ישראל" autocomplete="given-name" />
+              <span class="field-error" id="err-firstName"></span>
+            </div>
+            <div class="form-group">
+              <label for="lastName">שם משפחה <span class="required">*</span></label>
+              <input type="text" id="lastName" name="lastName" placeholder="ישראלי" autocomplete="family-name" />
+              <span class="field-error" id="err-lastName"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="email">אימייל <span class="required">*</span></label>
+            <input type="email" id="email" name="email" placeholder="israel@example.com" autocomplete="email" />
+            <span class="field-error" id="err-email"></span>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="phone">טלפון <span class="optional">(אופציונלי)</span></label>
+              <input type="tel" id="phone" name="phone" placeholder="050-0000000" autocomplete="tel" />
+            </div>
+            <div class="form-group">
+              <label for="company">ארגון / חברה <span class="optional">(אופציונלי)</span></label>
+              <input type="text" id="company" name="company" placeholder="שם הארגון" autocomplete="organization" />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-primary" onclick="nextStep(1)">המשך →</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Message -->
+        <div class="form-step" id="step-2">
+          <div class="form-group">
+            <label for="subject">נושא הפנייה <span class="required">*</span></label>
+            <input type="text" id="subject" name="subject" placeholder="תאר בקצרה את נושא הפנייה" />
+            <span class="field-error" id="err-subject"></span>
+          </div>
+          <div class="form-group">
+            <label for="message">תוכן הפנייה <span class="required">*</span></label>
+            <textarea id="message" name="message" rows="5" placeholder="פרט את בקשתך או תלונתך כאן..."></textarea>
+            <span class="char-count" id="char-count">0 / 2000</span>
+            <span class="field-error" id="err-message"></span>
+          </div>
+          <div class="form-group">
+            <label>דחיפות</label>
+            <div class="rating-group">
+              <label class="rating-option">
+                <input type="radio" name="rating" value="Cold" checked />
+                <span class="rating-chip low">רגיל</span>
+              </label>
+              <label class="rating-option">
+                <input type="radio" name="rating" value="Warm" />
+                <span class="rating-chip medium">בינוני</span>
+              </label>
+              <label class="rating-option">
+                <input type="radio" name="rating" value="Hot" />
+                <span class="rating-chip high">דחוף</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-actions split">
+            <button type="button" class="btn-secondary" onclick="prevStep(2)">← חזרה</button>
+            <button type="button" class="btn-primary" onclick="nextStep(2)">המשך →</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Summary -->
+        <div class="form-step" id="step-3">
+          <div class="summary-box" id="summary-box"></div>
+          <div class="privacy-note">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1L2 4v4c0 3.31 2.55 6.41 6 7 3.45-.59 6-3.69 6-7V4L8 1z" fill="#0176D3" opacity=".2" stroke="#0176D3" stroke-width="1.2"/><path d="M5.5 8l2 2 3-3" stroke="#0176D3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            הפנייה נשמרת בצורה מאובטחת ולא תכלול פרטים מזהים מעבר למה שמילאת.
+          </div>
+          <div class="form-actions split">
+            <button type="button" class="btn-secondary" onclick="prevStep(3)">← חזרה</button>
+            <button type="submit" class="btn-submit" id="submit-btn">
+              <span id="submit-label">שלח פנייה</span>
+              <span id="submit-spinner" class="spinner hidden"></span>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Error banner -->
+      <div class="alert alert-error hidden" id="error-banner"></div>
+    </div>
+
+    <!-- Success card -->
+    <div class="card success-card hidden" id="success-card">
+      <div class="success-icon">
+        <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+          <circle cx="28" cy="28" r="28" fill="#E8F5E9"/>
+          <path d="M18 28l8 8 14-14" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2>הפנייה נשלחה בהצלחה!</h2>
+      <p>קיבלנו את פנייתך. צוות הטיפול יחזור אליך בהקדם.</p>
+      <p class="ref-id" id="ref-id"></p>
+      <button class="btn-primary" onclick="resetForm()">שלח פנייה נוספת</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
