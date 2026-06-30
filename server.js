@@ -64,6 +64,11 @@ app.post('/api/submit', submitLimiter, async (req, res) => {
       redirect: 'manual',
     });
 
+    const body = await sfRes.text();
+    console.log('SF status:', sfRes.status);
+    console.log('SF headers location:', sfRes.headers.get('location'));
+    console.log('SF body:', body.slice(0, 300));
+
     // Salesforce returns 302 redirect on success
     if (sfRes.status === 302 || sfRes.status === 200) {
       res.json({ success: true });
