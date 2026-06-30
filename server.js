@@ -7,7 +7,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const SF_WEB_TO_LEAD_URL = 'https://test.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8';
+const SF_WEB_TO_CASE_URL = 'https://test.salesforce.com/servlet/servlet.WebToCase?encoding=UTF-8';
 const SF_OID = process.env.SF_OID || '00DWm000001yNaf';
 
 app.set('trust proxy', 1);
@@ -43,21 +43,21 @@ app.post('/api/submit', submitLimiter, async (req, res) => {
   }
 
   try {
-    const ratingLabel = { Cold: 'רגיל', Warm: 'בינוני', Hot: 'דחוף' }[rating] || 'רגיל';
+    const priority = { Cold: 'Low', Warm: 'Medium', Hot: 'High' }[rating] || 'Low';
 
     const params = new URLSearchParams({
       oid: SF_OID,
       retURL: 'https://example.com',
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
+      name: `${firstName.trim()} ${lastName.trim()}`,
       email: email.trim().toLowerCase(),
       phone: phone ? phone.trim() : '',
-      company: company ? company.trim() : 'אנונימי',
-      lead_source: 'Web',
-      description: `נושא: ${subject.trim()}\nדחיפות: ${ratingLabel}\n\n${message.trim()}`,
+      subject: subject.trim(),
+      description: message.trim(),
+      priority,
+      type: 'פנייה אנונימית',
     });
 
-    const sfRes = await fetch(SF_WEB_TO_LEAD_URL, {
+    const sfRes = await fetch(SF_WEB_TO_CASE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString(),
@@ -88,5 +88,5 @@ app.get('/api/health', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Salesforce OID: ${SF_OID}`);
+  console.log(`Salesforce OID: ${SF_OID} (Web-to-Case)`);
 });
