@@ -60,8 +60,18 @@ app.post('/api/submit', submitLimiter, async (req, res) => {
       redirect: 'manual',
     });
 
+    const sfBody = await sfRes.text();
     console.log('SF response status:', sfRes.status);
+    console.log('SF response location:', sfRes.headers.get('location'));
+    console.log('SF response body (first 500):', sfBody.slice(0, 500));
+
     if (sfRes.status === 302 || sfRes.status === 200) {
+      const location = sfRes.headers.get('location') || '';
+      const isError = sfBody.includes('error') || sfBody.includes('Error') || location.includes('error');
+      if (isError) {
+        console.error('SF returned error in body/redirect:', location || sfBody.slice(0, 200));
+        throw new Error('Salesforce rejected the submission');
+      }
       console.log('Lead submitted successfully');
       res.json({ success: true });
     } else {
