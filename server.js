@@ -8,6 +8,11 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+console.log('ENV CHECK:', {
+  SF_CLIENT_ID: process.env.SF_CLIENT_ID?.slice(0, 10),
+  SF_CALLBACK_URL: process.env.SF_CALLBACK_URL,
+  SF_OBJECT: process.env.SF_OBJECT,
+});
 app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json());
