@@ -2,11 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-const jsforce = require('jsforce');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+const SF_WEB_TO_LEAD_URL = 'https://test.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8';
+const SF_OID = process.env.SF_OID || '00DWm000001yNaf';
 
 app.set('trust proxy', 1);
 app.use(cors());
@@ -20,62 +22,6 @@ const submitLimiter = rateLimit({
   message: { success: false, error: 'יותר מדי בקשות. נסה שוב בעוד מספר דקות.' },
 });
 
-// Salesforce connection (singleton with auto-reconnect)
-let sfConnection = null;
-
-async function getSFConnection() {
-  if (sfConnection) {
-    try {
-      await sfConnection.identity();
-      return sfConnection;
-    } catch {
-      sfConnection = null;
-    }
-  }
-
-  const loginUrl = process.env.SF_LOGIN_URL || 'https://test.salesforce.com';
-
-  // OAuth2 Connected App flow (bypasses MFA)
-  if (process.env.SF_CLIENT_ID && process.env.SF_CLIENT_SECRET) {
-    const params = new URLSearchParams({
-      grant_type: 'password',
-      client_id: process.env.SF_CLIENT_ID,
-      client_secret: process.env.SF_CLIENT_SECRET,
-      username: process.env.SF_USERNAME,
-      password: process.env.SF_PASSWORD + (process.env.SF_SECURITY_TOKEN || ''),
-    });
-
-    const tokenRes = await fetch(`${loginUrl}/services/oauth2/token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString(),
-    });
-
-    const tokenData = await tokenRes.json();
-    if (!tokenRes.ok) {
-      throw new Error(tokenData.error_description || tokenData.error || 'OAuth2 login failed');
-    }
-
-    const conn = new jsforce.Connection({
-      instanceUrl: tokenData.instance_url,
-      accessToken: tokenData.access_token,
-    });
-
-    sfConnection = conn;
-    return conn;
-  }
-
-  // Fallback: username + password + security token
-  const conn = new jsforce.Connection({ loginUrl });
-  await conn.login(
-    process.env.SF_USERNAME,
-    process.env.SF_PASSWORD + (process.env.SF_SECURITY_TOKEN || '')
-  );
-
-  sfConnection = conn;
-  return conn;
-}
-
 // Validate form input
 function validateFormData(data) {
   const errors = [];
@@ -87,7 +33,7 @@ function validateFormData(data) {
   return errors;
 }
 
-// POST /api/submit — create Lead in Salesforce
+// POST /api/submit — Web-to-Lead (no auth required)
 app.post('/api/submit', submitLimiter, async (req, res) => {
   const { firstName, lastName, email, phone, company, subject, message, rating } = req.body;
 
@@ -97,57 +43,45 @@ app.post('/api/submit', submitLimiter, async (req, res) => {
   }
 
   try {
-    const conn = await getSFConnection();
+    const ratingLabel = { Cold: 'רגיל', Warm: 'בינוני', Hot: 'דחוף' }[rating] || 'רגיל';
 
-    const lead = {
-      FirstName: firstName.trim(),
-      LastName: lastName.trim(),
-      Email: email.trim().toLowerCase(),
-      Phone: phone ? phone.trim() : undefined,
-      Company: company ? company.trim() : 'אנונימי',
-      LeadSource: 'Web',
-      Subject__c: subject.trim(),       // Custom field — or use Description
-      Description: `נושא: ${subject.trim()}\n\nהודעה:\n${message.trim()}`,
-      Rating: rating || 'Cold',
-      Status: 'Open - Not Contacted',
-    };
+    const params = new URLSearchParams({
+      oid: SF_OID,
+      retURL: 'https://example.com',
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      email: email.trim().toLowerCase(),
+      phone: phone ? phone.trim() : '',
+      company: company ? company.trim() : 'אנונימי',
+      lead_source: 'Web',
+      description: `נושא: ${subject.trim()}\nדחיפות: ${ratingLabel}\n\n${message.trim()}`,
+    });
 
-    // Remove undefined fields
-    Object.keys(lead).forEach((k) => lead[k] === undefined && delete lead[k]);
+    const sfRes = await fetch(SF_WEB_TO_LEAD_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+      redirect: 'manual',
+    });
 
-    const result = await conn.sobject('Lead').create(lead);
-
-    if (result.success) {
-      res.json({ success: true, id: result.id });
+    // Salesforce returns 302 redirect on success
+    if (sfRes.status === 302 || sfRes.status === 200) {
+      res.json({ success: true });
     } else {
-      throw new Error(result.errors?.join(', ') || 'שגיאה ביצירת הרשומה');
+      throw new Error(`Salesforce returned status ${sfRes.status}`);
     }
   } catch (err) {
-    console.error('Salesforce error:', err.message);
-
-    // Reset connection on auth errors
-    if (err.errorCode === 'INVALID_SESSION_ID') {
-      sfConnection = null;
-    }
-
-    res.status(500).json({
-      success: false,
-      error: 'אירעה שגיאה בשליחת הטופס. אנא נסה שוב.',
-    });
+    console.error('Web-to-Lead error:', err.message);
+    res.status(500).json({ success: false, error: 'אירעה שגיאה בשליחת הטופס. אנא נסה שוב.' });
   }
 });
 
 // Health check
 app.get('/api/health', async (req, res) => {
-  try {
-    await getSFConnection();
-    res.json({ status: 'ok', salesforce: 'connected' });
-  } catch (err) {
-    res.status(503).json({ status: 'degraded', salesforce: 'disconnected', error: err.message });
-  }
+  res.json({ status: 'ok', mode: 'web-to-lead' });
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Salesforce URL: ${process.env.SF_LOGIN_URL || 'https://test.salesforce.com'}`);
+  console.log(`Salesforce OID: ${SF_OID}`);
 });
