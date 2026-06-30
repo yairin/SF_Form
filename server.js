@@ -2,17 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-const jsforce = require('jsforce');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const SF_OID = '00DWm000001yNaf';
+const SF_WEB_TO_LEAD = 'https://test.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8';
 
-console.log('ENV CHECK:', {
-  SF_CLIENT_ID: process.env.SF_CLIENT_ID?.slice(0, 10),
-  SF_CALLBACK_URL: process.env.SF_CALLBACK_URL,
-  SF_OBJECT: process.env.SF_OBJECT,
-});
 app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json());
@@ -24,88 +20,6 @@ const submitLimiter = rateLimit({
   message: { success: false, error: 'יותר מדי בקשות. נסה שוב בעוד מספר דקות.' },
 });
 
-// OAuth2 setup (lazy — reads env vars at call time)
-const SF_CALLBACK_URL = 'https://sfform-production.up.railway.app/auth/callback';
-
-function getOAuth2() {
-  return new jsforce.OAuth2({
-    loginUrl: process.env.SF_LOGIN_URL || 'https://test.salesforce.com',
-    clientId: process.env.SF_CLIENT_ID,
-    clientSecret: process.env.SF_CLIENT_SECRET,
-    redirectUri: process.env.SF_CALLBACK_URL || SF_CALLBACK_URL,
-  });
-}
-
-// Salesforce connection using refresh token
-let sfConnection = null;
-
-async function getSFConnection() {
-  if (sfConnection) {
-    try {
-      await sfConnection.identity();
-      return sfConnection;
-    } catch {
-      sfConnection = null;
-    }
-  }
-
-  if (!process.env.SF_REFRESH_TOKEN) {
-    throw new Error('SF_REFRESH_TOKEN not set — visit /auth to authorize');
-  }
-
-  const conn = new jsforce.Connection({
-    oauth2: getOAuth2(),
-    instanceUrl: process.env.SF_INSTANCE_URL,
-    accessToken: '',
-    refreshToken: process.env.SF_REFRESH_TOKEN,
-  });
-
-  conn.on('refresh', (accessToken) => {
-    console.log('SF token refreshed');
-  });
-
-  await conn.identity();
-  sfConnection = conn;
-  return conn;
-}
-
-// ── OAuth2 authorization flow (one-time setup) ────────────────────────────────
-
-// Step 1: Redirect admin to Salesforce login
-app.get('/auth', (req, res) => {
-  const o = getOAuth2();
-  const url = o.getAuthorizationUrl({ scope: 'api refresh_token offline_access' });
-  console.log('Auth URL:', url);
-  res.redirect(url);
-});
-
-// Step 2: Salesforce redirects back with code
-app.get('/auth/callback', async (req, res) => {
-  const { code } = req.query;
-  if (!code) return res.status(400).send('Missing code');
-
-  try {
-    const conn = new jsforce.Connection({ oauth2: getOAuth2() });
-    await conn.authorize(code);
-
-    res.send(`
-      <html><body style="font-family:sans-serif;direction:rtl;padding:32px">
-        <h2>✅ אישור הצליח!</h2>
-        <p>הוסף את המשתנים הבאים ב-Railway:</p>
-        <pre style="background:#f0f0f0;padding:16px;border-radius:8px">
-SF_REFRESH_TOKEN=${conn.refreshToken}
-SF_INSTANCE_URL=${conn.instanceUrl}
-        </pre>
-        <p>לאחר הוספה, בצע Redeploy ב-Railway.</p>
-      </body></html>
-    `);
-  } catch (err) {
-    res.status(500).send(`שגיאה: ${err.message}`);
-  }
-});
-
-// ── Validation ─────────────────────────────────────────────────────────────────
-
 function validateFormData(data) {
   const errors = [];
   if (!data.firstName || data.firstName.trim().length < 2) errors.push('שם פרטי נדרש (לפחות 2 תווים)');
@@ -116,8 +30,6 @@ function validateFormData(data) {
   return errors;
 }
 
-// ── Submit ─────────────────────────────────────────────────────────────────────
-
 app.post('/api/submit', submitLimiter, async (req, res) => {
   const { firstName, lastName, email, phone, company, subject, message, rating } = req.body;
 
@@ -127,66 +39,40 @@ app.post('/api/submit', submitLimiter, async (req, res) => {
   }
 
   try {
-    const conn = await getSFConnection();
-    const objectName = process.env.SF_OBJECT || 'Case';
+    const ratingLabel = { Cold: 'רגיל', Warm: 'בינוני', Hot: 'דחוף' }[rating] || 'רגיל';
 
-    const record = objectName === 'Case' ? {
-      SuppliedName: `${firstName.trim()} ${lastName.trim()}`,
-      SuppliedEmail: email.trim().toLowerCase(),
-      SuppliedPhone: phone ? phone.trim() : undefined,
-      SuppliedCompany: company ? company.trim() : 'אנונימי',
-      Subject: subject.trim(),
-      Description: message.trim(),
-      Priority: { Cold: 'Low', Warm: 'Medium', Hot: 'High' }[rating] || 'Low',
-      Origin: 'Web',
-      Status: 'New',
-    } : {
-      // Custom object — field names from SF_FIELD_MAP env var (JSON)
-      ...buildCustomRecord(req.body),
-    };
+    const params = new URLSearchParams({
+      oid: SF_OID,
+      retURL: 'https://sfform-production.up.railway.app',
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      email: email.trim().toLowerCase(),
+      phone: phone ? phone.trim() : '',
+      company: company ? company.trim() : 'אנונימי',
+      lead_source: 'Web',
+      description: `נושא: ${subject.trim()}\nדחיפות: ${ratingLabel}\n\n${message.trim()}`,
+    });
 
-    // Remove undefined
-    Object.keys(record).forEach((k) => record[k] === undefined && delete record[k]);
+    const sfRes = await fetch(SF_WEB_TO_LEAD, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+      redirect: 'manual',
+    });
 
-    const result = await conn.sobject(objectName).create(record);
-    if (result.success) {
-      res.json({ success: true, id: result.id });
+    if (sfRes.status === 302 || sfRes.status === 200) {
+      res.json({ success: true });
     } else {
-      throw new Error(result.errors?.join(', '));
+      throw new Error(`SF status ${sfRes.status}`);
     }
   } catch (err) {
-    console.error('Salesforce error:', err.message);
-    if (err.errorCode === 'INVALID_SESSION_ID') sfConnection = null;
+    console.error('Submit error:', err.message);
     res.status(500).json({ success: false, error: 'אירעה שגיאה בשליחת הטופס. אנא נסה שוב.' });
   }
 });
 
-function buildCustomRecord({ firstName, lastName, email, phone, company, subject, message, rating }) {
-  try {
-    const map = JSON.parse(process.env.SF_FIELD_MAP || '{}');
-    const data = { firstName, lastName, email, phone, company, subject, message, rating };
-    const record = {};
-    Object.entries(map).forEach(([sfField, formField]) => {
-      if (data[formField] !== undefined) record[sfField] = data[formField];
-    });
-    return record;
-  } catch {
-    return {};
-  }
-}
-
-// ── Health ─────────────────────────────────────────────────────────────────────
-
-app.get('/api/health', async (req, res) => {
-  if (!process.env.SF_REFRESH_TOKEN) {
-    return res.status(503).json({ status: 'setup_required', message: 'Visit /auth to authorize Salesforce' });
-  }
-  try {
-    await getSFConnection();
-    res.json({ status: 'ok', salesforce: 'connected', object: process.env.SF_OBJECT || 'Case' });
-  } catch (err) {
-    res.status(503).json({ status: 'degraded', salesforce: 'disconnected', error: err.message });
-  }
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', mode: 'web-to-lead', oid: SF_OID });
 });
 
 app.listen(PORT, () => {
