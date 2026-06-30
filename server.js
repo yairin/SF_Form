@@ -65,6 +65,8 @@ async function getSFConnection() {
 // Step 1: Redirect admin to Salesforce login
 app.get('/auth', (req, res) => {
   const url = oauth2.getAuthorizationUrl({ scope: 'api refresh_token offline_access' });
+  console.log('Auth URL:', url);
+  console.log('Callback URL env:', process.env.SF_CALLBACK_URL);
   res.redirect(url);
 });
 
