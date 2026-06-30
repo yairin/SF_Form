@@ -111,8 +111,8 @@ app.get('/api/health', async (req, res) => {
   try {
     await getSFConnection();
     res.json({ status: 'ok', salesforce: 'connected' });
-  } catch {
-    res.status(503).json({ status: 'degraded', salesforce: 'disconnected' });
+  } catch (err) {
+    res.status(503).json({ status: 'degraded', salesforce: 'disconnected', error: err.message });
   }
 });
 
