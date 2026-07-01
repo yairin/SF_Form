@@ -1,0 +1,14 @@
+{
+  "orgName": "SF Forms",
+  "edition": "Developer",
+  "language": "en_US",
+  "features": [],
+  "settings": {
+    "lightningExperienceSettings": {
+      "enableS1DesktopEnabled": true
+    },
+    "mobileSettings": {
+      "enableS1EncryptedStoragePref2": false
+    }
+  }
+}

@@ -1,0 +1,18 @@
+# Non-Salesforce assets (the web app, docs, agent skills, tooling)
+**/node_modules
+package.json
+package-lock.json
+server.js
+public/**
+docs/**
+scripts/**
+.agents/**
+.claude/**
+skills-lock.json
+.env
+.env.example
+
+# Salesforce housekeeping
+**/*.eslintrc.json
+**/jsconfig.json
+**/.eslintrc.cjs

@@ -1,0 +1,55 @@
+name: Salesforce CI
+
+# Validates the force-app metadata against a fresh scratch org and runs the
+# Apex tests on every push/PR that touches Salesforce source.
+#
+# Requires one repository secret:
+#   DEVHUB_SFDX_AUTH_URL  — the "sfdx auth URL" of an authorized Dev Hub
+#   (get it with:  sf org display --verbose --json  → result.sfdxAuthUrl)
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths: ["force-app/**", "manifest/**", "config/**", ".github/workflows/**"]
+  pull_request:
+    paths: ["force-app/**", "manifest/**", "config/**"]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Deploy to scratch org + run Apex tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Salesforce CLI
+        run: npm install --global @salesforce/cli@latest
+
+      - name: Authorize Dev Hub
+        run: |
+          if [ -z "${{ secrets.DEVHUB_SFDX_AUTH_URL }}" ]; then
+            echo "::error::Missing secret DEVHUB_SFDX_AUTH_URL. See docs/DEPLOY.md."
+            exit 1
+          fi
+          echo "${{ secrets.DEVHUB_SFDX_AUTH_URL }}" > ./DEVHUB_AUTH.txt
+          sf org login sfdx-url --sfdx-url-file ./DEVHUB_AUTH.txt --set-default-dev-hub --alias devhub
+          rm -f ./DEVHUB_AUTH.txt
+
+      - name: Create scratch org
+        run: sf org create scratch --definition-file config/project-scratch-def.json --alias ci --set-default --duration-days 1 --wait 10
+
+      - name: Deploy source
+        run: sf project deploy start --source-dir force-app --target-org ci --wait 20
+
+      - name: Run Apex tests
+        run: sf apex run test --target-org ci --code-coverage --result-format human --wait 20 --test-level RunLocalTests
+
+      - name: Delete scratch org
+        if: always()
+        run: sf org delete scratch --target-org ci --no-prompt

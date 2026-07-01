@@ -42,6 +42,23 @@ sf org assign permset --name SF_Forms_Manager --target-org sfforms
    מתאימות — אימות שהטריגר עובד.
 4. דוח מסוג **Form Responses** מציג את הרשומות.
 
+## Scratch Org (פיתוח)
+```bash
+# יצירת scratch org מתוך ההגדרה
+sf org create scratch --definition-file config/project-scratch-def.json --alias ci --set-default --duration-days 7
+sf project deploy start --source-dir force-app --target-org ci
+sf apex run test --target-org ci --code-coverage --result-format human
+```
+פריסה לפי manifest (חלופה): `sf project deploy start --manifest manifest/package.xml`.
+
+## אינטגרציה רציפה (CI)
+קובץ `.github/workflows/salesforce-ci.yml` מריץ בכל push/PR: יצירת scratch org,
+פריסת `force-app`, והרצת בדיקות Apex (ומוחק את ה-scratch בסיום).
+נדרש **secret אחד** במאגר:
+- `DEVHUB_SFDX_AUTH_URL` — ה-sfdx auth URL של Dev Hub מורשה.
+  משיגים אותו ב: `sf org display --verbose --json` (שדה `result.sfdxAuthUrl`),
+  ומגדירים תחת **Settings → Secrets and variables → Actions**.
+
 ## שלבים הבאים (נבנים מול ארגון חי עם הסקילים)
 - **Custom Report Type "Form Responses with Answers"** (Response + Answers) —
   `platform-metadata-deploy` / עורך ה-Report Type.
