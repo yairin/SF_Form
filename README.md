@@ -1,6 +1,12 @@
 # SF Anonymous Form — טופס אנונימי לSalesforce Sandbox
 
-טופס אינטרקטיבי דו-שלבי לשליחת פניות אנונימיות. הנתונים נשמרים כ-Lead בSalesforce Sandbox.
+טופס אינטרקטיבי דו-שלבי לשליחת פניות אנונימיות. הנתונים נשמרים כרשומת **`Form_Response__c`**
+בSalesforce (דרך jsforce), בהתאם למודל הנתונים של המערכת. טריגר ה-Apex בצד Salesforce
+מפרק את התשובות לרשומות `Form_Answer__c` לצורך דיווח.
+
+> **דרישה מקדימה:** יש לפרוס תחילה את המטא-דאטה שב-`force-app/` (ראו `docs/DEPLOY.md`).
+> אפליקציית ה-Node היא מסלול-ביניים; היעד ארוך-הטווח הוא טפסים נייטיביים
+> (OmniStudio + Experience Cloud) — ראו `docs/FORM_BUILDER_SPEC.md`.
 
 ## Tech Stack
 
@@ -76,8 +82,8 @@ SF_Form/
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/submit` | שליחת הטופס → יוצר Lead בSalesforce |
-| `GET`  | `/api/health` | בדיקת חיבור לSalesforce |
+| `POST` | `/api/submit` | שליחת הטופס → יוצר רשומת `Form_Response__c` בSalesforce; מחזיר מספר סימוכין (FR-…) |
+| `GET`  | `/api/health` | בדיקת חיבור לSalesforce (jsforce identity) |
 
 ### דוגמה לשליחה ידנית
 
@@ -98,4 +104,6 @@ curl -X POST http://localhost:3000/api/submit \
 
 - **Rate limiting**: מוגבל ל-10 בקשות לכל IP בכל 15 דקות
 - **אנונימיות**: הטופס לא דורש הזדהות. שדות phone ו-company אופציונליים
-- **Custom field**: אם רוצים לשמור את ה-subject בשדה נפרד בSalesforce, צור שדה `Subject__c` ב-Lead Object, אחרת הוא נכלל ב-Description
+- **מיפוי שדות**: שם/אימייל/טלפון/נושא נשמרים בשדות-המפתח של `Form_Response__c`; כל
+  התשובות נשמרות גם כ-JSON ב-`Response_Data__c` (ומפורקות ל-`Form_Answer__c` בצד SF)
+- **אימות**: `GET /api/health` מאמת את חיבור ה-jsforce לארגון

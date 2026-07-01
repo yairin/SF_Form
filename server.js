@@ -3,11 +3,14 @@ const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const jsforce = require('jsforce');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SF_OID = '00DWm000001yNaf';
-const SF_WEB_TO_LEAD = 'https://test.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8';
+
+const SF_LOGIN_URL = process.env.SF_LOGIN_URL || 'https://test.salesforce.com';
+const FORM_NAME = 'טופס פתיחת פנייה';
+const FORM_EXTERNAL_ID = 'contact-inquiry';
 
 app.set('trust proxy', 1);
 app.use(cors());
@@ -20,6 +23,35 @@ const submitLimiter = rateLimit({
   message: { success: false, error: 'יותר מדי בקשות. נסה שוב בעוד מספר דקות.' },
 });
 
+// ── Salesforce connection (jsforce, cached with re-login on expiry) ───────────
+let cachedConn = null;
+
+async function getConnection() {
+  if (cachedConn) return cachedConn;
+  const { SF_USERNAME, SF_PASSWORD, SF_SECURITY_TOKEN } = process.env;
+  if (!SF_USERNAME || !SF_PASSWORD) {
+    throw new Error('Missing Salesforce credentials (SF_USERNAME / SF_PASSWORD)');
+  }
+  const conn = new jsforce.Connection({ loginUrl: SF_LOGIN_URL });
+  await conn.login(SF_USERNAME, `${SF_PASSWORD}${SF_SECURITY_TOKEN || ''}`);
+  cachedConn = conn;
+  return conn;
+}
+
+// Run a callback with a live connection; on an expired/invalid session, reset and retry once.
+async function withConnection(fn) {
+  try {
+    return await fn(await getConnection());
+  } catch (err) {
+    if (cachedConn && /INVALID_SESSION|expired|not logged in|INVALID_LOGIN/i.test(err.message || '')) {
+      cachedConn = null;
+      return await fn(await getConnection());
+    }
+    throw err;
+  }
+}
+
+// ── Validation (server-side; never trust the client) ──────────────────────────
 function validateFormData(data) {
   const errors = [];
   if (!data.firstName || data.firstName.trim().length < 2) errors.push('שם פרטי נדרש (לפחות 2 תווים)');
@@ -30,6 +62,7 @@ function validateFormData(data) {
   return errors;
 }
 
+// ── Submit → create a Form_Response__c record ─────────────────────────────────
 app.post('/api/submit', submitLimiter, async (req, res) => {
   const { firstName, lastName, email, phone, company, subject, message, rating } = req.body;
 
@@ -38,53 +71,75 @@ app.post('/api/submit', submitLimiter, async (req, res) => {
     return res.status(400).json({ success: false, errors });
   }
 
+  const ratingLabel = { Cold: 'רגיל', Warm: 'בינוני', Hot: 'דחוף' }[rating] || 'רגיל';
+
+  // Full answer set stored as JSON in Response_Data__c (flattened into
+  // Form_Answer__c rows by the after-insert Apex trigger in Salesforce).
+  const answers = {
+    firstName: firstName.trim(),
+    lastName: lastName.trim(),
+    email: email.trim().toLowerCase(),
+    phone: phone ? phone.trim() : '',
+    company: company ? company.trim() : '',
+    subject: subject.trim(),
+    message: message.trim(),
+    urgency: ratingLabel,
+  };
+
+  const record = {
+    Form_Name__c: FORM_NAME,
+    Form_External_Id__c: FORM_EXTERNAL_ID,
+    Submitted_At__c: new Date().toISOString(),
+    Respondent_Name__c: `${answers.firstName} ${answers.lastName}`.slice(0, 255),
+    Email__c: answers.email,
+    Phone__c: answers.phone,
+    Subject__c: answers.subject.slice(0, 255),
+    Response_Data__c: JSON.stringify(answers),
+    Source_IP__c: (req.ip || '').slice(0, 45),
+  };
+
   try {
-    const ratingLabel = { Cold: 'רגיל', Warm: 'בינוני', Hot: 'דחוף' }[rating] || 'רגיל';
-
-    const params = new URLSearchParams({
-      oid: SF_OID,
-      retURL: 'https://sfform-production.up.railway.app',
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
-      email: email.trim().toLowerCase(),
-      phone: phone ? phone.trim() : '',
-      company: company ? company.trim() : 'אנונימי',
-      lead_source: 'Web',
-      description: `נושא: ${subject.trim()}\nדחיפות: ${ratingLabel}\n\n${message.trim()}`,
-    });
-
-    const sfRes = await fetch(SF_WEB_TO_LEAD, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString(),
-      redirect: 'manual',
-    });
-
-    const sfBody = await sfRes.text();
-    console.log('SF response status:', sfRes.status);
-    console.log('SF response location:', sfRes.headers.get('location'));
-    console.log('SF response body (first 500):', sfBody.slice(0, 500));
-
-    if (sfRes.status === 302 || sfRes.status === 200) {
-      const location = sfRes.headers.get('location') || '';
-      const isError = sfBody.includes('error') || sfBody.includes('Error') || location.includes('error');
-      if (isError) {
-        console.error('SF returned error in body/redirect:', location || sfBody.slice(0, 200));
-        throw new Error('Salesforce rejected the submission');
-      }
-      console.log('Lead submitted successfully');
-      res.json({ success: true });
-    } else {
-      throw new Error(`SF status ${sfRes.status}`);
+    const result = await withConnection((conn) =>
+      conn.sobject('Form_Response__c').create(record)
+    );
+    if (!result.success) {
+      throw new Error(`Create failed: ${JSON.stringify(result.errors || result)}`);
     }
+
+    // Return the friendly auto-number (FR-00001) when available, else the record Id.
+    let reference = result.id;
+    try {
+      const created = await withConnection((conn) =>
+        conn.sobject('Form_Response__c').retrieve(result.id)
+      );
+      if (created && created.Name) reference = created.Name;
+    } catch (_) {
+      /* non-fatal: fall back to the record Id */
+    }
+
+    console.log('Form_Response__c created:', reference);
+    res.json({ success: true, id: reference });
   } catch (err) {
     console.error('Submit error:', err.message);
     res.status(500).json({ success: false, error: 'אירעה שגיאה בשליחת הטופס. אנא נסה שוב.' });
   }
 });
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', mode: 'web-to-lead', oid: SF_OID });
+// ── Health check (verifies the Salesforce connection) ─────────────────────────
+app.get('/api/health', async (req, res) => {
+  try {
+    const conn = await getConnection();
+    const identity = await conn.identity();
+    res.json({
+      status: 'ok',
+      mode: 'jsforce',
+      object: 'Form_Response__c',
+      org: identity.organization_id,
+      user: identity.username,
+    });
+  } catch (err) {
+    res.status(500).json({ status: 'error', error: err.message });
+  }
 });
 
 app.listen(PORT, () => {
