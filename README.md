@@ -94,6 +94,12 @@ SF_Form/
 > אם `type` / `severity` / `status` הם picklist ב-Salesforce, ודא שהערכים
 > בעברית תואמים לערכי ה-API של ה-picklist.
 
+### לוגו מרכז השלטון המקומי
+
+בראש טופס החירום מוצג לוגו הארגון. שמור את קובץ הלוגו בשם **`public/logo-local-gov.png`**
+(אפשר גם לייצא אותו מ-Salesforce כ-Static Resource / Document). אם הקובץ חסר,
+הבאנר פשוט לא יוצג (fallback חלק) והטופס ימשיך לתפקד כרגיל.
+
 לפיתוח על מודול "מאגר חירום" עצמו (אובייקטים, Flows, Apex, LWC) — ראה `SALESFORCE.md`.
 
 ### דוגמה לשליחה ידנית
