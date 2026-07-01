@@ -26,6 +26,7 @@
 > הנחיה זו חלה תמיד ואינה חד-פעמית.
 
 ## מסמכים
+- מדריך מעשי (יצירה/מילוי/בחינת תוצאות): `docs/QUICKSTART.md`
 - אפיון מחולל הטפסים: `docs/FORM_BUILDER_SPEC.md`
 - אפיון מחולל הדוחות: `docs/REPORT_GENERATOR_SPEC.md`
 - פריסת מטא-דאטה (SFDX): `docs/DEPLOY.md`
