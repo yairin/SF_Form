@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>One row per individual answer of a Form Response. Created automatically by flattening Form_Response__c.Response_Data__c (JSON). Makes every submitted field reportable, groupable and filterable in native Reports.</description>
+    <enableActivities>false</enableActivities>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Form Answer</label>
+    <nameField>
+        <displayFormat>FA-{00000}</displayFormat>
+        <label>Form Answer Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Form Answers</pluralLabel>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

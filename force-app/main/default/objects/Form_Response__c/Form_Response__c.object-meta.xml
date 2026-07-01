@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>A single flexible object that stores every form submission. Key fields (name, email, phone, subject) are mapped explicitly; the full answer set is kept as JSON in Response_Data__c. An after-insert Apex trigger explodes that JSON into child Form_Answer__c rows so every answer is reportable.</description>
+    <enableActivities>true</enableActivities>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Form Response</label>
+    <nameField>
+        <displayFormat>FR-{00000}</displayFormat>
+        <label>Form Response Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Form Responses</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

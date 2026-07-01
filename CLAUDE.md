@@ -26,7 +26,13 @@
 > הנחיה זו חלה תמיד ואינה חד-פעמית.
 
 ## מסמכים
-- אפיון המערכת: `docs/FORM_BUILDER_SPEC.md`
+- אפיון מחולל הטפסים: `docs/FORM_BUILDER_SPEC.md`
+- אפיון מחולל הדוחות: `docs/REPORT_GENERATOR_SPEC.md`
+- פריסת מטא-דאטה (SFDX): `docs/DEPLOY.md`
+
+## קוד מקור (Salesforce DX)
+- מטא-דאטה נייטיבית תחת `force-app/` — אובייקטים `Form_Response__c` / `Form_Answer__c`,
+  טריגר + Apex לפירוק JSON, Permission Sets, ו-Report Type. פריסה לפי `docs/DEPLOY.md`.
 
 ## ענף פיתוח
 - `claude/form-builder-system-kf36td`

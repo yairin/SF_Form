@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ReportType xmlns="http://soap.sforce.com/2006/04/metadata">
+    <baseObject>Form_Response__c</baseObject>
+    <category>other</category>
+    <deployed>true</deployed>
+    <description>All form submissions (response-level fields).</description>
+    <label>Form Responses</label>
+    <sections>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Name</field>
+            <table>Form_Response__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Form_Name__c</field>
+            <table>Form_Response__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Respondent_Name__c</field>
+            <table>Form_Response__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Email__c</field>
+            <table>Form_Response__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Phone__c</field>
+            <table>Form_Response__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Subject__c</field>
+            <table>Form_Response__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Status__c</field>
+            <table>Form_Response__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Submitted_At__c</field>
+            <table>Form_Response__c</table>
+        </columns>
+        <masterLabel>Form Responses</masterLabel>
+    </sections>
+</ReportType>

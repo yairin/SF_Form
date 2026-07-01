@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Form_Response__c</fullName>
+    <description>Master-Detail to the parent Form Response.</description>
+    <label>Form Response</label>
+    <referenceTo>Form_Response__c</referenceTo>
+    <relationshipLabel>Answers</relationshipLabel>
+    <relationshipName>Answers</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <type>MasterDetail</type>
+</CustomField>
