@@ -1,0 +1,16 @@
+# Salesforce CLI ignore file — controls what is skipped on deploy/retrieve
+
+# CLI / auth artifacts
+.sfdx
+.sf
+
+# Node
+node_modules
+
+# LWC config & tests (kept locally, not deployed)
+**/jsconfig.json
+**/.eslintrc.json
+**/__tests__/**
+
+# OS junk
+**/.DS_Store

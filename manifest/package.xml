@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Manifest for the "מאגר חירום" (Emergency) module in the MashamDev sandbox.
+
+  This lists the metadata TYPES that typically make up a Lightning app module
+  (app, object + fields, tabs, pages, flows, layouts, Apex, LWC, permissions).
+  The "*" wildcard pulls every member of that type from the org.
+
+  RECOMMENDED FIRST STEP — discover, then scope down:
+    1. Retrieve just the app to find its API name and related components:
+         sf project retrieve start -m CustomApplication -o MashamDev
+    2. Open force-app/.../applications/*.app-meta.xml to see the app's tabs.
+    3. Replace the wildcards below with the specific API names you found,
+       so retrieve/deploy touches only the emergency module and not the
+       whole org.
+-->
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>*</members>
+        <name>CustomApplication</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>CustomTab</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>FlexiPage</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>Flow</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>Layout</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>QuickAction</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>ApexTrigger</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>LightningComponentBundle</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>AuraDefinitionBundle</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>PermissionSet</name>
+    </types>
+    <version>62.0</version>
+</Package>
