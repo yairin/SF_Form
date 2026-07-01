@@ -56,10 +56,9 @@ body {
 }
 
 .logo img {
-  height: 48px;
+  height: 64px;
   width: auto;
   display: block;
-  border-radius: 8px;
 }
 
 h1 {
