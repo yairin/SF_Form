@@ -13,6 +13,9 @@ name: Validate against org
 
 on:
   workflow_dispatch:
+  push:
+    branches: ["main", "claude/**"]
+    paths: ["force-app/**", "manifest/**", ".github/workflows/validate-org.yml"]
   pull_request:
     paths: ["force-app/**", "manifest/**"]
 
