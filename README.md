@@ -76,8 +76,25 @@ SF_Form/
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/submit` | שליחת הטופס → יוצר Lead בSalesforce |
-| `GET`  | `/api/health` | בדיקת חיבור לSalesforce |
+| `POST` | `/api/submit` | שליחת הטופס האנונימי → יוצר Lead בSalesforce (Web-to-Lead) |
+| `GET`  | `/api/health` | בדיקת מצב Web-to-Lead |
+| `POST` | `/api/emergency` | הקמת אירוע חירום → יוצר רשומה במאגר החירום (jsforce) |
+| `GET`  | `/api/emergency/health` | בדיקת חיבור jsforce למאגר החירום |
+
+## טופס הקמת אירוע חירום — `/emergency`
+
+טופס ייעודי בכתובת **http://localhost:3000/emergency.html** לפתיחת אירוע במאגר החירום.
+בניגוד לטופס האנונימי (Web-to-Lead), אירוע נשמר באובייקט מותאם אישית ולכן נדרש
+חיבור **jsforce מאומת** — הגדר את פרטי ההתחברות ומיפוי השדות ב-`.env`.
+
+> ⚠️ **מיפוי שדות**: ערכי ברירת המחדל ב-`.env.example` (למשל `Emergency_Event__c`,
+> `Event_Type__c`) הם **placeholders**. משוך את המטא-דאטה של המודול
+> (`scripts/sf-retrieve.sh CustomApplication`) כדי לגלות את ה-API Names האמיתיים
+> של האובייקט והשדות, ועדכן את משתני `SF_EMERGENCY_*` / `SF_F_*` בהתאם.
+> אם `type` / `severity` / `status` הם picklist ב-Salesforce, ודא שהערכים
+> בעברית תואמים לערכי ה-API של ה-picklist.
+
+לפיתוח על מודול "מאגר חירום" עצמו (אובייקטים, Flows, Apex, LWC) — ראה `SALESFORCE.md`.
 
 ### דוגמה לשליחה ידנית
 

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>הקמת אירוע חירום</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="emergency-theme">
+  <div class="page-wrapper">
+    <div class="card" id="form-card">
+      <div class="card-header">
+        <div class="logo">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="36" height="36" rx="10" fill="#dc2626"/>
+            <path d="M18 9l9 16H9l9-16z" fill="white"/>
+            <rect x="17" y="15" width="2" height="6" rx="1" fill="#dc2626"/>
+            <rect x="17" y="22" width="2" height="2" rx="1" fill="#dc2626"/>
+          </svg>
+        </div>
+        <div>
+          <h1>הקמת אירוע חירום</h1>
+          <p class="subtitle">מילוי הטופס יפתח אירוע חדש במאגר החירום.</p>
+        </div>
+      </div>
+
+      <!-- Step indicators -->
+      <div class="steps" id="steps">
+        <div class="step active" data-step="1">
+          <span class="step-num">1</span>
+          <span class="step-label">פרטי האירוע</span>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step" data-step="2">
+          <span class="step-num">2</span>
+          <span class="step-label">דיווח</span>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step" data-step="3">
+          <span class="step-num">3</span>
+          <span class="step-label">סיכום</span>
+        </div>
+      </div>
+
+      <form id="main-form" novalidate>
+        <!-- Step 1: Event details -->
+        <div class="form-step active" id="step-1">
+          <div class="form-group">
+            <label for="title">כותרת האירוע <span class="required">*</span></label>
+            <input type="text" id="title" name="title" placeholder="לדוגמה: שריפה במחסן מרכזי" />
+            <span class="field-error" id="err-title"></span>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="type">סוג אירוע <span class="required">*</span></label>
+              <select id="type" name="type">
+                <option value="">בחר סוג...</option>
+                <option value="שריפה">שריפה</option>
+                <option value="רעידת אדמה">רעידת אדמה</option>
+                <option value="שיטפון">שיטפון</option>
+                <option value="אירוע ביטחוני">אירוע ביטחוני</option>
+                <option value="תאונה">תאונה</option>
+                <option value="מפגע">מפגע</option>
+                <option value="אחר">אחר</option>
+              </select>
+              <span class="field-error" id="err-type"></span>
+            </div>
+            <div class="form-group">
+              <label for="location">מיקום האירוע <span class="required">*</span></label>
+              <input type="text" id="location" name="location" placeholder="כתובת / אזור" />
+              <span class="field-error" id="err-location"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>דרגת חומרה <span class="required">*</span></label>
+            <div class="rating-group">
+              <label class="rating-option">
+                <input type="radio" name="severity" value="נמוכה" />
+                <span class="rating-chip low">נמוכה</span>
+              </label>
+              <label class="rating-option">
+                <input type="radio" name="severity" value="בינונית" checked />
+                <span class="rating-chip medium">בינונית</span>
+              </label>
+              <label class="rating-option">
+                <input type="radio" name="severity" value="גבוהה" />
+                <span class="rating-chip high">גבוהה</span>
+              </label>
+              <label class="rating-option">
+                <input type="radio" name="severity" value="קריטית" />
+                <span class="rating-chip critical">קריטית</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="description">תיאור האירוע <span class="required">*</span></label>
+            <textarea id="description" name="description" rows="5" placeholder="פרט מה קרה, היקף האירוע, וגורמים מעורבים..."></textarea>
+            <span class="char-count" id="char-count">0 / 2000</span>
+            <span class="field-error" id="err-description"></span>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-primary" onclick="nextStep(1)">המשך →</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Reporting -->
+        <div class="form-step" id="step-2">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="occurredAt">מועד תחילת האירוע <span class="optional">(אופציונלי)</span></label>
+              <input type="datetime-local" id="occurredAt" name="occurredAt" />
+            </div>
+            <div class="form-group">
+              <label for="casualties">מספר נפגעים <span class="optional">(אופציונלי)</span></label>
+              <input type="number" id="casualties" name="casualties" min="0" step="1" placeholder="0" />
+              <span class="field-error" id="err-casualties"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="reporter">שם המדווח <span class="required">*</span></label>
+            <input type="text" id="reporter" name="reporter" placeholder="שם מלא" autocomplete="name" />
+            <span class="field-error" id="err-reporter"></span>
+          </div>
+          <div class="form-group">
+            <label for="phone">טלפון ליצירת קשר <span class="required">*</span></label>
+            <input type="tel" id="phone" name="phone" placeholder="050-0000000" autocomplete="tel" />
+            <span class="field-error" id="err-phone"></span>
+          </div>
+          <div class="form-actions split">
+            <button type="button" class="btn-secondary" onclick="prevStep(2)">← חזרה</button>
+            <button type="button" class="btn-primary" onclick="nextStep(2)">המשך →</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Summary -->
+        <div class="form-step" id="step-3">
+          <div class="summary-box" id="summary-box"></div>
+          <div class="privacy-note">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1L2 4v4c0 3.31 2.55 6.41 6 7 3.45-.59 6-3.69 6-7V4L8 1z" fill="#dc2626" opacity=".2" stroke="#dc2626" stroke-width="1.2"/><path d="M5.5 8l2 2 3-3" stroke="#dc2626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            בדוק שהפרטים נכונים — האירוע ייפתח מיידית במאגר החירום עם שליחת הטופס.
+          </div>
+          <div class="form-actions split">
+            <button type="button" class="btn-secondary" onclick="prevStep(3)">← חזרה</button>
+            <button type="submit" class="btn-submit" id="submit-btn">
+              <span id="submit-label">פתח אירוע חירום</span>
+              <span id="submit-spinner" class="spinner hidden"></span>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Error banner -->
+      <div class="alert alert-error hidden" id="error-banner"></div>
+    </div>
+
+    <!-- Success card -->
+    <div class="card success-card hidden" id="success-card">
+      <div class="success-icon">
+        <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+          <circle cx="28" cy="28" r="28" fill="#E8F5E9"/>
+          <path d="M18 28l8 8 14-14" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2>האירוע נפתח בהצלחה!</h2>
+      <p>האירוע נרשם במאגר החירום וצוות החמ"ל יטפל בהתאם.</p>
+      <p class="ref-id" id="ref-id"></p>
+      <button class="btn-primary" onclick="resetForm()">פתח אירוע נוסף</button>
+    </div>
+  </div>
+
+  <script src="emergency.js"></script>
+</body>
+</html>

@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const { createEmergencyEvent, checkConnection } = require('./sf-emergency');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -80,6 +81,51 @@ app.post('/api/submit', submitLimiter, async (req, res) => {
   } catch (err) {
     console.error('Submit error:', err.message);
     res.status(500).json({ success: false, error: 'אירעה שגיאה בשליחת הטופס. אנא נסה שוב.' });
+  }
+});
+
+// ── Emergency event ───────────────────────────────────────────────────────
+const EVENT_TYPES = ['שריפה', 'רעידת אדמה', 'שיטפון', 'אירוע ביטחוני', 'תאונה', 'מפגע', 'אחר'];
+const SEVERITIES = ['נמוכה', 'בינונית', 'גבוהה', 'קריטית'];
+
+function validateEmergencyData(data) {
+  const errors = [];
+  if (!data.title || data.title.trim().length < 3) errors.push('כותרת האירוע נדרשת (לפחות 3 תווים)');
+  if (!data.type || !EVENT_TYPES.includes(data.type)) errors.push('סוג אירוע לא תקין');
+  if (!data.severity || !SEVERITIES.includes(data.severity)) errors.push('דרגת חומרה לא תקינה');
+  if (!data.location || data.location.trim().length < 2) errors.push('מיקום האירוע נדרש');
+  if (!data.description || data.description.trim().length < 10) errors.push('תיאור האירוע נדרש (לפחות 10 תווים)');
+  if (!data.reporter || data.reporter.trim().length < 2) errors.push('שם המדווח נדרש');
+  if (!data.phone || !/^[\d\-+()\s]{7,20}$/.test(data.phone.trim())) errors.push('מספר טלפון לא תקין');
+  if (data.casualties !== undefined && data.casualties !== null && data.casualties !== '') {
+    const n = Number(data.casualties);
+    if (!Number.isInteger(n) || n < 0) errors.push('מספר נפגעים חייב להיות מספר שלם אי-שלילי');
+  }
+  return errors;
+}
+
+app.post('/api/emergency', submitLimiter, async (req, res) => {
+  const errors = validateEmergencyData(req.body);
+  if (errors.length > 0) {
+    return res.status(400).json({ success: false, errors });
+  }
+
+  try {
+    const { id } = await createEmergencyEvent(req.body);
+    console.log('Emergency event created:', id);
+    res.json({ success: true, id });
+  } catch (err) {
+    console.error('Emergency submit error:', err.message);
+    res.status(500).json({ success: false, error: 'אירעה שגיאה בהקמת האירוע. אנא נסה שוב.' });
+  }
+});
+
+app.get('/api/emergency/health', async (req, res) => {
+  try {
+    const info = await checkConnection();
+    res.json({ status: 'ok', mode: 'jsforce', ...info });
+  } catch (err) {
+    res.status(503).json({ status: 'error', error: err.message });
   }
 });
 

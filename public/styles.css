@@ -24,6 +24,14 @@ body {
   color: var(--text-primary);
 }
 
+/* Emergency form: swap the blue accent for red (buttons, steps, focus, summary) */
+body.emergency-theme {
+  --sf-blue: #dc2626;
+  --sf-blue-dark: #991b1b;
+  --sf-blue-light: #fef2f2;
+  background: linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%);
+}
+
 .page-wrapper {
   width: 100%;
   max-width: 560px;
@@ -168,6 +176,9 @@ label {
 input[type="text"],
 input[type="email"],
 input[type="tel"],
+input[type="number"],
+input[type="datetime-local"],
+select,
 textarea {
   width: 100%;
   padding: 10px 13px;
@@ -182,13 +193,22 @@ textarea {
   direction: rtl;
 }
 
-input:focus, textarea:focus {
+select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 13px center;
+  padding-left: 34px;
+}
+
+input:focus, select:focus, textarea:focus {
   border-color: var(--sf-blue);
   box-shadow: 0 0 0 3px rgba(1,118,211,0.12);
   background: #fff;
 }
 
-input.error, textarea.error {
+input.error, select.error, textarea.error {
   border-color: var(--error);
 }
 
@@ -241,10 +261,12 @@ textarea {
 .rating-chip.low   { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
 .rating-chip.medium { background: #fffbeb; color: #92400e; border-color: #fde68a; }
 .rating-chip.high  { background: #fff1f2; color: #9f1239; border-color: #fecdd3; }
+.rating-chip.critical { background: #450a0a; color: #fff; border-color: #7f1d1d; }
 
 .rating-option input:checked + .rating-chip.low    { border-color: #16a34a; box-shadow: 0 0 0 2px rgba(22,163,74,0.15); }
 .rating-option input:checked + .rating-chip.medium { border-color: #d97706; box-shadow: 0 0 0 2px rgba(217,119,6,0.15); }
 .rating-option input:checked + .rating-chip.high   { border-color: #e11d48; box-shadow: 0 0 0 2px rgba(225,29,72,0.15); }
+.rating-option input:checked + .rating-chip.critical { border-color: #dc2626; box-shadow: 0 0 0 2px rgba(220,38,38,0.35); }
 
 /* Summary */
 .summary-box {
