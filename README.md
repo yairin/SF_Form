@@ -64,6 +64,15 @@ npm start
 
 הטופס יהיה זמין בכתובת: **http://localhost:3000**
 
+## בדיקות
+
+```bash
+npm test
+```
+
+בדיקות אוטומטיות (Node test runner) המכסות ולידציה, מיפוי השדות ל-`Form_Response__c`,
+וזרימת השליחה — עם mock ל-jsforce, כך שאין צורך בחיבור ל-Salesforce.
+
 ## מבנה הפרויקט
 
 ```
