@@ -1,0 +1,52 @@
+name: Validate against org
+
+# Check-only ("dry-run") deploy of force-app to an EXISTING org (e.g. a Sandbox)
+# plus running the Apex tests. Nothing is persisted to the org — this only
+# verifies that the metadata compiles and the tests pass end-to-end.
+#
+# Requires one repository secret:
+#   SF_AUTH_URL — the sfdx auth URL of the target org (a Sandbox is fine).
+#   Get it with:
+#     sf org login web --instance-url https://test.salesforce.com
+#     sf org display --verbose --json      # copy result.sfdxAuthUrl
+#   Add it under: Settings -> Secrets and variables -> Actions -> New repository secret
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: ["force-app/**", "manifest/**"]
+
+jobs:
+  validate:
+    name: Dry-run deploy + Apex tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Salesforce CLI
+        run: npm install --global @salesforce/cli@latest
+
+      - name: Authorize target org
+        run: |
+          if [ -z "${{ secrets.SF_AUTH_URL }}" ]; then
+            echo "::error::Missing secret SF_AUTH_URL. See docs/DEPLOY.md."
+            exit 1
+          fi
+          echo "${{ secrets.SF_AUTH_URL }}" > ./SF_AUTH.txt
+          sf org login sfdx-url --sfdx-url-file ./SF_AUTH.txt --alias target --set-default
+          rm -f ./SF_AUTH.txt
+
+      - name: Validate (check-only deploy + run local tests)
+        run: |
+          sf project deploy start \
+            --source-dir force-app \
+            --dry-run \
+            --test-level RunLocalTests \
+            --target-org target \
+            --wait 30

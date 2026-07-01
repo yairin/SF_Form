@@ -59,6 +59,17 @@ sf apex run test --target-org ci --code-coverage --result-format human
   משיגים אותו ב: `sf org display --verbose --json` (שדה `result.sfdxAuthUrl`),
   ומגדירים תחת **Settings → Secrets and variables → Actions**.
 
+## אימות מהיר מול Sandbox (ללא Dev Hub, ללא שינוי בארגון)
+ה-workflow `.github/workflows/validate-org.yml` מבצע **dry-run deploy** של `force-app`
+והרצת בדיקות Apex מול ארגון קיים — בלי לשנות אותו. נדרש secret אחד:
+- `SF_AUTH_URL` — ה-sfdx auth URL של ה-Sandbox:
+  ```bash
+  sf org login web --instance-url https://test.salesforce.com
+  sf org display --verbose --json   # העתק את result.sfdxAuthUrl
+  ```
+  מוסיפים תחת **Settings → Secrets and variables → Actions**. לאחר מכן ניתן להריץ את
+  ה-workflow ידנית (Run workflow) או שהוא ירוץ ב-PR.
+
 ## שלבים הבאים (נבנים מול ארגון חי עם הסקילים)
 - **Custom Report Type "Form Responses with Answers"** (Response + Answers) —
   `platform-metadata-deploy` / עורך ה-Report Type.
