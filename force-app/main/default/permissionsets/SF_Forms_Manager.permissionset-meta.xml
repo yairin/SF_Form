@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
-    <label>SF Forms Manager</label>
-    <description>Full access to form responses and answers for CRM managers who review, manage and report on submissions.</description>
-    <hasActivationRequired>false</hasActivationRequired>
+    <applicationVisibilities>
+        <application>SF_Forms</application>
+        <visible>true</visible>
+    </applicationVisibilities>
     <classAccesses>
         <apexClass>FormResponseController</apexClass>
         <enabled>true</enabled>
@@ -15,65 +16,7 @@
         <apexClass>FormBuilderController</apexClass>
         <enabled>true</enabled>
     </classAccesses>
-    <objectPermissions>
-        <object>Form_Template__c</object>
-        <allowCreate>true</allowCreate>
-        <allowDelete>true</allowDelete>
-        <allowEdit>true</allowEdit>
-        <allowRead>true</allowRead>
-        <modifyAllRecords>true</modifyAllRecords>
-        <viewAllRecords>true</viewAllRecords>
-    </objectPermissions>
-    <fieldPermissions>
-        <field>Form_Template__c.External_Id__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <field>Form_Template__c.Description__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <field>Form_Template__c.Schema_JSON__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <field>Form_Template__c.Active__c</field>
-        <readable>true</readable>
-        <editable>true</editable>
-    </fieldPermissions>
-    <applicationVisibilities>
-        <application>SF_Forms</application>
-        <visible>true</visible>
-    </applicationVisibilities>
-    <tabSettings>
-        <tab>SF_Forms_Home</tab>
-        <visibility>Visible</visibility>
-    </tabSettings>
-    <tabSettings>
-        <tab>Form_Response__c</tab>
-        <visibility>Visible</visibility>
-    </tabSettings>
-    <objectPermissions>
-        <object>Form_Response__c</object>
-        <allowCreate>true</allowCreate>
-        <allowDelete>true</allowDelete>
-        <allowEdit>true</allowEdit>
-        <allowRead>true</allowRead>
-        <modifyAllRecords>false</modifyAllRecords>
-        <viewAllRecords>true</viewAllRecords>
-    </objectPermissions>
-    <objectPermissions>
-        <object>Form_Answer__c</object>
-        <allowCreate>true</allowCreate>
-        <allowDelete>true</allowDelete>
-        <allowEdit>true</allowEdit>
-        <allowRead>true</allowRead>
-        <modifyAllRecords>false</modifyAllRecords>
-        <viewAllRecords>true</viewAllRecords>
-    </objectPermissions>
+    <description>Full access to form responses, answers and templates for CRM managers who review, manage, build and report on forms.</description>
     <fieldPermissions>
         <field>Form_Response__c.Form_Name__c</field>
         <readable>true</readable>
@@ -149,4 +92,61 @@
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>
+    <fieldPermissions>
+        <field>Form_Template__c.External_Id__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Form_Template__c.Description__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Form_Template__c.Schema_JSON__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Form_Template__c.Active__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>SF Forms Manager</label>
+    <objectPermissions>
+        <object>Form_Response__c</object>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <viewAllRecords>true</viewAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <object>Form_Answer__c</object>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <viewAllRecords>true</viewAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <object>Form_Template__c</object>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>true</modifyAllRecords>
+        <viewAllRecords>true</viewAllRecords>
+    </objectPermissions>
+    <tabSettings>
+        <tab>SF_Forms_Home</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>Form_Response__c</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
 </PermissionSet>
