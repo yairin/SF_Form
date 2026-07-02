@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>בונה טפסים — SF Forms</title>
+  <style>
+    :root{--indigo:#4F46E5;--blue:#2563EB;--ink:#0F172A;--slate:#475569;--line:#E2E8F0;--bg:#F1F5F9;}
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--ink);}
+    .wrap{max-width:860px;margin:0 auto;padding:24px 16px 60px;}
+    h1{font-size:24px;margin:0 0 4px;color:var(--indigo);}
+    .sub{color:var(--slate);margin:0 0 20px;}
+    .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
+    label{display:block;font-weight:600;font-size:14px;margin:8px 0 4px;}
+    input[type=text],textarea,select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font:inherit;background:#fff;}
+    textarea{min-height:60px;resize:vertical;}
+    .row{display:flex;gap:10px;flex-wrap:wrap;}
+    .row>div{flex:1;min-width:140px;}
+    .field{border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:10px;background:#fff;}
+    .field-top{display:flex;gap:8px;align-items:center;}
+    .chk{display:flex;align-items:center;gap:6px;font-weight:600;font-size:14px;white-space:nowrap;}
+    .btn{border:0;border-radius:10px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer;}
+    .btn-primary{background:var(--indigo);color:#fff;}
+    .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink);}
+    .btn-sm{padding:5px 9px;font-size:13px;}
+    .btn-danger{background:#fff;border:1px solid #FCA5A5;color:#B91C1C;}
+    .actions{display:flex;gap:10px;margin-top:8px;}
+    .muted{color:var(--slate);font-size:13px;}
+    .result{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46;border-radius:11px;padding:14px;margin-top:12px;display:none;}
+    .result a{color:#065F46;font-weight:700;word-break:break-all;}
+    .err{background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C;border-radius:11px;padding:12px;margin-top:10px;display:none;}
+    .forms-list a{color:var(--blue);font-weight:600;text-decoration:none;}
+    .forms-list li{margin:6px 0;}
+    .opts{display:none;}
+    .opts.show{display:block;}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div><h1>בונה טפסים</h1><p class="sub">הגדר שדות, פרסם קישור ציבורי אנונימי, וקבל את התשובות ל-Salesforce.</p></div>
+    </div>
+
+    <div class="card">
+      <label for="f-title">כותרת הטופס</label>
+      <input type="text" id="f-title" placeholder="למשל: רישום לאירוע" />
+      <label for="f-desc">תיאור (אופציונלי)</label>
+      <input type="text" id="f-desc" placeholder="תיאור קצר שיוצג לפונה" />
+    </div>
+
+    <div class="card">
+      <div class="topbar"><strong>שדות</strong><button class="btn btn-ghost btn-sm" id="add-field">+ הוסף שדה</button></div>
+      <div id="fields"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="save">שמור ופרסם</button>
+      <a class="btn btn-ghost" href="/builder">איפוס</a>
+    </div>
+    <div class="err" id="err"></div>
+    <div class="result" id="result"></div>
+
+    <div class="card" style="margin-top:22px;">
+      <strong>טפסים קיימים</strong>
+      <ul class="forms-list" id="forms-list"><li class="muted">טוען…</li></ul>
+    </div>
+  </div>
+  <script src="/builder.js"></script>
+</body>
+</html>

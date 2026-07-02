@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>טופס</title>
+  <style>
+    :root{--indigo:#4F46E5;--ink:#0F172A;--slate:#475569;--line:#E2E8F0;--bg:#F1F5F9;}
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--ink);}
+    .wrap{max-width:600px;margin:0 auto;padding:28px 16px 60px;}
+    .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 4px 16px rgba(15,23,42,.06);}
+    .head{background:var(--indigo);color:#fff;border-radius:14px;padding:18px 20px;margin:-4px 0 18px;}
+    .head h1{margin:0;font-size:20px;}
+    .head p{margin:6px 0 0;opacity:.9;font-size:14px;}
+    label{display:block;font-weight:600;font-size:14px;margin:14px 0 5px;}
+    .req{color:#DC2626;}
+    input,textarea,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff;}
+    textarea{min-height:90px;resize:vertical;}
+    .choice{display:flex;align-items:center;gap:8px;font-weight:400;margin:4px 0;}
+    .choice input{width:auto;}
+    .help{color:var(--slate);font-size:12px;margin-top:3px;}
+    .btn{border:0;border-radius:12px;padding:13px 18px;font:inherit;font-weight:700;cursor:pointer;background:var(--indigo);color:#fff;width:100%;margin-top:20px;}
+    .err{background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C;border-radius:11px;padding:12px;margin-top:14px;display:none;}
+    .ok{text-align:center;padding:20px;}
+    .ok .ref{font-weight:700;color:var(--indigo);margin-top:8px;}
+    .hp{position:absolute;left:-9999px;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="card">
+      <div class="head"><h1 id="title">טופס</h1><p id="desc"></p></div>
+      <form id="dynform" novalidate>
+        <div id="fields"></div>
+        <input type="text" name="_hp" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+        <button class="btn" type="submit" id="submit">שליחה</button>
+        <div class="err" id="err"></div>
+      </form>
+    </div>
+  </div>
+  <script src="/form.js"></script>
+</body>
+</html>

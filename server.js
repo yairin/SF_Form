@@ -3,7 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const fs = require('fs');
 const jsforce = require('jsforce');
+const forms = require('./lib/forms');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -154,6 +156,78 @@ app.get('/api/health', async (req, res) => {
     res.status(500).json({ status: 'error', error: err.message });
   }
 });
+
+// ── Dynamic form builder ──────────────────────────────────────────────────────
+const FORMS_DIR = process.env.FORMS_DIR || path.join(__dirname, 'data', 'forms');
+fs.mkdirSync(FORMS_DIR, { recursive: true });
+
+const formPath = (slug) => path.join(FORMS_DIR, `${slug}.json`);
+const formExists = (slug) => fs.existsSync(formPath(slug));
+function readForm(slug) {
+  try { return JSON.parse(fs.readFileSync(formPath(slug), 'utf8')); } catch { return null; }
+}
+function listForms() {
+  return fs.readdirSync(FORMS_DIR)
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => readForm(f.slice(0, -5)))
+    .filter(Boolean)
+    .map((s) => ({ slug: s.slug, title: s.title, fields: s.fields.length, createdAt: s.createdAt }))
+    .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+}
+function uniqueSlug(base) {
+  let slug = base, n = 2;
+  while (formExists(slug)) slug = `${base}-${n++}`;
+  return slug;
+}
+
+// Builder: create a form
+app.post('/api/forms', (req, res) => {
+  const { schema, errors } = forms.normalizeSchema(req.body || {});
+  if (errors.length) return res.status(400).json({ success: false, errors });
+  schema.slug = uniqueSlug(forms.slugify(schema.title));
+  schema.createdAt = new Date().toISOString();
+  fs.writeFileSync(formPath(schema.slug), JSON.stringify(schema, null, 2));
+  res.json({ success: true, slug: schema.slug, url: `/f/${schema.slug}` });
+});
+
+// Builder: list forms
+app.get('/api/forms', (req, res) => res.json({ forms: listForms() }));
+
+// Public: fetch a form schema for rendering
+app.get('/api/forms/:slug', (req, res) => {
+  const schema = readForm(req.params.slug);
+  if (!schema) return res.status(404).json({ error: 'Form not found' });
+  res.json(schema);
+});
+
+// Public anonymous submission → Form_Response__c
+app.post('/api/forms/:slug/submit', submitLimiter, async (req, res) => {
+  if (req.body && req.body._hp) return res.json({ success: true, id: 'ok' }); // honeypot
+  const schema = readForm(req.params.slug);
+  if (!schema) return res.status(404).json({ success: false, error: 'הטופס לא נמצא' });
+
+  const errors = forms.validateSubmission(schema, req.body || {});
+  if (errors.length) return res.status(400).json({ success: false, errors });
+
+  const record = forms.buildResponseRecord(schema, req.body || {}, req.ip);
+  try {
+    const result = await withConnection((conn) => conn.sobject('Form_Response__c').create(record));
+    if (!result.success) throw new Error(`Create failed: ${JSON.stringify(result.errors || result)}`);
+    let reference = result.id;
+    try {
+      const created = await withConnection((conn) => conn.sobject('Form_Response__c').retrieve(result.id));
+      if (created && created.Name) reference = created.Name;
+    } catch (_) { /* fall back to record Id */ }
+    res.json({ success: true, id: reference });
+  } catch (err) {
+    console.error('Form submit error:', err.message);
+    res.status(500).json({ success: false, error: 'אירעה שגיאה בשליחת הטופס. אנא נסה שוב.' });
+  }
+});
+
+// Pages
+app.get('/builder', (req, res) => res.sendFile(path.join(__dirname, 'public', 'builder.html')));
+app.get('/f/:slug', (req, res) => res.sendFile(path.join(__dirname, 'public', 'form.html')));
 
 if (require.main === module) {
   app.listen(PORT, () => {

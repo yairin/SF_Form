@@ -91,8 +91,14 @@ SF_Form/
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/submit` | שליחת הטופס → יוצר רשומת `Form_Response__c` בSalesforce; מחזיר מספר סימוכין (FR-…) |
+| `POST` | `/api/submit` | הטופס הקבוע → יוצר רשומת `Form_Response__c`; מחזיר מספר סימוכין (FR-…) |
 | `GET`  | `/api/health` | בדיקת חיבור לSalesforce (jsforce identity) |
+| `GET`  | `/builder` | בונה הטפסים הדינמי (הגדרת שדות ופרסום) |
+| `POST` | `/api/forms` | יצירת טופס חדש (סכמה) → מחזיר `slug` וקישור ציבורי |
+| `GET`  | `/api/forms` | רשימת הטפסים |
+| `GET`  | `/api/forms/:slug` | סכמת הטופס (לרינדור) |
+| `GET`  | `/f/:slug` | דף הטופס הציבורי האנונימי |
+| `POST` | `/api/forms/:slug/submit` | שליחה אנונימית → `Form_Response__c` |
 
 ### דוגמה לשליחה ידנית
 
