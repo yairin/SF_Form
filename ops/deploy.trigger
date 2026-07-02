@@ -1,1 +1,1 @@
-deploy #4 — fix FlexiPage itemInstances + permset applicationVisibility
+deploy #5 — FlexiPage component identifier

@@ -6,6 +6,7 @@
         <itemInstances>
             <componentInstance>
                 <componentName>publicForm</componentName>
+                <identifier>publicForm1</identifier>
             </componentInstance>
         </itemInstances>
     </flexiPageRegions>
