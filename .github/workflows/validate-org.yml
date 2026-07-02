@@ -1,3 +1,4 @@
+# Trigger: run after SF_AUTH_URL secret was added.
 name: Validate against org
 
 # Check-only ("dry-run") deploy of force-app to an EXISTING org (e.g. a Sandbox)
