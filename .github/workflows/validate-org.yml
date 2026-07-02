@@ -54,5 +54,6 @@ jobs:
             --test-level RunSpecifiedTests \
             --tests FormResponseAnswerServiceTest \
             --tests FormResponseControllerTest \
+            --tests FormBuilderControllerTest \
             --target-org target \
             --wait 30
