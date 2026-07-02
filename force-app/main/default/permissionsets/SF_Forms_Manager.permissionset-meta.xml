@@ -3,6 +3,10 @@
     <label>SF Forms Manager</label>
     <description>Full access to form responses and answers for CRM managers who review, manage and report on submissions.</description>
     <hasActivationRequired>false</hasActivationRequired>
+    <classAccesses>
+        <apexClass>FormResponseController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <objectPermissions>
         <object>Form_Response__c</object>
         <allowCreate>true</allowCreate>

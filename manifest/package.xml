@@ -27,7 +27,13 @@
     <types>
         <members>FormResponseAnswerService</members>
         <members>FormResponseAnswerServiceTest</members>
+        <members>FormResponseController</members>
+        <members>FormResponseControllerTest</members>
         <name>ApexClass</name>
+    </types>
+    <types>
+        <members>publicForm</members>
+        <name>LightningComponentBundle</name>
     </types>
     <types>
         <members>FormResponseTrigger</members>

@@ -45,6 +45,7 @@ jobs:
             --source-dir force-app \
             --test-level RunSpecifiedTests \
             --tests FormResponseAnswerServiceTest \
+            --tests FormResponseControllerTest \
             --target-org target \
             --wait 30
 

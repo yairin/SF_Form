@@ -1,0 +1,46 @@
+<template>
+    <div dir="rtl" class="slds-box slds-box_x-small slds-p-around_medium" style="max-width:560px;margin:0 auto;">
+        <template lwc:if={reference}>
+            <div class="slds-text-align_center slds-p-vertical_large">
+                <lightning-icon icon-name="action:approval" size="large"></lightning-icon>
+                <h2 class="slds-text-heading_medium slds-p-top_small">נשלח בהצלחה!</h2>
+                <p class="slds-p-top_x-small">תודה, הפנייה התקבלה.</p>
+                <p class="slds-text-title_bold slds-p-top_x-small">מספר סימוכין: {reference}</p>
+            </div>
+        </template>
+
+        <template lwc:else>
+            <h1 class="slds-text-heading_medium slds-p-bottom_small">{formName}</h1>
+
+            <lightning-input name="fullName" label="שם מלא" required value={fullName}
+                onchange={handleChange}></lightning-input>
+            <lightning-input name="email" type="email" label="אימייל" required value={email}
+                onchange={handleChange}></lightning-input>
+            <lightning-input name="phone" type="tel" label="טלפון" value={phone}
+                onchange={handleChange}></lightning-input>
+
+            <lightning-combobox name="track" label="בחירת מסלול" value={track}
+                options={trackOptions} onchange={handleChange} placeholder="בחר מסלול">
+            </lightning-combobox>
+
+            <div class="slds-p-top_small">
+                <lightning-input type="checkbox" name="needsTransport" label="צריך הסעה?"
+                    checked={needsTransport} onchange={handleChange}></lightning-input>
+            </div>
+
+            <template lwc:if={showPickup}>
+                <lightning-input name="pickup" label="כתובת איסוף" required value={pickup}
+                    onchange={handleChange}></lightning-input>
+            </template>
+
+            <template lwc:if={error}>
+                <div class="slds-text-color_error slds-p-top_small" role="alert">{error}</div>
+            </template>
+
+            <div class="slds-p-top_medium">
+                <lightning-button variant="brand" label="שליחת הרשמה" onclick={handleSubmit}
+                    disabled={loading}></lightning-button>
+            </div>
+        </template>
+    </div>
+</template>

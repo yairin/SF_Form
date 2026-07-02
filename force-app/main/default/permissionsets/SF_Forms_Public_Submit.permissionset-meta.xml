@@ -3,6 +3,10 @@
     <label>SF Forms Public Submit</label>
     <description>Guest User create-only access for public form submissions: create on Form_Response__c and edit on its form fields. Form_Answer__c is populated by the after-insert trigger (system context).</description>
     <hasActivationRequired>false</hasActivationRequired>
+    <classAccesses>
+        <apexClass>FormResponseController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <objectPermissions>
         <object>Form_Response__c</object>
         <allowCreate>true</allowCreate>
