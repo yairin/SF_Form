@@ -36,6 +36,19 @@
         <name>LightningComponentBundle</name>
     </types>
     <types>
+        <members>SF_Forms</members>
+        <name>CustomApplication</name>
+    </types>
+    <types>
+        <members>SF_Forms_Home</members>
+        <name>FlexiPage</name>
+    </types>
+    <types>
+        <members>SF_Forms_Home</members>
+        <members>Form_Response__c</members>
+        <name>CustomTab</name>
+    </types>
+    <types>
         <members>FormResponseTrigger</members>
         <name>ApexTrigger</name>
     </types>

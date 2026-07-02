@@ -7,6 +7,19 @@
         <apexClass>FormResponseController</apexClass>
         <enabled>true</enabled>
     </classAccesses>
+    <applicationVisibilities>
+        <application>SF_Forms</application>
+        <default>false</default>
+        <visible>true</visible>
+    </applicationVisibilities>
+    <tabSettings>
+        <tab>SF_Forms_Home</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>Form_Response__c</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
     <objectPermissions>
         <object>Form_Response__c</object>
         <allowCreate>true</allowCreate>

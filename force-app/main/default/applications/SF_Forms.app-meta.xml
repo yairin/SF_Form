@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>SF Forms</label>
+    <description>Internal app: fill the native form and manage Form Responses.</description>
+    <navType>Standard</navType>
+    <uiType>Lightning</uiType>
+    <formFactors>Large</formFactors>
+    <tabs>SF_Forms_Home</tabs>
+    <tabs>Form_Response__c</tabs>
+</CustomApplication>
