@@ -17,6 +17,9 @@
             <layoutItems><behavior>Edit</behavior><field>Subject__c</field></layoutItems>
             <layoutItems><behavior>Edit</behavior><field>Status__c</field></layoutItems>
             <layoutItems><behavior>Edit</behavior><field>Submitted_At__c</field></layoutItems>
+            <layoutItems><behavior>Edit</behavior><field>Department__c</field></layoutItems>
+            <layoutItems><behavior>Edit</behavior><field>Service_Type__c</field></layoutItems>
+            <layoutItems><behavior>Edit</behavior><field>SLA_Due__c</field></layoutItems>
         </layoutColumns>
     </layoutSections>
     <layoutSections>
