@@ -26,6 +26,7 @@
 > הנחיה זו חלה תמיד ואינה חד-פעמית.
 
 ## מסמכים
+- **Enterprise PRD:** `docs/PRD.md`
 - **תכנון פתרון מלא (רשות מקומית):** `docs/SOLUTION_ARCHITECTURE.md`
 - מדריך מעשי (יצירה/מילוי/בחינת תוצאות): `docs/QUICKSTART.md`
 - אפיון מחולל הטפסים: `docs/FORM_BUILDER_SPEC.md`
