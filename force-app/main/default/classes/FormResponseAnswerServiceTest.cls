@@ -26,7 +26,7 @@ private class FormResponseAnswerServiceTest {
         System.assertEquals(7, byKey.size(), 'One answer row per JSON key');
         System.assertEquals('ישראל ישראלי', byKey.get('full_name').Value_Text__c);
         System.assertEquals('true', byKey.get('needs_transport').Value_Text__c);
-        System.assertEquals(3, byKey.get('party_size').Value_Number__c);
+        System.assertEquals(3, byKey.get('party_size').Value_Number__c.intValue());
         System.assertEquals(Date.newInstance(2026, 8, 1), byKey.get('event_date').Value_Date__c);
         System.assertEquals('הסעות; קייטרינג', byKey.get('topics').Value_Text__c,
             'Multi-select values are joined');

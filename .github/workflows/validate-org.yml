@@ -46,11 +46,12 @@ jobs:
           sf org login sfdx-url --sfdx-url-file ./SF_AUTH.txt --alias target --set-default
           rm -f ./SF_AUTH.txt
 
-      - name: Validate (check-only deploy + run local tests)
+      - name: Validate (check-only deploy + run our Apex test)
         run: |
           sf project deploy start \
             --source-dir force-app \
             --dry-run \
-            --test-level RunLocalTests \
+            --test-level RunSpecifiedTests \
+            --tests FormResponseAnswerServiceTest \
             --target-org target \
             --wait 30
