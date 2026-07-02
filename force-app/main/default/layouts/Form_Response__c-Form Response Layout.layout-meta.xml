@@ -46,7 +46,6 @@
         </layoutColumns>
     </layoutSections>
     <relatedLists>
-        <fields>Name</fields>
         <fields>Field_Key__c</fields>
         <fields>Value_Text__c</fields>
         <fields>Value_Number__c</fields>
