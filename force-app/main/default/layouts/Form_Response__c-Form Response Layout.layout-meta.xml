@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Layout xmlns="http://soap.sforce.com/2006/04/metadata">
+    <layoutSections>
+        <customLabel>true</customLabel>
+        <detailHeading>true</detailHeading>
+        <editHeading>true</editHeading>
+        <label>פרטי הפנייה</label>
+        <style>TwoColumnsTopToBottom</style>
+        <layoutColumns>
+            <layoutItems><behavior>Readonly</behavior><field>Name</field></layoutItems>
+            <layoutItems><behavior>Edit</behavior><field>Respondent_Name__c</field></layoutItems>
+            <layoutItems><behavior>Edit</behavior><field>Email__c</field></layoutItems>
+            <layoutItems><behavior>Edit</behavior><field>Phone__c</field></layoutItems>
+        </layoutColumns>
+        <layoutColumns>
+            <layoutItems><behavior>Edit</behavior><field>Form_Name__c</field></layoutItems>
+            <layoutItems><behavior>Edit</behavior><field>Subject__c</field></layoutItems>
+            <layoutItems><behavior>Edit</behavior><field>Status__c</field></layoutItems>
+            <layoutItems><behavior>Edit</behavior><field>Submitted_At__c</field></layoutItems>
+        </layoutColumns>
+    </layoutSections>
+    <layoutSections>
+        <customLabel>true</customLabel>
+        <detailHeading>true</detailHeading>
+        <editHeading>true</editHeading>
+        <label>נתוני התשובה</label>
+        <style>OneColumn</style>
+        <layoutColumns>
+            <layoutItems><behavior>Edit</behavior><field>Response_Data__c</field></layoutItems>
+            <layoutItems><behavior>Edit</behavior><field>Form_External_Id__c</field></layoutItems>
+            <layoutItems><behavior>Edit</behavior><field>Source_IP__c</field></layoutItems>
+        </layoutColumns>
+    </layoutSections>
+    <layoutSections>
+        <customLabel>true</customLabel>
+        <detailHeading>true</detailHeading>
+        <editHeading>true</editHeading>
+        <label>מידע מערכת</label>
+        <style>TwoColumnsTopToBottom</style>
+        <layoutColumns>
+            <layoutItems><behavior>Readonly</behavior><field>OwnerId</field></layoutItems>
+            <layoutItems><behavior>Readonly</behavior><field>CreatedById</field></layoutItems>
+        </layoutColumns>
+        <layoutColumns>
+            <layoutItems><behavior>Readonly</behavior><field>LastModifiedById</field></layoutItems>
+        </layoutColumns>
+    </layoutSections>
+    <relatedLists>
+        <fields>Name</fields>
+        <fields>Field_Key__c</fields>
+        <fields>Value_Text__c</fields>
+        <fields>Value_Number__c</fields>
+        <fields>Value_Date__c</fields>
+        <relatedList>Form_Answer__c.Form_Response__c</relatedList>
+    </relatedLists>
+</Layout>

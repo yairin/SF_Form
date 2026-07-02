@@ -49,6 +49,10 @@
         <name>CustomTab</name>
     </types>
     <types>
+        <members>Form_Response__c-Form Response Layout</members>
+        <name>Layout</name>
+    </types>
+    <types>
         <members>FormResponseTrigger</members>
         <name>ApexTrigger</name>
     </types>

@@ -1,1 +1,1 @@
-deploy #5 — FlexiPage component identifier
+deploy #6 — Form Response page layout (show entered fields + Answers)
