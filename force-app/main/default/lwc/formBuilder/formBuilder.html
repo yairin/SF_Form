@@ -1,0 +1,88 @@
+<template>
+    <div dir="rtl" class="slds-grid slds-gutters slds-wrap">
+        <!-- Builder -->
+        <div class="slds-col slds-size_1-of-1 slds-large-size_7-of-12">
+            <div class="slds-box">
+                <h1 class="slds-text-heading_medium slds-p-bottom_small">בונה טפסים</h1>
+
+                <div class="slds-form-element slds-p-bottom_x-small">
+                    <label class="slds-form-element__label">כותרת הטופס</label>
+                    <input type="text" class="slds-input" value={title} onchange={handleTitle} placeholder="למשל: רישום לאירוע" />
+                </div>
+                <div class="slds-form-element slds-p-bottom_small">
+                    <label class="slds-form-element__label">תיאור (אופציונלי)</label>
+                    <input type="text" class="slds-input" value={description} onchange={handleDesc} />
+                </div>
+
+                <template for:each={fieldRows} for:item="f">
+                    <div key={f.index} class="slds-box slds-box_xx-small slds-m-bottom_x-small">
+                        <div class="slds-grid slds-gutters_xx-small slds-wrap slds-grid_vertical-align-center">
+                            <div class="slds-col slds-size_5-of-12">
+                                <input type="text" class="slds-input" data-i={f.index} data-p="label"
+                                    value={f.label} onchange={handleField} placeholder="תווית השדה" />
+                            </div>
+                            <div class="slds-col slds-size_4-of-12">
+                                <select class="slds-select" data-i={f.index} data-p="type" onchange={handleField}>
+                                    <template for:each={f.typeOptions} for:item="t">
+                                        <option key={t.value} value={t.value} selected={t.selected}>{t.label}</option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div class="slds-col slds-size_2-of-12">
+                                <label class="slds-checkbox_standalone">
+                                    <input type="checkbox" data-i={f.index} data-p="required" checked={f.required} onchange={handleField} /> חובה
+                                </label>
+                            </div>
+                            <div class="slds-col slds-size_1-of-12">
+                                <button class="slds-button slds-button_destructive" data-i={f.index} onclick={removeField}>×</button>
+                            </div>
+                        </div>
+                        <div class="slds-grid slds-gutters_xx-small slds-wrap slds-p-top_xx-small">
+                            <div class="slds-col slds-size_6-of-12">
+                                <select class="slds-select" data-i={f.index} data-p="mapTo" onchange={handleField}>
+                                    <template for:each={f.mapOptions} for:item="m">
+                                        <option key={m.value} value={m.value} selected={m.selected}>{m.label}</option>
+                                    </template>
+                                </select>
+                            </div>
+                            <template lwc:if={f.showOptions}>
+                                <div class="slds-col slds-size_6-of-12">
+                                    <textarea class="slds-textarea" data-i={f.index} data-p="options"
+                                        onchange={handleField} placeholder="אפשרות בכל שורה">{f.options}</textarea>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <button class="slds-button slds-button_neutral slds-m-top_x-small" onclick={addField}>+ הוסף שדה</button>
+                <div class="slds-p-top_medium">
+                    <button class="slds-button slds-button_brand" onclick={save}>שמור ופרסם</button>
+                </div>
+
+                <template lwc:if={error}><div class="slds-text-color_error slds-p-top_small">{error}</div></template>
+                <template lwc:if={savedMsg}><div class="slds-text-color_success slds-p-top_small">{savedMsg}</div></template>
+            </div>
+
+            <div class="slds-box slds-m-top_small">
+                <h2 class="slds-text-title_bold slds-p-bottom_x-small">טפסים קיימים</h2>
+                <template for:each={existing} for:item="e">
+                    <div key={e.Id} class="slds-p-vertical_xxx-small">
+                        {e.Name} <span class="slds-text-body_small slds-text-color_weak">· {e.External_Id__c}</span>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Live test of the saved form -->
+        <div class="slds-col slds-size_1-of-1 slds-large-size_5-of-12">
+            <template lwc:if={savedExternalId}>
+                <div class="slds-text-title_bold slds-p-bottom_x-small">תצוגה חיה (מילוי אמיתי)</div>
+                <c-dynamic-form external-id={savedExternalId}></c-dynamic-form>
+            </template>
+            <template lwc:else>
+                <div class="slds-box slds-text-color_weak">שמור טופס כדי לראות אותו כאן ולבדוק מילוי.</div>
+            </template>
+        </div>
+    </div>
+</template>

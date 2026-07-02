@@ -146,6 +146,10 @@
         <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
+        <tab>SF_Forms_Builder</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
         <tab>Form_Response__c</tab>
         <visibility>Visible</visibility>
     </tabSettings>

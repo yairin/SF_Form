@@ -6,5 +6,6 @@
     <uiType>Lightning</uiType>
     <formFactors>Large</formFactors>
     <tabs>SF_Forms_Home</tabs>
+    <tabs>SF_Forms_Builder</tabs>
     <tabs>Form_Response__c</tabs>
 </CustomApplication>

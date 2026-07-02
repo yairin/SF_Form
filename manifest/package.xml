@@ -37,6 +37,8 @@
     </types>
     <types>
         <members>publicForm</members>
+        <members>dynamicForm</members>
+        <members>formBuilder</members>
         <name>LightningComponentBundle</name>
     </types>
     <types>
@@ -45,10 +47,12 @@
     </types>
     <types>
         <members>SF_Forms_Home</members>
+        <members>SF_Forms_Builder</members>
         <name>FlexiPage</name>
     </types>
     <types>
         <members>SF_Forms_Home</members>
+        <members>SF_Forms_Builder</members>
         <members>Form_Response__c</members>
         <name>CustomTab</name>
     </types>
