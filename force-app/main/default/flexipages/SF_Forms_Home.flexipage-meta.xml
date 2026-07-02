@@ -3,9 +3,11 @@
     <flexiPageRegions>
         <name>main</name>
         <type>Region</type>
-        <componentInstances>
-            <componentName>publicForm</componentName>
-        </componentInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentName>publicForm</componentName>
+            </componentInstance>
+        </itemInstances>
     </flexiPageRegions>
     <masterLabel>SF Forms Home</masterLabel>
     <template>

@@ -9,7 +9,6 @@
     </classAccesses>
     <applicationVisibilities>
         <application>SF_Forms</application>
-        <default>false</default>
         <visible>true</visible>
     </applicationVisibilities>
     <tabSettings>
