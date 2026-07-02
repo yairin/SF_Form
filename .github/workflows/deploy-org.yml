@@ -1,0 +1,60 @@
+name: Deploy to org
+
+# REAL deploy of force-app to the target org (Sandbox), assign the manager
+# permission set, then a live smoke test that creates a demo Form Response and
+# verifies the trigger populated Form_Answer__c rows.
+#
+# Requires the SF_AUTH_URL repository secret (see docs/DEPLOY.md).
+# Re-run by bumping ops/deploy.trigger (or via the Actions "Run workflow" button).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/**", "main"]
+    paths: [".github/workflows/deploy-org.yml", "ops/deploy.trigger"]
+
+jobs:
+  deploy:
+    name: Deploy + assign perms + smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Salesforce CLI
+        run: npm install --global @salesforce/cli@latest
+
+      - name: Authorize target org
+        run: |
+          if [ -z "${{ secrets.SF_AUTH_URL }}" ]; then
+            echo "::error::Missing secret SF_AUTH_URL. See docs/DEPLOY.md."
+            exit 1
+          fi
+          echo "${{ secrets.SF_AUTH_URL }}" > ./SF_AUTH.txt
+          sf org login sfdx-url --sfdx-url-file ./SF_AUTH.txt --alias target --set-default
+          rm -f ./SF_AUTH.txt
+
+      - name: Deploy metadata (real)
+        run: |
+          sf project deploy start \
+            --source-dir force-app \
+            --test-level RunSpecifiedTests \
+            --tests FormResponseAnswerServiceTest \
+            --target-org target \
+            --wait 30
+
+      - name: Assign manager permission set
+        run: |
+          sf org assign permset --name SF_Forms_Manager --target-org target \
+            || echo "Permission set already assigned (ignored)."
+
+      - name: Smoke test (create demo response, verify Answers)
+        run: |
+          out=$(sf apex run --file scripts/smoke.apex --target-org target --json)
+          echo "$out"
+          echo "$out" | python3 -c "import sys,json; d=json.load(sys.stdin)['result']; print('compiled=', d.get('compiled'), 'success=', d.get('success')); sys.exit(0 if d.get('compiled') and d.get('success') else 1)"
