@@ -13,8 +13,13 @@ public with sharing class FormBuilderController {
         ];
     }
 
+    @AuraEnabled(cacheable=true)
+    public static List<Service_Type__c> listServiceTypes() {
+        return [SELECT Id, Name FROM Service_Type__c WHERE Active__c = true ORDER BY Name];
+    }
+
     @AuraEnabled
-    public static Form_Template__c saveForm(String recordId, String title, String description, String schemaJson, String externalId) {
+    public static Form_Template__c saveForm(String recordId, String title, String description, String schemaJson, String externalId, String serviceTypeId) {
         Form_Template__c f;
         if (String.isNotBlank(recordId)) {
             f = [SELECT Id FROM Form_Template__c WHERE Id = :recordId LIMIT 1];
@@ -25,6 +30,7 @@ public with sharing class FormBuilderController {
         f.Description__c = description;
         f.Schema_JSON__c = schemaJson;
         f.Active__c = true;
+        f.Service_Type__c = String.isBlank(serviceTypeId) ? null : (Id) serviceTypeId;
         upsert f;
         return f;
     }

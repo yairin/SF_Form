@@ -4,4 +4,5 @@
  */
 trigger FormResponseTrigger on Form_Response__c (after insert) {
     FormResponseAnswerService.createAnswers(Trigger.new);
+    FormRoutingService.route(Trigger.new);
 }

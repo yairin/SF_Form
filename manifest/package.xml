@@ -4,6 +4,8 @@
         <members>Form_Response__c</members>
         <members>Form_Answer__c</members>
         <members>Form_Template__c</members>
+        <members>Department__c</members>
+        <members>Service_Type__c</members>
         <name>CustomObject</name>
     </types>
     <types>
@@ -33,6 +35,8 @@
         <members>FormRenderController</members>
         <members>FormBuilderController</members>
         <members>FormBuilderControllerTest</members>
+        <members>FormRoutingService</members>
+        <members>FormRoutingServiceTest</members>
         <name>ApexClass</name>
     </types>
     <types>

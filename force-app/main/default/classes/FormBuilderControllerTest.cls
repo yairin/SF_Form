@@ -7,9 +7,10 @@ private class FormBuilderControllerTest {
 
         Test.startTest();
         Form_Template__c created = FormBuilderController.saveForm(
-            null, 'רישום לאירוע', 'טופס בדיקה', schema, 'event-x');
+            null, 'רישום לאירוע', 'טופס בדיקה', schema, 'event-x', null);
         // update path
-        FormBuilderController.saveForm(created.Id, 'רישום מעודכן', 'תיאור 2', schema, 'event-x');
+        FormBuilderController.saveForm(created.Id, 'רישום מעודכן', 'תיאור 2', schema, 'event-x', null);
+        FormBuilderController.listServiceTypes();
         Test.stopTest();
 
         System.assertNotEquals(null, created.Id, 'template created');

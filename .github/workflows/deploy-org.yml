@@ -47,6 +47,7 @@ jobs:
             --tests FormResponseAnswerServiceTest \
             --tests FormResponseControllerTest \
             --tests FormBuilderControllerTest \
+            --tests FormRoutingServiceTest \
             --target-org target \
             --wait 30
 
@@ -54,6 +55,9 @@ jobs:
         run: |
           sf org assign permset --name SF_Forms_Manager --target-org target \
             || echo "Permission set already assigned (ignored)."
+
+      - name: Seed reference data (departments + service types)
+        run: sf apex run --file scripts/seed.apex --target-org target
 
       - name: Smoke test (create demo response, verify Answers)
         run: |

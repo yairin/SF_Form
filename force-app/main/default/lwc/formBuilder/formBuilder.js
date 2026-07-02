@@ -1,6 +1,7 @@
 import { LightningElement } from 'lwc';
 import saveForm from '@salesforce/apex/FormBuilderController.saveForm';
 import listForms from '@salesforce/apex/FormBuilderController.listForms';
+import listServiceTypes from '@salesforce/apex/FormBuilderController.listServiceTypes';
 
 const CHOICE = new Set(['select', 'radio', 'checkboxGroup']);
 const TYPE_OPTIONS = [
@@ -15,6 +16,8 @@ const MAP_OPTIONS = [
 export default class FormBuilder extends LightningElement {
     title = '';
     description = '';
+    serviceTypeId = '';
+    serviceTypes = [];
     fields = [{ type: 'text', label: '', required: true, options: '', mapTo: 'respondentName' }];
 
     savedExternalId;
@@ -28,7 +31,15 @@ export default class FormBuilder extends LightningElement {
 
     async refresh() {
         try { this.existing = await listForms(); } catch (e) { /* ignore */ }
+        try {
+            const sts = await listServiceTypes();
+            this.serviceTypes = [{ value: '', label: '— ללא —' }].concat(
+                sts.map((s) => ({ value: s.Id, label: s.Name }))
+            );
+        } catch (e) { /* ignore */ }
     }
+
+    handleServiceType(e) { this.serviceTypeId = e.target.value; }
 
     get fieldRows() {
         return this.fields.map((f, i) => ({
@@ -108,7 +119,8 @@ export default class FormBuilder extends LightningElement {
                 title: this.title.trim(),
                 description: this.description,
                 schemaJson: JSON.stringify(fields),
-                externalId
+                externalId,
+                serviceTypeId: this.serviceTypeId
             });
             this.savedExternalId = externalId;
             this.savedMsg = 'הטופס נשמר ופורסם! מזהה: ' + externalId;

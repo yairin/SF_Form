@@ -9,9 +9,19 @@
                     <label class="slds-form-element__label">כותרת הטופס</label>
                     <input type="text" class="slds-input" value={title} onchange={handleTitle} placeholder="למשל: רישום לאירוע" />
                 </div>
-                <div class="slds-form-element slds-p-bottom_small">
+                <div class="slds-form-element slds-p-bottom_x-small">
                     <label class="slds-form-element__label">תיאור (אופציונלי)</label>
                     <input type="text" class="slds-input" value={description} onchange={handleDesc} />
+                </div>
+                <div class="slds-form-element slds-p-bottom_small">
+                    <label class="slds-form-element__label">סוג שירות (ניתוב למחלקה + SLA)</label>
+                    <div class="slds-select_container">
+                        <select class="slds-select" onchange={handleServiceType}>
+                            <template for:each={serviceTypes} for:item="s">
+                                <option key={s.value} value={s.value}>{s.label}</option>
+                            </template>
+                        </select>
+                    </div>
                 </div>
 
                 <template for:each={fieldRows} for:item="f">
