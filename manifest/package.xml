@@ -6,8 +6,11 @@
         <members>Form_Template__c</members>
         <members>Department__c</members>
         <members>Service_Type__c</members>
-        <members>Form_Setting__mdt</members>
         <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Form_Public_Site_Base_Url</members>
+        <name>CustomLabel</name>
     </types>
     <types>
         <members>Form_Response__c.Form_Name__c</members>
@@ -26,12 +29,7 @@
         <members>Form_Answer__c.Value_Text__c</members>
         <members>Form_Answer__c.Value_Number__c</members>
         <members>Form_Answer__c.Value_Date__c</members>
-        <members>Form_Setting__mdt.Form_Page_URL__c</members>
         <name>CustomField</name>
-    </types>
-    <types>
-        <members>Form_Setting.Default</members>
-        <name>CustomMetadata</name>
     </types>
     <types>
         <members>FormResponseAnswerService</members>

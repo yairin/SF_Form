@@ -133,8 +133,7 @@ public with sharing class FormBuilderController {
 
     private static String buildUrl(String externalId) {
         if (String.isBlank(externalId)) return null;
-        Form_Setting__mdt s = Form_Setting__mdt.getInstance('Default');
-        String base = (s == null) ? null : s.Form_Page_URL__c;
+        String base = System.Label.Form_Public_Site_Base_Url;
         if (String.isBlank(base)) return null;
         String sep = base.contains('?') ? '&' : '?';
         return base + sep + 'formId=' + EncodingUtil.urlEncode(externalId, 'UTF-8');

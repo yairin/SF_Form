@@ -68,8 +68,8 @@ private class FormBuilderControllerTest {
 
     @isTest
     static void publicUrlBuilds() {
-        // getPublicUrl uses the Form_Setting__mdt Default record; result may be null
-        // if the org has no configured base URL, but the call must not error.
+        // getPublicUrl uses the Form_Public_Site_Base_Url custom label; result may be
+        // null if the label has no value, but the call must not error.
         String url = FormBuilderController.getPublicUrl('some-form');
         if (url != null) {
             System.assert(url.contains('formId=some-form'), 'url appends the form external id');

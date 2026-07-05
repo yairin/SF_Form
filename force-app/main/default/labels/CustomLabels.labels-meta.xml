@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+    <labels>
+        <fullName>Form_Public_Site_Base_Url</fullName>
+        <categories>SF Forms</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Public form page base URL</shortDescription>
+        <value>https://localgovernmenteconomicserviceslt2--mashamdev.sandbox.my.site.com/forms</value>
+    </labels>
+</CustomLabels>
