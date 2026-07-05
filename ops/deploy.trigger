@@ -1,1 +1,1 @@
-deploy #15 — diagnose: surface component failures as JSON
+deploy #16 — diagnose: dump raw deploy json
