@@ -67,21 +67,37 @@
 
                 <button class="slds-button slds-button_neutral slds-m-top_x-small" onclick={addField}>+ הוסף שדה</button>
                 <div class="slds-p-top_medium">
-                    <button class="slds-button slds-button_brand" onclick={save}>שמור ופרסם</button>
+                    <button class="slds-button slds-button_brand" onclick={save}>{saveLabel}</button>
+                    <template lwc:if={embedded}>
+                        <button class="slds-button slds-button_neutral" onclick={cancel}>חזרה לרשימה</button>
+                    </template>
                 </div>
 
                 <template lwc:if={error}><div class="slds-text-color_error slds-p-top_small">{error}</div></template>
-                <template lwc:if={savedMsg}><div class="slds-text-color_success slds-p-top_small">{savedMsg}</div></template>
-            </div>
-
-            <div class="slds-box slds-m-top_small">
-                <h2 class="slds-text-title_bold slds-p-bottom_x-small">טפסים קיימים</h2>
-                <template for:each={existing} for:item="e">
-                    <div key={e.Id} class="slds-p-vertical_xxx-small">
-                        {e.Name} <span class="slds-text-body_small slds-text-color_weak">· {e.External_Id__c}</span>
-                    </div>
+                <template lwc:if={savedMsg}>
+                    <div class="slds-text-color_success slds-p-top_small">{savedMsg}</div>
+                    <template lwc:if={savedUrl}>
+                        <div class="slds-box slds-box_xx-small slds-m-top_x-small">
+                            <div class="slds-text-title_bold">קישור ציבורי לטופס:</div>
+                            <a href={savedUrl} target="_blank" class="slds-text-link">{savedUrl}</a>
+                            <div class="slds-p-top_xx-small">
+                                <button class="slds-button slds-button_neutral" onclick={copyUrl}>העתק קישור</button>
+                            </div>
+                        </div>
+                    </template>
                 </template>
             </div>
+
+            <template lwc:if={notEmbedded}>
+                <div class="slds-box slds-m-top_small">
+                    <h2 class="slds-text-title_bold slds-p-bottom_x-small">טפסים קיימים</h2>
+                    <template for:each={existing} for:item="e">
+                        <div key={e.Id} class="slds-p-vertical_xxx-small">
+                            {e.Name} <span class="slds-text-body_small slds-text-color_weak">· {e.External_Id__c}</span>
+                        </div>
+                    </template>
+                </div>
+            </template>
         </div>
 
         <!-- Live test of the saved form -->

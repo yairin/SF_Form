@@ -31,4 +31,49 @@ private class FormBuilderControllerTest {
         }
         System.assertEquals(true, threw, 'missing form throws');
     }
+
+    @isTest
+    static void detailedListEditCloneToggleDelete() {
+        String schema = '[{"key":"a","label":"שדה","type":"text","required":true}]';
+        Form_Template__c t = FormBuilderController.saveForm(
+            null, 'טופס לניהול', 'תיאור', schema, 'manage-x', null);
+
+        Test.startTest();
+        // detailed list + public URL
+        List<FormBuilderController.TemplateInfo> rows = FormBuilderController.listFormsDetailed();
+        System.assert(rows.size() >= 1, 'detailed list returns rows');
+
+        // getTemplate for editing
+        Form_Template__c fetched = FormBuilderController.getTemplate(t.Id);
+        System.assertEquals('manage-x', fetched.External_Id__c, 'template fetched for edit');
+
+        // clone -> inactive copy with a fresh external id
+        Form_Template__c copy = FormBuilderController.cloneForm(t.Id);
+        System.assertEquals(false, copy.Active__c, 'clone starts inactive');
+        System.assertNotEquals(t.External_Id__c, copy.External_Id__c, 'clone gets a new external id');
+
+        // activate the copy, then deactivate the original
+        FormBuilderController.setActive(copy.Id, true);
+        FormBuilderController.setActive(t.Id, false);
+        System.assertEquals(false,
+            [SELECT Active__c FROM Form_Template__c WHERE Id = :t.Id].Active__c, 'original deactivated');
+
+        // delete the original
+        FormBuilderController.deleteForm(t.Id);
+        Test.stopTest();
+
+        System.assertEquals(0,
+            [SELECT COUNT() FROM Form_Template__c WHERE Id = :t.Id], 'original deleted');
+    }
+
+    @isTest
+    static void publicUrlBuilds() {
+        // getPublicUrl uses the Form_Setting__mdt Default record; result may be null
+        // if the org has no configured base URL, but the call must not error.
+        String url = FormBuilderController.getPublicUrl('some-form');
+        if (url != null) {
+            System.assert(url.contains('formId=some-form'), 'url appends the form external id');
+        }
+        System.assertEquals(null, FormBuilderController.getPublicUrl(null), 'blank id yields null');
+    }
 }

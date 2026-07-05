@@ -1,4 +1,5 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, wire } from 'lwc';
+import { CurrentPageReference } from 'lightning/navigation';
 import getForm from '@salesforce/apex/FormRenderController.getForm';
 import submitResponse from '@salesforce/apex/FormResponseController.submitResponse';
 
@@ -6,11 +7,29 @@ const TEXT_TYPES = { text: 'text', email: 'email', phone: 'tel', number: 'number
 
 export default class DynamicForm extends LightningElement {
     _ext;
+    _urlExt;
     @api
     get externalId() { return this._ext; }
     set externalId(v) {
+        // A ?formId= URL param (read via the wire) always wins over the static
+        // property, so a single published page can serve every form.
+        if (!this._urlExt) this.applyExternalId(v);
+    }
+
+    // Read ?formId= (or ?c__formId=) from the Experience page URL.
+    @wire(CurrentPageReference)
+    setPageRef(ref) {
+        const fromUrl = ref && ref.state && (ref.state.formId || ref.state.c__formId);
+        if (fromUrl) {
+            this._urlExt = fromUrl;
+            this.applyExternalId(fromUrl);
+        }
+    }
+
+    applyExternalId(v) {
+        if (!v || v === this._ext) return;
         this._ext = v;
-        if (v) this.load();
+        this.load();
     }
 
     title = 'טופס';
