@@ -41,6 +41,7 @@ jobs:
 
       - name: Deploy metadata (real)
         run: |
+          set -o pipefail
           sf project deploy start \
             --source-dir force-app \
             --test-level RunSpecifiedTests \
@@ -49,7 +50,9 @@ jobs:
             --tests FormBuilderControllerTest \
             --tests FormRoutingServiceTest \
             --target-org target \
-            --wait 30
+            --wait 30 \
+            --json > deploy.json \
+            || (echo '===DEPLOY ERRORS==='; cat deploy.json | node -e "let d=JSON.parse(require('fs').readFileSync(0,'utf8'));let f=(d.result&&d.result.details&&d.result.details.componentFailures)||[];console.log(d.message||'');for(const c of f){console.log(c.componentType+' '+c.fullName+' :: '+c.problem)}"; exit 1)
 
       - name: Assign manager permission set
         run: |
