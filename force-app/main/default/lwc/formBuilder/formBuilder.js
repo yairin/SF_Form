@@ -212,8 +212,9 @@ export default class FormBuilder extends LightningElement {
     }
 
     slugify(s) {
+        // ASCII-only external ids — Hebrew characters in the public URL break LWR routing.
         return String(s || '').trim().toLowerCase()
-            .replace(/[^a-z0-9֐-׿]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50) || 'form';
+            .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50) || 'form';
     }
 
     async save() {

@@ -1,1 +1,1 @@
-deploy #38 — remove View All on Form_Response so restriction rule applies to managers
+deploy #39 — ASCII-only external ids (Hebrew in URL broke LWR routing)
