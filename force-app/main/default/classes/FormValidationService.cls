@@ -5,8 +5,8 @@
  */
 public without sharing class FormValidationService {
 
-    private static final Pattern EMAIL = Pattern.compile('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
-    private static final Pattern NUMBER = Pattern.compile('^-?\\d+(\\.\\d+)?$');
+    private static final Pattern EMAIL_RE = Pattern.compile('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+    private static final Pattern NUMBER_RE = Pattern.compile('^-?\\d+(\\.\\d+)?$');
 
     /** Returns a list of validation errors; empty list means the payload is valid. */
     public static List<String> validate(String schemaJson, Map<String, Object> values) {
@@ -44,12 +44,12 @@ public without sharing class FormValidationService {
 
     private static String formatError(String type, String s, String label) {
         if (type == 'email') {
-            if (!EMAIL.matcher(s).matches()) return 'כתובת אימייל לא תקינה: ' + label;
+            if (!EMAIL_RE.matcher(s).matches()) return 'כתובת אימייל לא תקינה: ' + label;
         } else if (type == 'phone') {
             String digits = s.replaceAll('\\D', '');
             if (digits.length() < 9 || digits.length() > 15) return 'מספר טלפון לא תקין: ' + label;
         } else if (type == 'number' || type == 'currency') {
-            if (!NUMBER.matcher(s).matches()) return 'ערך מספרי לא תקין: ' + label;
+            if (!NUMBER_RE.matcher(s).matches()) return 'ערך מספרי לא תקין: ' + label;
         } else if (type == 'idNumber') {
             if (!isValidIsraeliId(s)) return 'תעודת זהות לא תקינה: ' + label;
         } else if (type == 'date') {
