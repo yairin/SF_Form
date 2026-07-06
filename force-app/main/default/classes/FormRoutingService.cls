@@ -15,7 +15,7 @@ public without sharing class FormRoutingService {
 
         Map<String, Form_Template__c> byExt = new Map<String, Form_Template__c>();
         for (Form_Template__c t : [
-            SELECT External_Id__c, Authority__c, Service_Type__c,
+            SELECT External_Id__c, Authority__c, Authority__r.Code__c, Service_Type__c,
                    Service_Type__r.Department__c, Service_Type__r.Default_SLA_Hours__c
             FROM Form_Template__c
             WHERE External_Id__c IN :extIds
@@ -32,6 +32,7 @@ public without sharing class FormRoutingService {
             // Stamp the tenant (authority) so multi-authority isolation applies.
             if (t.Authority__c != null) {
                 u.Authority__c = t.Authority__c;
+                u.Tenant_Code__c = t.Authority__r.Code__c;
                 changed = true;
             }
             if (t.Service_Type__c != null) {

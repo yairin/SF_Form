@@ -54,6 +54,7 @@
         <members>Form_Response__c.Update_Token__c</members>
         <members>Form_Response__c.Update_Requested__c</members>
         <members>Form_Response__c.Authority_Code__c</members>
+        <members>Form_Response__c.Tenant_Code__c</members>
         <members>Form_Answer__c.Form_Response__c</members>
         <members>Form_Answer__c.Field_Key__c</members>
         <members>Form_Answer__c.Field_Label__c</members>
