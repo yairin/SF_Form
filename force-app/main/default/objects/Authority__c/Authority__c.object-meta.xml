@@ -8,7 +8,6 @@
     <enableSearch>true</enableSearch>
     <label>רשות</label>
     <pluralLabel>רשויות</pluralLabel>
-    <startsWith>Consonant</startsWith>
     <nameField>
         <label>שם הרשות</label>
         <type>Text</type>

@@ -1,1 +1,1 @@
-deploy #33 — Hebrew object label for Authority (רשות/רשויות)
+deploy #34 — Hebrew Authority label without startsWith
