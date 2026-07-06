@@ -35,6 +35,7 @@
         <members>Form_Response__c.AI_Findings__c</members>
         <members>Form_Response__c.AI_Reviewed_At__c</members>
         <members>Form_Response__c.Update_Token__c</members>
+        <members>Form_Response__c.Update_Requested__c</members>
         <members>Form_Answer__c.Form_Response__c</members>
         <members>Form_Answer__c.Field_Key__c</members>
         <members>Form_Answer__c.Field_Label__c</members>
@@ -67,6 +68,7 @@
         <members>formBuilder</members>
         <members>formManager</members>
         <members>formSettings</members>
+        <members>formAiReview</members>
         <name>LightningComponentBundle</name>
     </types>
     <types>

@@ -190,6 +190,41 @@ private class FormResponseControllerTest {
     }
 
     @isTest
+    static void requestCompletionSetsTokenAndFlag() {
+        FormResponseController.Result r = FormResponseController.submitResponse(
+            'טופס', 'preview', '{}', 'פלוני', 'applicant@example.com', null, 'x');
+        // seed a needs-info finding
+        update new Form_Response__c(Id = r.id, AI_Status__c = 'Needs_Info', AI_Findings__c = 'חסר מסמך');
+
+        Test.startTest();
+        FormAIReviewService.requestCompletion(r.id);
+        Test.stopTest();
+
+        Form_Response__c saved = [
+            SELECT Update_Requested__c, Update_Token__c FROM Form_Response__c WHERE Id = :r.id
+        ];
+        System.assertEquals(true, saved.Update_Requested__c, 'update requested flag set');
+        System.assert(String.isNotBlank(saved.Update_Token__c), 'completion token generated');
+
+        FormAIReviewService.ReviewInfo info = FormAIReviewService.getReview(r.id);
+        System.assertEquals('Needs_Info', info.status, 'getReview returns current status');
+        System.assertEquals(true, info.updateRequested, 'getReview reflects requested flag');
+    }
+
+    @isTest
+    static void requestCompletionWithoutEmailThrows() {
+        FormResponseController.Result r = FormResponseController.submitResponse(
+            'טופס', 'preview', '{}', null, null, null, null);
+        Boolean threw = false;
+        try {
+            FormAIReviewService.requestCompletion(r.id);
+        } catch (Exception e) {
+            threw = true;
+        }
+        System.assertEquals(true, threw, 'no applicant email -> error');
+    }
+
+    @isTest
     static void aiReviewAgentforceStubReportsUnconfigured() {
         FormSettingsController.saveSettings('Agentforce', null, null, null);
         FormResponseController.Result r = FormResponseController.submitResponse(

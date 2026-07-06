@@ -13,6 +13,72 @@ public without sharing class FormAIReviewService {
         @AuraEnabled public String findings;
     }
 
+    public class ReviewInfo {
+        @AuraEnabled public String status;
+        @AuraEnabled public String findings;
+        @AuraEnabled public Datetime reviewedAt;
+        @AuraEnabled public String email;
+        @AuraEnabled public Boolean updateRequested;
+    }
+
+    @AuraEnabled(cacheable=false)
+    public static ReviewInfo getReview(Id responseId) {
+        Form_Response__c r = [
+            SELECT AI_Status__c, AI_Findings__c, AI_Reviewed_At__c, Email__c, Update_Requested__c
+            FROM Form_Response__c WHERE Id = :responseId LIMIT 1
+        ];
+        ReviewInfo info = new ReviewInfo();
+        info.status = r.AI_Status__c;
+        info.findings = r.AI_Findings__c;
+        info.reviewedAt = r.AI_Reviewed_At__c;
+        info.email = r.Email__c;
+        info.updateRequested = r.Update_Requested__c;
+        return info;
+    }
+
+    /** Emails the applicant a link to complete missing items (proactive outreach). */
+    @AuraEnabled
+    public static void requestCompletion(Id responseId) {
+        Form_Response__c r = [
+            SELECT Id, Email__c, Form_External_Id__c, Form_Name__c, AI_Findings__c, Update_Token__c
+            FROM Form_Response__c WHERE Id = :responseId LIMIT 1
+        ];
+        if (String.isBlank(r.Email__c)) {
+            throw new AuraHandledException('לפונה אין כתובת אימייל לשליחת בקשת השלמה.');
+        }
+        if (String.isBlank(r.Update_Token__c)) {
+            r.Update_Token__c = generateToken();
+        }
+        r.Update_Requested__c = true;
+        update r;
+
+        String base = System.Label.Form_Public_Site_Base_Url;
+        String link = base;
+        if (String.isNotBlank(base) && String.isNotBlank(r.Form_External_Id__c)) {
+            link = base + (base.contains('?') ? '&' : '?')
+                + 'formId=' + EncodingUtil.urlEncode(r.Form_External_Id__c, 'UTF-8')
+                + '&token=' + r.Update_Token__c;
+        }
+        Messaging.SingleEmailMessage m = new Messaging.SingleEmailMessage();
+        m.setToAddresses(new List<String>{ r.Email__c });
+        m.setSubject('נדרשת השלמת פרטים לפנייתך: ' + r.Form_Name__c);
+        m.setPlainTextBody(
+            'שלום,\n\nבבדיקת פנייתך נמצא שנדרשת השלמה:\n'
+            + (r.AI_Findings__c == null ? '' : r.AI_Findings__c)
+            + '\n\nלהשלמת הפרטים: ' + link + '\n\nתודה.'
+        );
+        m.setSaveAsActivity(false);
+        try {
+            Messaging.sendEmail(new List<Messaging.SingleEmailMessage>{ m });
+        } catch (Exception e) {
+            // Email deliverability may be off in a sandbox; the request is still recorded.
+        }
+    }
+
+    private static String generateToken() {
+        return EncodingUtil.convertToHex(Crypto.generateAesKey(128));
+    }
+
     @AuraEnabled
     public static ReviewResult runReview(Id responseId) {
         Form_Response__c r = [

@@ -175,6 +175,11 @@
         <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
+        <field>Form_Response__c.Update_Requested__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
         <field>Service_Type__c.Department__c</field>
         <readable>true</readable>
         <editable>true</editable>
