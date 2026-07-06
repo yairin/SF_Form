@@ -235,7 +235,7 @@
         <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
-        <field>User.Authority__c</field>
+        <field>User.Authority_Code__c</field>
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>

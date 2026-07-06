@@ -6,7 +6,7 @@
 ## מה כבר פרוס (בטוח, ללא השפעת גישה)
 - אובייקט `Authority__c` + שדות config פר-רשות.
 - Lookup `Authority__c` על טפסים/פניות/מחלקות/סוגי-שירות + חותמת אוטומטית בפנייה.
-- **שדה `Authority__c` על ה-User** (מיפוי משתמש→רשות).
+- **שדה `Authority_Code__c` על ה-User** (מיפוי משתמש→רשות; טקסט התואם ל-`Authority__c.Code__c`).
 
 ## שלבי הפעלה (מלווים, חלקם קליקים ב-Setup)
 
@@ -16,8 +16,8 @@
 - פניות חדשות ייחתמו אוטומטית; פניות ישנות — עדכן Authority בכמות (Data Loader) אם נדרש.
 
 ### 2. שייך משתמשים לרשות
-- לכל משתמש פנימי: שדה **Authority** על ה-User → הרשות שלו.
-- ודא שלכל המשתמשים הרלוונטיים (כולל אדמין שמנהל רשות) יש Authority.
+- לכל משתמש פנימי: שדה **Authority Code** על ה-User → הקוד של הרשות שלו (תואם ל-Authority.Code).
+- ודא שלכל המשתמשים הרלוונטיים (כולל אדמין שמנהל רשות) יש Authority Code.
 
 ### 3. הסר "View All" מה-Permission Set (אחרת מנהלים רואים הכל)
 - ב-`SF_Forms_Manager`: לאובייקטים Form_Response/Form_Template/Department/Service_Type —
@@ -30,7 +30,7 @@
 ### 5. בידוד — בחר גישה:
 **א. Restriction Rules (מומלץ, נייטיב):** לכל אובייקט → Restriction Rules → New:
 - Target: כל המשתמשים.
-- Record filter: `Authority__c EQUALS $User.Authority__c`
+- Record filter: `Authority__r.Code__c EQUALS $User.Authority_Code__c`
 - זה מגביל כל משתמש לרשומות הרשות שלו. (משתמש ללא רשות — לא יראה רשומות מסומנות.)
 
 **ב. Sharing Rules + Public Groups:** קבוצה ציבורית לכל רשות + Owner/Criteria-based

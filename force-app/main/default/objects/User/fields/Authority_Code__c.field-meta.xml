@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Authority_Code__c</fullName>
+    <label>Authority Code</label>
+    <description>Code of the local authority (tenant) this user belongs to. Matched against Authority__c.Code__c for per-authority data isolation.</description>
+    <type>Text</type>
+    <length>40</length>
+    <required>false</required>
+</CustomField>
