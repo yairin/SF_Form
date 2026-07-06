@@ -9,7 +9,7 @@
     <label>Authority</label>
     <pluralLabel>Authorities</pluralLabel>
     <nameField>
-        <label>Authority Name</label>
+        <label>שם הרשות</label>
         <type>Text</type>
     </nameField>
     <sharingModel>ReadWrite</sharingModel>

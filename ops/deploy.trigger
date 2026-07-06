@@ -1,1 +1,1 @@
-deploy #31 — fix: User.Authority_Code text field (lookup on User not allowed)
+deploy #32 — rename Authority name field label to Hebrew
