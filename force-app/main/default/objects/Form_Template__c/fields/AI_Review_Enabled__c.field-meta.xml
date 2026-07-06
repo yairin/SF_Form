@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>AI_Review_Enabled__c</fullName>
+    <label>AI Review Enabled</label>
+    <description>When on, submissions of this form can be reviewed by the AI agent.</description>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>

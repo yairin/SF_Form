@@ -1,1 +1,1 @@
-deploy #23 — Gap Wave 1b: file upload field (ContentVersion) + guest permission
+deploy #24 — AI-1: form creator defines what the AI should check

@@ -67,6 +67,18 @@ private class FormBuilderControllerTest {
     }
 
     @isTest
+    static void aiReviewConfigPersists() {
+        String schema = '[{"key":"a","label":"שדה","type":"text","required":true}]';
+        Form_Template__c t = FormBuilderController.saveForm(null, 'טופס AI', 'תיאור', schema, 'ai-cfg', null);
+        Test.startTest();
+        FormBuilderController.setAIConfig(t.Id, true, 'ודא שצורף צילום תעודת זהות קריא.');
+        Test.stopTest();
+        Form_Template__c fetched = FormBuilderController.getTemplate(t.Id);
+        System.assertEquals(true, fetched.AI_Review_Enabled__c, 'AI review enabled persisted');
+        System.assert(fetched.AI_Review_Instructions__c.contains('תעודת זהות'), 'instructions persisted');
+    }
+
+    @isTest
     static void aiSettingsSaveAndRead() {
         Test.startTest();
         FormSettingsController.saveSettings('External', 'https://api.example.com', 'claude-opus-4-8', 'secret-key');

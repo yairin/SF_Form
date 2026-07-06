@@ -126,6 +126,16 @@
         <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
+        <field>Form_Template__c.AI_Review_Enabled__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Form_Template__c.AI_Review_Instructions__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
         <field>Form_Response__c.Department__c</field>
         <readable>true</readable>
         <editable>true</editable>

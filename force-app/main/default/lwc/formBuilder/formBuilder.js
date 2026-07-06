@@ -4,6 +4,7 @@ import listForms from '@salesforce/apex/FormBuilderController.listForms';
 import listServiceTypes from '@salesforce/apex/FormBuilderController.listServiceTypes';
 import getTemplate from '@salesforce/apex/FormBuilderController.getTemplate';
 import getPublicUrl from '@salesforce/apex/FormBuilderController.getPublicUrl';
+import setAIConfig from '@salesforce/apex/FormBuilderController.setAIConfig';
 
 const CHOICE = new Set(['select', 'radio', 'checkboxGroup']);
 const TYPE_OPTIONS = [
@@ -24,6 +25,8 @@ export default class FormBuilder extends LightningElement {
     description = '';
     serviceTypeId = '';
     serviceTypes = [];
+    aiEnabled = false;
+    aiInstructions = '';
     steps = [{ title: '', fields: [{ type: 'text', label: '', required: true, options: '', mapTo: 'respondentName' }] }];
 
     savedExternalId;
@@ -52,6 +55,8 @@ export default class FormBuilder extends LightningElement {
         this.title = '';
         this.description = '';
         this.serviceTypeId = '';
+        this.aiEnabled = false;
+        this.aiInstructions = '';
         this.steps = [newStep()];
         this._editExternalId = undefined;
         this.savedExternalId = undefined;
@@ -68,6 +73,8 @@ export default class FormBuilder extends LightningElement {
             this.title = t.Name || '';
             this.description = t.Description__c || '';
             this.serviceTypeId = t.Service_Type__c || '';
+            this.aiEnabled = t.AI_Review_Enabled__c === true;
+            this.aiInstructions = t.AI_Review_Instructions__c || '';
             this._editExternalId = t.External_Id__c;
             let parsed = [];
             try { parsed = JSON.parse(t.Schema_JSON__c || '[]'); } catch (e) { parsed = []; }
@@ -173,6 +180,8 @@ export default class FormBuilder extends LightningElement {
 
     handleTitle(e) { this.title = e.target.value; }
     handleDesc(e) { this.description = e.target.value; }
+    handleAiEnabled(e) { this.aiEnabled = e.target.checked; }
+    handleAiInstructions(e) { this.aiInstructions = e.target.value; }
 
     buildSchema() {
         const seen = {};
@@ -235,6 +244,11 @@ export default class FormBuilder extends LightningElement {
                 serviceTypeId: this.serviceTypeId
             });
             this.savedExternalId = (saved && saved.External_Id__c) || externalId;
+            if (saved && saved.Id) {
+                try {
+                    await setAIConfig({ recordId: saved.Id, enabled: this.aiEnabled, instructions: this.aiInstructions });
+                } catch (e) { /* non-fatal */ }
+            }
             try { this.savedUrl = await getPublicUrl({ externalId: this.savedExternalId }); } catch (e) { /* ignore */ }
             this.savedMsg = this.isEdit ? 'השינויים נשמרו!' : 'הטופס נשמר ופורסם!';
             this.refresh();
