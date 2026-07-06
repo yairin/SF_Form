@@ -1,1 +1,1 @@
-deploy #39 — ASCII-only external ids (Hebrew in URL broke LWR routing)
+deploy #40 — clickable required checkbox (lightning-input) in builder
