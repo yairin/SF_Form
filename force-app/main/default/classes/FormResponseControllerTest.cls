@@ -78,6 +78,20 @@ private class FormResponseControllerTest {
     }
 
     @isTest
+    static void steppedSchemaValidationFlattens() {
+        String stepped = '{"steps":['
+            + '{"title":"פרטים אישיים","fields":[{"key":"a","label":"שם","type":"text","required":true}]},'
+            + '{"title":"פרטי קשר","fields":[{"key":"b","label":"אימייל","type":"email","required":true}]}]}';
+        System.assertEquals(2, FormValidationService.flattenFields(stepped).size(),
+            'fields flattened across steps');
+        System.assert(!FormValidationService.validate(stepped, new Map<String, Object>{ 'a' => 'x' }).isEmpty(),
+            'missing required field in step 2 is caught');
+        System.assert(FormValidationService.validate(
+                stepped, new Map<String, Object>{ 'a' => 'x', 'b' => 'y@z.com' }).isEmpty(),
+            'complete stepped payload passes');
+    }
+
+    @isTest
     static void previewAndUnknownFormSkipValidation() {
         // externalId 'preview' and unknown ids must not error (no template to validate against)
         FormResponseController.Result a = FormResponseController.submitResponse(

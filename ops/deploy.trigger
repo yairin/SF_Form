@@ -1,1 +1,1 @@
-deploy #20 — fix test: malformed inline JSON label broke id validation assert
+deploy #21 — Gap Wave 1c: multi-step wizard (stepped schema + renderer + builder)

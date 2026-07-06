@@ -15,14 +15,15 @@ const TYPE_OPTIONS = [
 const MAP_OPTIONS = [
     ['', '— ללא מיפוי —'], ['respondentName', 'שם'], ['email', 'אימייל'], ['phone', 'טלפון'], ['subject', 'נושא']
 ];
-const NEW_FIELD = { type: 'text', label: '', required: true, options: '', mapTo: 'respondentName' };
+const newField = () => ({ type: 'text', label: '', required: false, options: '', mapTo: '' });
+const newStep = () => ({ title: '', fields: [newField()] });
 
 export default class FormBuilder extends LightningElement {
     title = '';
     description = '';
     serviceTypeId = '';
     serviceTypes = [];
-    fields = [{ ...NEW_FIELD }];
+    steps = [{ title: '', fields: [{ type: 'text', label: '', required: true, options: '', mapTo: 'respondentName' }] }];
 
     savedExternalId;
     savedUrl;
@@ -30,7 +31,6 @@ export default class FormBuilder extends LightningElement {
     error;
     existing = [];
 
-    // When embedded inside the manager, show navigation ("back to list") buttons.
     @api embedded = false;
 
     _recordId;
@@ -39,11 +39,8 @@ export default class FormBuilder extends LightningElement {
     get recordId() { return this._recordId; }
     set recordId(v) {
         this._recordId = v;
-        if (v) {
-            this.loadTemplate(v);
-        } else {
-            this.resetForm();
-        }
+        if (v) this.loadTemplate(v);
+        else this.resetForm();
     }
 
     connectedCallback() {
@@ -54,7 +51,7 @@ export default class FormBuilder extends LightningElement {
         this.title = '';
         this.description = '';
         this.serviceTypeId = '';
-        this.fields = [{ ...NEW_FIELD }];
+        this.steps = [newStep()];
         this._editExternalId = undefined;
         this.savedExternalId = undefined;
         this.savedUrl = undefined;
@@ -73,18 +70,30 @@ export default class FormBuilder extends LightningElement {
             this._editExternalId = t.External_Id__c;
             let parsed = [];
             try { parsed = JSON.parse(t.Schema_JSON__c || '[]'); } catch (e) { parsed = []; }
-            this.fields = parsed.length
-                ? parsed.map((f) => ({
-                    type: f.type || 'text',
-                    label: f.label || '',
-                    required: !!f.required,
-                    options: (f.options || []).join('\n'),
-                    mapTo: f.mapTo || ''
-                }))
-                : [{ ...NEW_FIELD }];
+            this.steps = this.toStepsModel(parsed);
         } catch (e) {
             this.error = 'שגיאה בטעינת הטופס.';
         }
+    }
+
+    toStepsModel(parsed) {
+        const rev = (f) => ({
+            type: f.type || 'text',
+            label: f.label || '',
+            required: !!f.required,
+            options: (f.options || []).join('\n'),
+            mapTo: f.mapTo || ''
+        });
+        let rawSteps;
+        if (Array.isArray(parsed)) rawSteps = [{ title: '', fields: parsed }];
+        else if (parsed && Array.isArray(parsed.steps)) rawSteps = parsed.steps;
+        else if (parsed && Array.isArray(parsed.fields)) rawSteps = [{ title: '', fields: parsed.fields }];
+        else rawSteps = [];
+        const model = rawSteps.map((s) => ({
+            title: s.title || '',
+            fields: (s.fields || []).map(rev)
+        }));
+        return model.length ? model : [newStep()];
     }
 
     async refresh() {
@@ -103,57 +112,93 @@ export default class FormBuilder extends LightningElement {
     get saveLabel() { return this.isEdit ? 'שמור שינויים' : 'שמור ופרסם'; }
     get notEmbedded() { return !this.embedded; }
 
-    get fieldRows() {
-        return this.fields.map((f, i) => ({
-            index: i,
-            label: f.label,
-            required: f.required,
-            options: f.options,
-            showOptions: CHOICE.has(f.type),
-            typeOptions: TYPE_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === f.type })),
-            mapOptions: MAP_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === (f.mapTo || '') }))
+    get stepRows() {
+        return this.steps.map((st, s) => ({
+            index: s,
+            title: st.title,
+            label: 'שלב ' + (s + 1),
+            canRemove: this.steps.length > 1,
+            fields: st.fields.map((f, i) => ({
+                s: s,
+                i: i,
+                label: f.label,
+                required: f.required,
+                options: f.options,
+                showOptions: CHOICE.has(f.type),
+                typeOptions: TYPE_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === f.type })),
+                mapOptions: MAP_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === (f.mapTo || '') }))
+            }))
         }));
     }
 
-    addField() {
-        this.fields = [...this.fields, { type: 'text', label: '', required: false, options: '', mapTo: '' }];
+    addStep() {
+        this.steps = [...this.steps, newStep()];
+    }
+
+    removeStep(event) {
+        const s = Number(event.target.dataset.s);
+        if (this.steps.length <= 1) return;
+        this.steps = this.steps.filter((_, idx) => idx !== s);
+    }
+
+    handleStepTitle(event) {
+        const s = Number(event.target.dataset.s);
+        const val = event.target.value;
+        this.steps = this.steps.map((st, idx) => (idx === s ? { ...st, title: val } : st));
+    }
+
+    addField(event) {
+        const s = Number(event.target.dataset.s);
+        this.steps = this.steps.map((st, idx) => (idx === s ? { ...st, fields: [...st.fields, newField()] } : st));
     }
 
     removeField(event) {
+        const s = Number(event.target.dataset.s);
         const i = Number(event.target.dataset.i);
-        this.fields = this.fields.filter((_, idx) => idx !== i);
+        this.steps = this.steps.map((st, idx) =>
+            idx === s ? { ...st, fields: st.fields.filter((_, fi) => fi !== i) } : st
+        );
+    }
+
+    handleField(event) {
+        const s = Number(event.target.dataset.s);
+        const i = Number(event.target.dataset.i);
+        const p = event.target.dataset.p;
+        const val = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
+        this.steps = this.steps.map((st, idx) =>
+            idx === s ? { ...st, fields: st.fields.map((f, fi) => (fi === i ? { ...f, [p]: val } : f)) } : st
+        );
     }
 
     handleTitle(e) { this.title = e.target.value; }
     handleDesc(e) { this.description = e.target.value; }
 
-    handleField(event) {
-        const i = Number(event.target.dataset.i);
-        const p = event.target.dataset.p;
-        const val = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
-        this.fields = this.fields.map((f, idx) => (idx === i ? { ...f, [p]: val } : f));
-    }
-
-    buildFields() {
+    buildSchema() {
         const seen = {};
-        return this.fields
-            .filter((f) => f.label && f.label.trim())
-            .map((f, i) => {
-                let key = f.label.trim().toLowerCase().replace(/[^a-z0-9֐-׿]+/g, '_').replace(/^_+|_+$/g, '');
-                if (!key) key = 'field_' + (i + 1);
-                while (seen[key]) key = key + '_' + i;
-                seen[key] = 1;
-                return {
-                    key,
-                    label: f.label.trim(),
-                    type: f.type,
-                    required: !!f.required,
-                    mapTo: f.mapTo || undefined,
-                    options: CHOICE.has(f.type)
-                        ? String(f.options || '').split('\n').map((s) => s.trim()).filter(Boolean)
-                        : undefined
-                };
-            });
+        let n = 0;
+        const steps = this.steps.map((st) => ({
+            title: (st.title || '').trim() || null,
+            fields: st.fields
+                .filter((f) => f.label && f.label.trim())
+                .map((f) => {
+                    n += 1;
+                    let key = f.label.trim().toLowerCase().replace(/[^a-z0-9֐-׿]+/g, '_').replace(/^_+|_+$/g, '');
+                    if (!key) key = 'field_' + n;
+                    while (seen[key]) key = key + '_' + n;
+                    seen[key] = 1;
+                    return {
+                        key,
+                        label: f.label.trim(),
+                        type: f.type,
+                        required: !!f.required,
+                        mapTo: f.mapTo || undefined,
+                        options: CHOICE.has(f.type)
+                            ? String(f.options || '').split('\n').map((x) => x.trim()).filter(Boolean)
+                            : undefined
+                    };
+                })
+        }));
+        return steps;
     }
 
     slugify(s) {
@@ -170,8 +215,9 @@ export default class FormBuilder extends LightningElement {
             this.error = 'נא להזין כותרת (לפחות 2 תווים).';
             return;
         }
-        const fields = this.buildFields();
-        if (!fields.length) {
+        const steps = this.buildSchema();
+        const totalFields = steps.reduce((acc, st) => acc + st.fields.length, 0);
+        if (!totalFields) {
             this.error = 'נא להוסיף לפחות שדה אחד עם תווית.';
             return;
         }
@@ -183,7 +229,7 @@ export default class FormBuilder extends LightningElement {
                 recordId: this._recordId || null,
                 title: this.title.trim(),
                 description: this.description,
-                schemaJson: JSON.stringify(fields),
+                schemaJson: JSON.stringify({ steps }),
                 externalId,
                 serviceTypeId: this.serviceTypeId
             });

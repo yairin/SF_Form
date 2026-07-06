@@ -15,7 +15,16 @@
             <h1 class="slds-text-heading_medium">{title}</h1>
             <p class="slds-text-body_small slds-p-bottom_small">{description}</p>
 
-            <template for:each={fields} for:item="f">
+            <template lwc:if={isWizard}>
+                <div class="slds-p-bottom_small">
+                    <p class="slds-text-title_bold slds-p-bottom_xx-small">{stepProgressLabel}</p>
+                    <div class="slds-progress-bar" role="progressbar">
+                        <span class="slds-progress-bar__value" style={progressStyle}></span>
+                    </div>
+                </div>
+            </template>
+
+            <template for:each={currentFields} for:item="f">
                 <div key={f.key} class="slds-form-element slds-p-vertical_xx-small">
                     <template lwc:if={f.isCheckbox}>
                         <label class="slds-checkbox_standalone">
@@ -64,8 +73,23 @@
                 <div class="slds-text-color_error slds-p-top_small" role="alert">{error}</div>
             </template>
 
-            <div class="slds-p-top_medium">
-                <button class="slds-button slds-button_brand" onclick={handleSubmit} disabled={loading}>שליחה</button>
+            <div class="slds-p-top_medium slds-grid slds-grid_align-spread">
+                <div>
+                    <template lwc:if={isWizard}>
+                        <template lwc:if={isFirstStep}></template>
+                        <template lwc:else>
+                            <button class="slds-button slds-button_neutral" onclick={prevStep} disabled={loading}>הקודם</button>
+                        </template>
+                    </template>
+                </div>
+                <div>
+                    <template lwc:if={isLastStep}>
+                        <button class="slds-button slds-button_brand" onclick={handleSubmit} disabled={loading}>שליחה</button>
+                    </template>
+                    <template lwc:else>
+                        <button class="slds-button slds-button_brand" onclick={nextStep} disabled={loading}>הבא</button>
+                    </template>
+                </div>
             </div>
         </template>
     </div>

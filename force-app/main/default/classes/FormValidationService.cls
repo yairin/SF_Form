@@ -11,14 +11,8 @@ public without sharing class FormValidationService {
     /** Returns a list of validation errors; empty list means the payload is valid. */
     public static List<String> validate(String schemaJson, Map<String, Object> values) {
         List<String> errors = new List<String>();
-        if (String.isBlank(schemaJson)) return errors;
-
-        List<Object> fields;
-        try {
-            fields = (List<Object>) JSON.deserializeUntyped(schemaJson);
-        } catch (Exception e) {
-            return errors; // unparseable schema — nothing to validate against
-        }
+        List<Object> fields = flattenFields(schemaJson);
+        if (fields.isEmpty()) return errors;
         if (values == null) values = new Map<String, Object>();
 
         for (Object fo : fields) {
@@ -40,6 +34,37 @@ public without sharing class FormValidationService {
             if (err != null) errors.add(err);
         }
         return errors;
+    }
+
+    /**
+     * Returns the flat list of field maps from a schema that may be a plain array
+     * (legacy single-step) or an object { "steps": [ { "fields": [...] } ] } / { "fields": [...] }.
+     */
+    public static List<Object> flattenFields(String schemaJson) {
+        List<Object> fields = new List<Object>();
+        if (String.isBlank(schemaJson)) return fields;
+        Object parsed;
+        try {
+            parsed = JSON.deserializeUntyped(schemaJson);
+        } catch (Exception e) {
+            return fields;
+        }
+        if (parsed instanceof List<Object>) {
+            fields.addAll((List<Object>) parsed);
+        } else if (parsed instanceof Map<String, Object>) {
+            Map<String, Object> m = (Map<String, Object>) parsed;
+            if (m.get('steps') instanceof List<Object>) {
+                for (Object so : (List<Object>) m.get('steps')) {
+                    if (so instanceof Map<String, Object>) {
+                        Object fs = ((Map<String, Object>) so).get('fields');
+                        if (fs instanceof List<Object>) fields.addAll((List<Object>) fs);
+                    }
+                }
+            } else if (m.get('fields') instanceof List<Object>) {
+                fields.addAll((List<Object>) m.get('fields'));
+            }
+        }
+        return fields;
     }
 
     private static String formatError(String type, String s, String label) {

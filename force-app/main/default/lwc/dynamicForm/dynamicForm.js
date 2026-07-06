@@ -8,6 +8,16 @@ const TEXT_TYPES = {
     currency: 'number', idNumber: 'text', date: 'date'
 };
 
+// Accepts a plain array (legacy single-step) or { steps:[{title,fields}] } / { fields:[...] }.
+function normalizeSteps(parsed) {
+    if (Array.isArray(parsed)) return [{ title: null, fields: parsed }];
+    if (parsed && Array.isArray(parsed.steps)) {
+        return parsed.steps.map((s) => ({ title: s.title || null, fields: s.fields || [] }));
+    }
+    if (parsed && Array.isArray(parsed.fields)) return [{ title: null, fields: parsed.fields }];
+    return [{ title: null, fields: [] }];
+}
+
 function isValidIsraeliId(id) {
     const digits = String(id || '').replace(/\D/g, '');
     if (!digits.length || digits.length > 9) return false;
@@ -56,6 +66,47 @@ export default class DynamicForm extends LightningElement {
     error;
     loading = false;
     notFound = false;
+    stepIndex = 0;
+    stepTitles = [];
+
+    get isWizard() { return this.stepTitles.length > 1; }
+    get currentFields() { return this.fields.filter((f) => f.step === this.stepIndex); }
+    get isFirstStep() { return this.stepIndex === 0; }
+    get isLastStep() { return this.stepIndex >= this.stepTitles.length - 1; }
+    get currentStepTitle() { return this.stepTitles[this.stepIndex]; }
+    get stepProgressLabel() {
+        return 'שלב ' + (this.stepIndex + 1) + ' מתוך ' + this.stepTitles.length + ': ' + this.currentStepTitle;
+    }
+    get progressStyle() {
+        const pct = this.stepTitles.length ? Math.round(((this.stepIndex + 1) / this.stepTitles.length) * 100) : 100;
+        return 'width:' + pct + '%';
+    }
+
+    stepHasErrors() {
+        const missing = this.currentFields.filter((f) => f.required && this.isEmpty(this.values[f.key]));
+        if (missing.length) {
+            this.error = 'נא למלא את שדות החובה: ' + missing.map((f) => f.label).join(', ');
+            return true;
+        }
+        const badId = this.currentFields.filter((f) => f.type === 'idNumber'
+            && !this.isEmpty(this.values[f.key]) && !isValidIsraeliId(this.values[f.key]));
+        if (badId.length) {
+            this.error = 'תעודת זהות לא תקינה: ' + badId.map((f) => f.label).join(', ');
+            return true;
+        }
+        return false;
+    }
+
+    nextStep() {
+        this.error = undefined;
+        if (this.stepHasErrors()) return;
+        if (!this.isLastStep) this.stepIndex += 1;
+    }
+
+    prevStep() {
+        this.error = undefined;
+        if (!this.isFirstStep) this.stepIndex -= 1;
+    }
 
     connectedCallback() {
         if (this._ext && this.fields.length === 0) this.load();
@@ -76,23 +127,33 @@ export default class DynamicForm extends LightningElement {
         this.description = description || '';
         this.values = {};
         this.reference = undefined;
+        this.stepIndex = 0;
         let parsed = [];
         try { parsed = JSON.parse(schemaJson || '[]'); } catch (e) { parsed = []; }
-        this.fields = parsed.map((f) => ({
-            key: f.key,
-            label: f.label,
-            type: f.type,
-            required: !!f.required,
-            mapTo: f.mapTo,
-            options: (f.options || []).map((o) => ({ label: o, value: o })),
-            isText: Object.keys(TEXT_TYPES).includes(f.type),
-            inputType: TEXT_TYPES[f.type] || 'text',
-            isTextarea: f.type === 'textarea',
-            isSelect: f.type === 'select',
-            isRadio: f.type === 'radio',
-            isCheckbox: f.type === 'checkbox',
-            isCheckboxGroup: f.type === 'checkboxGroup'
-        }));
+        const steps = normalizeSteps(parsed);
+        this.stepTitles = steps.map((s, i) => s.title || ('שלב ' + (i + 1)));
+        const flat = [];
+        steps.forEach((s, si) => {
+            (s.fields || []).forEach((f) => {
+                flat.push({
+                    key: f.key,
+                    label: f.label,
+                    type: f.type,
+                    step: si,
+                    required: !!f.required,
+                    mapTo: f.mapTo,
+                    options: (f.options || []).map((o) => ({ label: o, value: o })),
+                    isText: Object.keys(TEXT_TYPES).includes(f.type),
+                    inputType: TEXT_TYPES[f.type] || 'text',
+                    isTextarea: f.type === 'textarea',
+                    isSelect: f.type === 'select',
+                    isRadio: f.type === 'radio',
+                    isCheckbox: f.type === 'checkbox',
+                    isCheckboxGroup: f.type === 'checkboxGroup'
+                });
+            });
+        });
+        this.fields = flat;
     }
 
     handleChange(event) {
