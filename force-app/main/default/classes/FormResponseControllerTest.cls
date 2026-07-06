@@ -142,6 +142,53 @@ private class FormResponseControllerTest {
             [SELECT AI_Status__c FROM Form_Response__c WHERE Id = :r.id].AI_Status__c, 'status written to record');
     }
 
+    private class LlmMissingMock implements HttpCalloutMock {
+        public HttpResponse respond(HttpRequest req) {
+            String verdict = JSON.serialize(new Map<String, Object>{
+                'complete' => false,
+                'missing' => new List<Object>{ 'צילום תעודת זהות', 'אישור תושב' },
+                'notes' => 'חסרים מסמכים'
+            });
+            String body = JSON.serialize(new Map<String, Object>{
+                'content' => new List<Object>{ new Map<String, Object>{ 'type' => 'text', 'text' => verdict } }
+            });
+            HttpResponse res = new HttpResponse();
+            res.setStatusCode(200);
+            res.setBody(body);
+            return res;
+        }
+    }
+
+    @isTest
+    static void aiReviewExternalNeedsInfoWithAttachment() {
+        FormSettingsController.saveSettings('External', 'https://api.example.com/v1/messages', 'm', 'k');
+        FormResponseController.Result r = FormResponseController.submitResponse(
+            'טופס', 'preview', '{"x":"1"}', 'פלוני', 'a@b.com', null, 'x');
+        FormFileService.FileInput fi = new FormFileService.FileInput();
+        fi.name = 'note.txt';
+        fi.base64 = EncodingUtil.base64Encode(Blob.valueOf('תוכן המסמך לבדיקה'));
+        FormFileService.attachFiles(r.id, new List<FormFileService.FileInput>{ fi });
+
+        Test.startTest();
+        Test.setMock(HttpCalloutMock.class, new LlmMissingMock());
+        FormAIReviewService.ReviewResult rr = FormAIReviewService.runReview(r.id);
+        Test.stopTest();
+
+        System.assertEquals('Needs_Info', rr.status, 'incomplete verdict maps to Needs_Info');
+        System.assert(rr.findings.contains('צילום תעודת זהות'), 'missing items listed in findings');
+    }
+
+    @isTest
+    static void aiReviewExternalNoEndpointErrors() {
+        FormSettingsController.saveSettings('External', null, null, 'k'); // endpoint blank
+        FormResponseController.Result r = FormResponseController.submitResponse(
+            'טופס', 'preview', '{}', null, null, null, null);
+        Test.startTest();
+        FormAIReviewService.ReviewResult rr = FormAIReviewService.runReview(r.id);
+        Test.stopTest();
+        System.assertEquals('Error', rr.status, 'missing endpoint -> Error');
+    }
+
     @isTest
     static void aiReviewAgentforceStubReportsUnconfigured() {
         FormSettingsController.saveSettings('Agentforce', null, null, null);
