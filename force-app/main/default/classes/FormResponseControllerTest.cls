@@ -190,6 +190,35 @@ private class FormResponseControllerTest {
     }
 
     @isTest
+    static void authorityStampedAndPerAuthorityEngineUsed() {
+        Authority__c auth = new Authority__c(
+            Name = 'רשות א', Code__c = 'A',
+            AI_Engine__c = 'External', LLM_Endpoint__c = 'https://api.example.com/v1/messages',
+            LLM_Model__c = 'claude-opus-4-8', LLM_API_Key__c = 'auth-key'
+        );
+        insert auth;
+        FormBuilderController.saveForm(null, 'טופס רשות', 'תיאור', SCHEMA, 'auth-form', null);
+        Form_Template__c t = [SELECT Id FROM Form_Template__c WHERE External_Id__c = 'auth-form' LIMIT 1];
+        t.Authority__c = auth.Id;
+        update t;
+
+        FormResponseController.Result r = FormResponseController.submitResponse(
+            'טופס רשות', 'auth-form', '{"full_name":"פלוני","email":"a@b.com"}', 'פלוני', 'a@b.com', null, 'x');
+
+        // the after-insert routing stamps the tenant onto the response
+        System.assertEquals(auth.Id,
+            [SELECT Authority__c FROM Form_Response__c WHERE Id = :r.id].Authority__c,
+            'response stamped with its template authority');
+
+        Test.startTest();
+        Test.setMock(HttpCalloutMock.class, new LlmMock());
+        FormAIReviewService.ReviewResult rr = FormAIReviewService.runReview(r.id);
+        Test.stopTest();
+
+        System.assertEquals('Approved', rr.status, 'per-authority external engine was used');
+    }
+
+    @isTest
     static void requestCompletionSetsTokenAndFlag() {
         FormResponseController.Result r = FormResponseController.submitResponse(
             'טופס', 'preview', '{}', 'פלוני', 'applicant@example.com', null, 'x');

@@ -83,7 +83,9 @@ public without sharing class FormAIReviewService {
     public static ReviewResult runReview(Id responseId) {
         Form_Response__c r = [
             SELECT Id, Form_Name__c, Form_External_Id__c, Response_Data__c,
-                   Respondent_Name__c, Email__c
+                   Respondent_Name__c, Email__c,
+                   Authority__r.AI_Engine__c, Authority__r.LLM_Endpoint__c,
+                   Authority__r.LLM_Model__c, Authority__r.LLM_API_Key__c
             FROM Form_Response__c WHERE Id = :responseId LIMIT 1
         ];
         String instructions = '';
@@ -99,12 +101,21 @@ public without sharing class FormAIReviewService {
 
         String prompt = buildPrompt(r, instructions, readAttachments(responseId));
 
-        ReviewResult result;
+        // Resolve config per authority (tenant), falling back to the org default.
         Form_AI_Setting__c s = Form_AI_Setting__c.getOrgDefaults();
-        String engine = (s != null && String.isNotBlank(s.Engine__c)) ? s.Engine__c : 'Agentforce';
+        String engine = coalesce(r.Authority__r == null ? null : r.Authority__r.AI_Engine__c,
+                                  s == null ? null : s.Engine__c, 'Agentforce');
+        String endpoint = coalesce(r.Authority__r == null ? null : r.Authority__r.LLM_Endpoint__c,
+                                   s == null ? null : s.LLM_Endpoint__c, null);
+        String model = coalesce(r.Authority__r == null ? null : r.Authority__r.LLM_Model__c,
+                                s == null ? null : s.LLM_Model__c, null);
+        String apiKey = coalesce(r.Authority__r == null ? null : r.Authority__r.LLM_API_Key__c,
+                                 s == null ? null : s.LLM_API_Key__c, null);
+
+        ReviewResult result;
         try {
             if (engine == 'External') {
-                result = reviewExternal(s, instructions, prompt);
+                result = reviewExternal(endpoint, model, apiKey, prompt);
             } else {
                 result = new ReviewResult();
                 result.status = 'Error';
@@ -155,22 +166,28 @@ public without sharing class FormAIReviewService {
             + '\n\nמה נדרש לוודא:\n' + (String.isBlank(instructions) ? 'ודא שההגשה מלאה והצרופות מתאימות.' : instructions);
     }
 
-    private static ReviewResult reviewExternal(Form_AI_Setting__c s, String instructions, String prompt) {
-        if (s == null || String.isBlank(s.LLM_Endpoint__c)) {
-            throw new CalloutException('לא הוגדר endpoint למנוע חיצוני בהגדרות.');
+    private static String coalesce(String a, String b, String c) {
+        if (String.isNotBlank(a)) return a;
+        if (String.isNotBlank(b)) return b;
+        return c;
+    }
+
+    private static ReviewResult reviewExternal(String endpoint, String model, String apiKey, String prompt) {
+        if (String.isBlank(endpoint)) {
+            throw new CalloutException('לא הוגדר endpoint למנוע חיצוני (ברמת הרשות או ברירת המחדל).');
         }
         String systemPrompt = 'אתה בודק טפסים לרשות מקומית. בדוק את ההגשה מול הדרישות. '
             + 'החזר אך ורק JSON תקין במבנה: {"complete": true|false, "missing": ["..."], "notes": "סיכום קצר בעברית"}.';
 
         HttpRequest req = new HttpRequest();
-        req.setEndpoint(s.LLM_Endpoint__c);
+        req.setEndpoint(endpoint);
         req.setMethod('POST');
         req.setHeader('Content-Type', 'application/json');
-        req.setHeader('x-api-key', s.LLM_API_Key__c == null ? '' : s.LLM_API_Key__c);
+        req.setHeader('x-api-key', apiKey == null ? '' : apiKey);
         req.setHeader('anthropic-version', '2023-06-01');
         req.setTimeout(120000);
         Map<String, Object> body = new Map<String, Object>{
-            'model' => String.isBlank(s.LLM_Model__c) ? 'claude-opus-4-8' : s.LLM_Model__c,
+            'model' => String.isBlank(model) ? 'claude-opus-4-8' : model,
             'max_tokens' => 1024,
             'system' => systemPrompt,
             'messages' => new List<Object>{ new Map<String, Object>{ 'role' => 'user', 'content' => prompt } }

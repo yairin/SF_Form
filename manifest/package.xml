@@ -7,6 +7,7 @@
         <members>Department__c</members>
         <members>Service_Type__c</members>
         <members>Form_AI_Setting__c</members>
+        <members>Authority__c</members>
         <name>CustomObject</name>
     </types>
     <types>
@@ -14,7 +15,22 @@
         <members>Form_AI_Setting__c.LLM_Endpoint__c</members>
         <members>Form_AI_Setting__c.LLM_Model__c</members>
         <members>Form_AI_Setting__c.LLM_API_Key__c</members>
+        <members>Authority__c.Code__c</members>
+        <members>Authority__c.Active__c</members>
+        <members>Authority__c.AI_Engine__c</members>
+        <members>Authority__c.LLM_Endpoint__c</members>
+        <members>Authority__c.LLM_Model__c</members>
+        <members>Authority__c.LLM_API_Key__c</members>
+        <members>Authority__c.Public_Site_Base_Url__c</members>
+        <members>Form_Template__c.Authority__c</members>
+        <members>Form_Response__c.Authority__c</members>
+        <members>Department__c.Authority__c</members>
+        <members>Service_Type__c.Authority__c</members>
         <name>CustomField</name>
+    </types>
+    <types>
+        <members>Anthropic_API</members>
+        <name>RemoteSiteSetting</name>
     </types>
     <types>
         <members>Form_Public_Site_Base_Url</members>
@@ -88,6 +104,7 @@
         <members>SF_Forms_Manage</members>
         <members>SF_Forms_Settings</members>
         <members>Form_Response__c</members>
+        <members>Authority__c</members>
         <name>CustomTab</name>
     </types>
     <types>

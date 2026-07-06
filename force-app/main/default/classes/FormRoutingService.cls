@@ -15,7 +15,7 @@ public without sharing class FormRoutingService {
 
         Map<String, Form_Template__c> byExt = new Map<String, Form_Template__c>();
         for (Form_Template__c t : [
-            SELECT External_Id__c, Service_Type__c,
+            SELECT External_Id__c, Authority__c, Service_Type__c,
                    Service_Type__r.Department__c, Service_Type__r.Default_SLA_Hours__c
             FROM Form_Template__c
             WHERE External_Id__c IN :extIds
@@ -26,15 +26,24 @@ public without sharing class FormRoutingService {
         List<Form_Response__c> updates = new List<Form_Response__c>();
         for (Form_Response__c r : responses) {
             Form_Template__c t = byExt.get(r.Form_External_Id__c);
-            if (t == null || t.Service_Type__c == null) continue;
+            if (t == null) continue;
             Form_Response__c u = new Form_Response__c(Id = r.Id);
-            u.Service_Type__c = t.Service_Type__c;
-            u.Department__c = t.Service_Type__r.Department__c;
-            Decimal hrs = t.Service_Type__r.Default_SLA_Hours__c;
-            if (hrs != null) {
-                u.SLA_Due__c = System.now().addMinutes((Integer) (hrs * 60));
+            Boolean changed = false;
+            // Stamp the tenant (authority) so multi-authority isolation applies.
+            if (t.Authority__c != null) {
+                u.Authority__c = t.Authority__c;
+                changed = true;
             }
-            updates.add(u);
+            if (t.Service_Type__c != null) {
+                u.Service_Type__c = t.Service_Type__c;
+                u.Department__c = t.Service_Type__r.Department__c;
+                Decimal hrs = t.Service_Type__r.Default_SLA_Hours__c;
+                if (hrs != null) {
+                    u.SLA_Due__c = System.now().addMinutes((Integer) (hrs * 60));
+                }
+                changed = true;
+            }
+            if (changed) updates.add(u);
         }
         if (!updates.isEmpty()) update updates;
     }

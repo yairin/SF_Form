@@ -1,1 +1,1 @@
-deploy #28 — AI-2b/AI-3: record review UI + proactive completion request (email + token)
+deploy #29 — MT-1: Authority (tenant) object + per-authority AI config + remote site
