@@ -1,1 +1,1 @@
-deploy #37 — stamped Tenant_Code on Form_Response (restriction-rule comparator)
+deploy #38 — remove View All on Form_Response so restriction rule applies to managers
