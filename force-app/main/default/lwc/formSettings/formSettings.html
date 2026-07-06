@@ -1,0 +1,38 @@
+<template>
+    <div dir="rtl">
+        <lightning-card title="הגדרות SF Forms" icon-name="standard:settings">
+            <div class="slds-p-around_medium" style="max-width:640px;">
+                <p class="slds-text-body_small slds-text-color_weak slds-p-bottom_small">
+                    בחר את מנוע ה-AI שיבדוק טפסים שהוגשו. עבור מנוע חיצוני יש להזין endpoint ומפתח API.
+                </p>
+
+                <lightning-radio-group
+                    name="engine"
+                    label="מנוע AI"
+                    options={engineOptions}
+                    value={engine}
+                    onchange={handleEngine}
+                    type="radio">
+                </lightning-radio-group>
+
+                <template lwc:if={isExternal}>
+                    <div class="slds-p-top_medium">
+                        <lightning-input label="Endpoint" value={endpoint} onchange={handleEndpoint}
+                            placeholder="https://api.example.com/v1/messages"></lightning-input>
+                        <lightning-input label="Model" value={model} onchange={handleModel}
+                            placeholder="claude-opus-4-8" class="slds-p-top_x-small"></lightning-input>
+                        <lightning-input label="API Key" type="password" value={apiKey} onchange={handleApiKey}
+                            placeholder={apiKeyPlaceholder} class="slds-p-top_x-small"></lightning-input>
+                        <template lwc:if={hasApiKey}>
+                            <p class="slds-text-body_small slds-text-color_success slds-p-top_xx-small">✓ מפתח שמור במערכת</p>
+                        </template>
+                    </div>
+                </template>
+
+                <div class="slds-p-top_medium">
+                    <lightning-button variant="brand" label="שמור הגדרות" onclick={save}></lightning-button>
+                </div>
+            </div>
+        </lightning-card>
+    </div>
+</template>

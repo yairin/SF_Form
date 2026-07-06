@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>LLM_Model__c</fullName>
+    <label>LLM Model</label>
+    <description>External LLM model id (e.g. claude-opus-4-8). Used when Engine = External.</description>
+    <type>Text</type>
+    <length>120</length>
+    <required>false</required>
+</CustomField>

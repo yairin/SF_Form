@@ -6,7 +6,15 @@
         <members>Form_Template__c</members>
         <members>Department__c</members>
         <members>Service_Type__c</members>
+        <members>Form_AI_Setting__c</members>
         <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Form_AI_Setting__c.Engine__c</members>
+        <members>Form_AI_Setting__c.LLM_Endpoint__c</members>
+        <members>Form_AI_Setting__c.LLM_Model__c</members>
+        <members>Form_AI_Setting__c.LLM_API_Key__c</members>
+        <name>CustomField</name>
     </types>
     <types>
         <members>Form_Public_Site_Base_Url</members>
@@ -42,6 +50,7 @@
         <members>FormRoutingService</members>
         <members>FormRoutingServiceTest</members>
         <members>FormValidationService</members>
+        <members>FormSettingsController</members>
         <name>ApexClass</name>
     </types>
     <types>
@@ -49,6 +58,7 @@
         <members>dynamicForm</members>
         <members>formBuilder</members>
         <members>formManager</members>
+        <members>formSettings</members>
         <name>LightningComponentBundle</name>
     </types>
     <types>
@@ -59,12 +69,14 @@
         <members>SF_Forms_Home</members>
         <members>SF_Forms_Builder</members>
         <members>SF_Forms_Manage</members>
+        <members>SF_Forms_Settings</members>
         <name>FlexiPage</name>
     </types>
     <types>
         <members>SF_Forms_Home</members>
         <members>SF_Forms_Builder</members>
         <members>SF_Forms_Manage</members>
+        <members>SF_Forms_Settings</members>
         <members>Form_Response__c</members>
         <name>CustomTab</name>
     </types>

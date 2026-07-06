@@ -9,4 +9,5 @@
     <tabs>SF_Forms_Manage</tabs>
     <tabs>SF_Forms_Builder</tabs>
     <tabs>Form_Response__c</tabs>
+    <tabs>SF_Forms_Settings</tabs>
 </CustomApplication>

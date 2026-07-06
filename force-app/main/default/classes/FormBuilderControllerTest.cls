@@ -67,6 +67,21 @@ private class FormBuilderControllerTest {
     }
 
     @isTest
+    static void aiSettingsSaveAndRead() {
+        Test.startTest();
+        FormSettingsController.saveSettings('External', 'https://api.example.com', 'claude-opus-4-8', 'secret-key');
+        Test.stopTest();
+        FormSettingsController.Settings s = FormSettingsController.getSettings();
+        System.assertEquals('External', s.engine, 'engine persisted');
+        System.assertEquals('https://api.example.com', s.endpoint, 'endpoint persisted');
+        System.assertEquals(true, s.hasApiKey, 'key stored flag is true (key itself is not returned)');
+
+        // default when unset
+        FormSettingsController.saveSettings('Agentforce', null, null, null);
+        System.assertEquals('Agentforce', FormSettingsController.getSettings().engine);
+    }
+
+    @isTest
     static void publicUrlBuilds() {
         // getPublicUrl uses the Form_Public_Site_Base_Url custom label; result may be
         // null if the label has no value, but the call must not error.

@@ -1,1 +1,1 @@
-deploy #21 — Gap Wave 1c: multi-step wizard (stepped schema + renderer + builder)
+deploy #22 — AI-1: general settings page (engine choice: Agentforce/External + key)
