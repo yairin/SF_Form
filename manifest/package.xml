@@ -51,6 +51,7 @@
         <members>FormRoutingServiceTest</members>
         <members>FormValidationService</members>
         <members>FormSettingsController</members>
+        <members>FormFileService</members>
         <name>ApexClass</name>
     </types>
     <types>

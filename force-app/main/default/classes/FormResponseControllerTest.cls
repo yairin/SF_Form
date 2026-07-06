@@ -92,6 +92,23 @@ private class FormResponseControllerTest {
     }
 
     @isTest
+    static void attachesFilesToResponse() {
+        FormResponseController.Result r = FormResponseController.submitResponse(
+            'טופס', 'preview', '{}', null, null, null, null);
+        FormFileService.FileInput fi = new FormFileService.FileInput();
+        fi.name = 'doc.txt';
+        fi.base64 = EncodingUtil.base64Encode(Blob.valueOf('hello world'));
+
+        Test.startTest();
+        FormFileService.attachFiles(r.id, new List<FormFileService.FileInput>{ fi });
+        Test.stopTest();
+
+        System.assertEquals(1,
+            [SELECT COUNT() FROM ContentDocumentLink WHERE LinkedEntityId = :r.id],
+            'file linked to the response');
+    }
+
+    @isTest
     static void previewAndUnknownFormSkipValidation() {
         // externalId 'preview' and unknown ids must not error (no template to validate against)
         FormResponseController.Result a = FormResponseController.submitResponse(

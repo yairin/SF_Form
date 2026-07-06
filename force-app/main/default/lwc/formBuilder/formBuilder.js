@@ -9,6 +9,7 @@ const CHOICE = new Set(['select', 'radio', 'checkboxGroup']);
 const TYPE_OPTIONS = [
     ['text', 'טקסט קצר'], ['textarea', 'טקסט ארוך'], ['email', 'אימייל'], ['phone', 'טלפון'],
     ['number', 'מספר'], ['currency', 'סכום (₪)'], ['idNumber', 'תעודת זהות'], ['date', 'תאריך'],
+    ['file', 'העלאת קובץ'],
     ['select', 'בחירה מרשימה'], ['radio', 'בחירה יחידה'],
     ['checkbox', 'תיבת סימון'], ['checkboxGroup', 'בחירה מרובה']
 ];

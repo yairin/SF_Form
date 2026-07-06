@@ -2,6 +2,9 @@ import { LightningElement, api, wire } from 'lwc';
 import { CurrentPageReference } from 'lightning/navigation';
 import getForm from '@salesforce/apex/FormRenderController.getForm';
 import submitResponse from '@salesforce/apex/FormResponseController.submitResponse';
+import attachFiles from '@salesforce/apex/FormFileService.attachFiles';
+
+const MAX_FILE_BYTES = 4 * 1024 * 1024; // ~4MB per file (Apex heap/base64 guard)
 
 const TEXT_TYPES = {
     text: 'text', email: 'email', phone: 'tel', number: 'number',
@@ -62,6 +65,7 @@ export default class DynamicForm extends LightningElement {
     description = '';
     fields = [];
     values = {};
+    files = {}; // key -> [{name, base64}]
     reference;
     error;
     loading = false;
@@ -126,6 +130,7 @@ export default class DynamicForm extends LightningElement {
         this.title = title || 'טופס';
         this.description = description || '';
         this.values = {};
+        this.files = {};
         this.reference = undefined;
         this.stepIndex = 0;
         let parsed = [];
@@ -149,7 +154,8 @@ export default class DynamicForm extends LightningElement {
                     isSelect: f.type === 'select',
                     isRadio: f.type === 'radio',
                     isCheckbox: f.type === 'checkbox',
-                    isCheckboxGroup: f.type === 'checkboxGroup'
+                    isCheckboxGroup: f.type === 'checkboxGroup',
+                    isFile: f.type === 'file'
                 });
             });
         });
@@ -171,8 +177,47 @@ export default class DynamicForm extends LightningElement {
         }
     }
 
+    handleFileChange(event) {
+        const key = event.target.dataset.key;
+        const fileList = Array.from(event.target.files || []);
+        this.error = undefined;
+        const tooBig = fileList.find((f) => f.size > MAX_FILE_BYTES);
+        if (tooBig) {
+            this.error = 'הקובץ "' + tooBig.name + '" גדול מדי (מקסימום 4MB).';
+            event.target.value = null;
+            return;
+        }
+        Promise.all(fileList.map((file) => this.readFile(file))).then((read) => {
+            this.files = { ...this.files, [key]: read };
+            this.values[key] = read.map((r) => r.name).join('; ');
+        });
+    }
+
+    readFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = reader.result || '';
+                const base64 = String(result).split(',')[1] || '';
+                resolve({ name: file.name, base64 });
+            };
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(file);
+        });
+    }
+
     isEmpty(v) {
         return v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
+    }
+
+    collectFiles() {
+        const out = [];
+        Object.keys(this.files).forEach((k) => {
+            (this.files[k] || []).forEach((f) => {
+                if (f && f.base64) out.push({ name: f.name, base64: f.base64 });
+            });
+        });
+        return out;
     }
 
     async handleSubmit() {
@@ -208,6 +253,10 @@ export default class DynamicForm extends LightningElement {
                 phone: mapped.phone || null,
                 subject: mapped.subject || this.title
             });
+            const toAttach = this.collectFiles();
+            if (toAttach.length) {
+                try { await attachFiles({ responseId: res.id, files: toAttach }); } catch (e) { /* non-fatal */ }
+            }
             this.reference = res.name;
         } catch (e) {
             this.error = (e && e.body && e.body.message) || 'אירעה שגיאה בשליחה.';

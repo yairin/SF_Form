@@ -37,6 +37,9 @@
                             <template lwc:if={f.isText}>
                                 <input type={f.inputType} data-key={f.key} class="slds-input" onchange={handleChange} />
                             </template>
+                            <template lwc:elseif={f.isFile}>
+                                <input type="file" multiple data-key={f.key} class="slds-input" onchange={handleFileChange} />
+                            </template>
                             <template lwc:elseif={f.isTextarea}>
                                 <textarea data-key={f.key} class="slds-textarea" onchange={handleChange}></textarea>
                             </template>
