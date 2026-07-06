@@ -1,1 +1,1 @@
-deploy #40 — clickable required checkbox (lightning-input) in builder
+deploy #41 — fix public site base URL to site root (not /forms)
