@@ -70,9 +70,11 @@ private class FormResponseControllerTest {
         System.assertEquals(false, FormValidationService.isValidIsraeliId('000000019'), 'bad check digit fails');
         System.assertEquals(false, FormValidationService.isValidIsraeliId('abc'), 'non-numeric fails');
 
-        String idSchema = '[{"key":"tz","label":"ת\"ז","type":"idNumber","required":true}]';
+        String idSchema = '[{"key":"tz","label":"תעודת זהות","type":"idNumber","required":true}]';
         List<String> errs = FormValidationService.validate(idSchema, new Map<String, Object>{ 'tz' => '123456789' });
         System.assert(!errs.isEmpty(), 'invalid id produces a validation error');
+        List<String> ok = FormValidationService.validate(idSchema, new Map<String, Object>{ 'tz' => '000000018' });
+        System.assert(ok.isEmpty(), 'valid id passes schema validation');
     }
 
     @isTest
