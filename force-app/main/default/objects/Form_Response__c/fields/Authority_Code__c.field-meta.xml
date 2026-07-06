@@ -5,5 +5,4 @@
     <description>The response's authority code (from Authority). Used by the restriction rule to isolate data per authority.</description>
     <type>Text</type>
     <formula>IF(ISBLANK(Authority__r.Code__c), &apos;&apos;, Authority__r.Code__c)</formula>
-    <formulaTreatBlanksAs>BlankAsBlanks</formulaTreatBlanksAs>
 </CustomField>
