@@ -235,6 +235,11 @@
         <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
+        <field>User.Authority__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
         <field>Service_Type__c.Department__c</field>
         <readable>true</readable>
         <editable>true</editable>

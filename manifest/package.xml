@@ -26,6 +26,7 @@
         <members>Form_Response__c.Authority__c</members>
         <members>Department__c.Authority__c</members>
         <members>Service_Type__c.Authority__c</members>
+        <members>User.Authority__c</members>
         <name>CustomField</name>
     </types>
     <types>

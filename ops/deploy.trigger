@@ -1,1 +1,1 @@
-deploy #29 — MT-1: Authority (tenant) object + per-authority AI config + remote site
+deploy #30 — MT-3 (safe): User->Authority mapping field + isolation runbook

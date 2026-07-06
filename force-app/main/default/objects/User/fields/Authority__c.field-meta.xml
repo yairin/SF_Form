@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Authority__c</fullName>
+    <label>Authority</label>
+    <description>The local authority (tenant) this user belongs to. Used to isolate data per authority.</description>
+    <type>Lookup</type>
+    <referenceTo>Authority__c</referenceTo>
+    <relationshipLabel>Users</relationshipLabel>
+    <relationshipName>Users</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+</CustomField>
