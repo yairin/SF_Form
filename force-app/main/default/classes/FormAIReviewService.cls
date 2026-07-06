@@ -137,11 +137,11 @@ public without sharing class FormAIReviewService {
     private static ReviewResult toResult(String verdictText) {
         ReviewResult out = new ReviewResult();
         try {
-            String json = verdictText;
-            Integer a = json.indexOf('{');
-            Integer b = json.lastIndexOf('}');
-            if (a >= 0 && b > a) json = json.substring(a, b + 1);
-            Map<String, Object> v = (Map<String, Object>) JSON.deserializeUntyped(json);
+            String raw = verdictText;
+            Integer a = raw.indexOf('{');
+            Integer b = raw.lastIndexOf('}');
+            if (a >= 0 && b > a) raw = raw.substring(a, b + 1);
+            Map<String, Object> v = (Map<String, Object>) JSON.deserializeUntyped(raw);
             Boolean complete = v.get('complete') == true;
             List<Object> missing = (v.get('missing') instanceof List<Object>) ? (List<Object>) v.get('missing') : new List<Object>();
             String notes = v.get('notes') == null ? '' : String.valueOf(v.get('notes'));

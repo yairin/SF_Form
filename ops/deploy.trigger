@@ -1,1 +1,1 @@
-deploy #25 — AI-2: AI review service (engine dispatch + attachments + verdict) + response fields
+deploy #26 — fix: case-insensitive var name shadowed JSON class
