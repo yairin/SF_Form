@@ -17,6 +17,26 @@ public without sharing class FormResponseController {
         String formName, String externalId, String payloadJson,
         String respondentName, String email, String phone, String subject
     ) {
+        // Authoritative server-side validation against the template schema.
+        if (String.isNotBlank(externalId) && externalId != 'preview') {
+            List<Form_Template__c> tpls = [
+                SELECT Schema_JSON__c FROM Form_Template__c
+                WHERE External_Id__c = :externalId AND Active__c = true LIMIT 1
+            ];
+            if (!tpls.isEmpty()) {
+                Map<String, Object> values;
+                try {
+                    values = (Map<String, Object>) JSON.deserializeUntyped(payloadJson);
+                } catch (Exception e) {
+                    values = new Map<String, Object>();
+                }
+                List<String> errs = FormValidationService.validate(tpls[0].Schema_JSON__c, values);
+                if (!errs.isEmpty()) {
+                    throw new AuraHandledException(String.join(errs, '\n'));
+                }
+            }
+        }
+
         Form_Response__c r = new Form_Response__c(
             Form_Name__c        = clip(formName, 255),
             Form_External_Id__c = clip(externalId, 255),

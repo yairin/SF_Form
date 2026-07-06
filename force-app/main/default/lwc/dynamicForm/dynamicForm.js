@@ -3,7 +3,23 @@ import { CurrentPageReference } from 'lightning/navigation';
 import getForm from '@salesforce/apex/FormRenderController.getForm';
 import submitResponse from '@salesforce/apex/FormResponseController.submitResponse';
 
-const TEXT_TYPES = { text: 'text', email: 'email', phone: 'tel', number: 'number', date: 'date' };
+const TEXT_TYPES = {
+    text: 'text', email: 'email', phone: 'tel', number: 'number',
+    currency: 'number', idNumber: 'text', date: 'date'
+};
+
+function isValidIsraeliId(id) {
+    const digits = String(id || '').replace(/\D/g, '');
+    if (!digits.length || digits.length > 9) return false;
+    const padded = digits.padStart(9, '0');
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+        let p = Number(padded[i]) * ((i % 2 === 0) ? 1 : 2);
+        if (p > 9) p -= 9;
+        sum += p;
+    }
+    return sum % 10 === 0;
+}
 
 export default class DynamicForm extends LightningElement {
     _ext;
@@ -65,6 +81,7 @@ export default class DynamicForm extends LightningElement {
         this.fields = parsed.map((f) => ({
             key: f.key,
             label: f.label,
+            type: f.type,
             required: !!f.required,
             mapTo: f.mapTo,
             options: (f.options || []).map((o) => ({ label: o, value: o })),
@@ -102,6 +119,12 @@ export default class DynamicForm extends LightningElement {
         const missing = this.fields.filter((f) => f.required && this.isEmpty(this.values[f.key]));
         if (missing.length) {
             this.error = 'נא למלא את שדות החובה: ' + missing.map((f) => f.label).join(', ');
+            return;
+        }
+        const badId = this.fields.filter((f) => f.type === 'idNumber'
+            && !this.isEmpty(this.values[f.key]) && !isValidIsraeliId(this.values[f.key]));
+        if (badId.length) {
+            this.error = 'תעודת זהות לא תקינה: ' + badId.map((f) => f.label).join(', ');
             return;
         }
         this.loading = true;

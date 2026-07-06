@@ -1,1 +1,1 @@
-deploy #17 — fix: replace CMDT with custom label (UNKNOWN_EXCEPTION on CMDT-record-with-type)
+deploy #18 — Gap Wave 1a: server-side validation + idNumber/currency field types

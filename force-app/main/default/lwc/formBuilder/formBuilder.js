@@ -8,7 +8,8 @@ import getPublicUrl from '@salesforce/apex/FormBuilderController.getPublicUrl';
 const CHOICE = new Set(['select', 'radio', 'checkboxGroup']);
 const TYPE_OPTIONS = [
     ['text', 'טקסט קצר'], ['textarea', 'טקסט ארוך'], ['email', 'אימייל'], ['phone', 'טלפון'],
-    ['number', 'מספר'], ['date', 'תאריך'], ['select', 'בחירה מרשימה'], ['radio', 'בחירה יחידה'],
+    ['number', 'מספר'], ['currency', 'סכום (₪)'], ['idNumber', 'תעודת זהות'], ['date', 'תאריך'],
+    ['select', 'בחירה מרשימה'], ['radio', 'בחירה יחידה'],
     ['checkbox', 'תיבת סימון'], ['checkboxGroup', 'בחירה מרובה']
 ];
 const MAP_OPTIONS = [
