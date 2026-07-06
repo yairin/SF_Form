@@ -1,1 +1,1 @@
-deploy #34 — Hebrew Authority label without startsWith
+deploy #35 — Authority_Code formula on Form_Response (for restriction rule)

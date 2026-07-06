@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Authority_Code__c</fullName>
+    <label>Authority Code</label>
+    <description>The response's authority code (from Authority). Used by the restriction rule to isolate data per authority.</description>
+    <type>Text</type>
+    <formula>IF(ISBLANK(Authority__r.Code__c), &apos;&apos;, Authority__r.Code__c)</formula>
+    <formulaTreatBlanksAs>BlankAsBlanks</formulaTreatBlanksAs>
+</CustomField>

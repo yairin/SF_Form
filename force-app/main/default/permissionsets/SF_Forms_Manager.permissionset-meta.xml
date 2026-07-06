@@ -185,6 +185,11 @@
         <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
+        <field>Form_Response__c.Authority_Code__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
         <field>Form_Template__c.Authority__c</field>
         <readable>true</readable>
         <editable>true</editable>
