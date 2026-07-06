@@ -108,6 +108,51 @@ private class FormResponseControllerTest {
             'file linked to the response');
     }
 
+    private class LlmMock implements HttpCalloutMock {
+        public HttpResponse respond(HttpRequest req) {
+            String verdict = JSON.serialize(new Map<String, Object>{
+                'complete' => true, 'missing' => new List<Object>(), 'notes' => 'ההגשה תקינה'
+            });
+            String body = JSON.serialize(new Map<String, Object>{
+                'content' => new List<Object>{ new Map<String, Object>{ 'type' => 'text', 'text' => verdict } }
+            });
+            HttpResponse res = new HttpResponse();
+            res.setStatusCode(200);
+            res.setBody(body);
+            return res;
+        }
+    }
+
+    @isTest
+    static void aiReviewExternalEngineApproves() {
+        FormSettingsController.saveSettings('External', 'https://api.example.com/v1/messages', 'claude-opus-4-8', 'k');
+        FormBuilderController.saveForm(null, 'טופס AI', 'תיאור', SCHEMA, 'ai-review-x', null);
+        Form_Template__c t = [SELECT Id FROM Form_Template__c WHERE External_Id__c = 'ai-review-x' LIMIT 1];
+        FormBuilderController.setAIConfig(t.Id, true, 'ודא שצורף מסמך רלוונטי.');
+        FormResponseController.Result r = FormResponseController.submitResponse(
+            'טופס AI', 'ai-review-x', '{"full_name":"פלוני","email":"a@b.com"}', 'פלוני', 'a@b.com', null, 'x');
+
+        Test.startTest();
+        Test.setMock(HttpCalloutMock.class, new LlmMock());
+        FormAIReviewService.ReviewResult rr = FormAIReviewService.runReview(r.id);
+        Test.stopTest();
+
+        System.assertEquals('Approved', rr.status, 'complete verdict maps to Approved');
+        System.assertEquals('Approved',
+            [SELECT AI_Status__c FROM Form_Response__c WHERE Id = :r.id].AI_Status__c, 'status written to record');
+    }
+
+    @isTest
+    static void aiReviewAgentforceStubReportsUnconfigured() {
+        FormSettingsController.saveSettings('Agentforce', null, null, null);
+        FormResponseController.Result r = FormResponseController.submitResponse(
+            'טופס', 'preview', '{}', null, null, null, null);
+        Test.startTest();
+        FormAIReviewService.ReviewResult rr = FormAIReviewService.runReview(r.id);
+        Test.stopTest();
+        System.assertEquals('Error', rr.status, 'agentforce not wired yet -> Error status');
+    }
+
     @isTest
     static void previewAndUnknownFormSkipValidation() {
         // externalId 'preview' and unknown ids must not error (no template to validate against)

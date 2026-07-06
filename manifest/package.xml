@@ -31,6 +31,10 @@
         <members>Form_Response__c.Subject__c</members>
         <members>Form_Response__c.Status__c</members>
         <members>Form_Response__c.Source_IP__c</members>
+        <members>Form_Response__c.AI_Status__c</members>
+        <members>Form_Response__c.AI_Findings__c</members>
+        <members>Form_Response__c.AI_Reviewed_At__c</members>
+        <members>Form_Response__c.Update_Token__c</members>
         <members>Form_Answer__c.Form_Response__c</members>
         <members>Form_Answer__c.Field_Key__c</members>
         <members>Form_Answer__c.Field_Label__c</members>
@@ -54,6 +58,7 @@
         <members>FormValidationService</members>
         <members>FormSettingsController</members>
         <members>FormFileService</members>
+        <members>FormAIReviewService</members>
         <name>ApexClass</name>
     </types>
     <types>

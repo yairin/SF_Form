@@ -24,6 +24,10 @@
         <apexClass>FormFileService</apexClass>
         <enabled>true</enabled>
     </classAccesses>
+    <classAccesses>
+        <apexClass>FormAIReviewService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <description>Full access to form responses, answers and templates for CRM managers who review, manage, build and report on forms.</description>
     <fieldPermissions>
         <field>Form_Response__c.Form_Name__c</field>
@@ -147,6 +151,26 @@
     </fieldPermissions>
     <fieldPermissions>
         <field>Form_Response__c.SLA_Due__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Form_Response__c.AI_Status__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Form_Response__c.AI_Findings__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Form_Response__c.AI_Reviewed_At__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Form_Response__c.Update_Token__c</field>
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>
