@@ -1,1 +1,1 @@
-deploy #32 — rename Authority name field label to Hebrew
+deploy #33 — Hebrew object label for Authority (רשות/רשויות)

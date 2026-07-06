@@ -6,8 +6,9 @@
     <enableHistory>false</enableHistory>
     <enableReports>true</enableReports>
     <enableSearch>true</enableSearch>
-    <label>Authority</label>
-    <pluralLabel>Authorities</pluralLabel>
+    <label>רשות</label>
+    <pluralLabel>רשויות</pluralLabel>
+    <startsWith>Consonant</startsWith>
     <nameField>
         <label>שם הרשות</label>
         <type>Text</type>
