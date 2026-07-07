@@ -1,1 +1,1 @@
-deploy #41 — fix public site base URL to site root (not /forms)
+deploy #42 — clickable AI toggle + structured AI options (check attachments / contact applicant)

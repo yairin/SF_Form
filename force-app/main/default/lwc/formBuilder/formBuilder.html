@@ -26,14 +26,16 @@
 
                 <!-- AI review configuration -->
                 <div class="slds-box slds-box_xx-small slds-m-bottom_small slds-theme_shade">
-                    <label class="slds-checkbox_standalone slds-text-title_bold">
-                        <input type="checkbox" checked={aiEnabled} onchange={handleAiEnabled} /> בדיקת AI לטופס זה
-                    </label>
+                    <lightning-input type="checkbox" label="בדיקת AI לטופס זה" checked={aiEnabled} onchange={handleAiEnabled}></lightning-input>
                     <template lwc:if={aiEnabled}>
-                        <div class="slds-form-element slds-p-top_x-small">
-                            <label class="slds-form-element__label">מה על ה-AI לבדוק? (למשל: "ודא שצורף צילום ת"ז קריא ואישור תושב")</label>
-                            <textarea class="slds-textarea" value={aiInstructions} onchange={handleAiInstructions}
-                                placeholder="תאר מה נדרש שהסוכן יוודא בכל הגשה"></textarea>
+                        <div class="slds-p-top_x-small">
+                            <lightning-input type="checkbox" label="בדוק שהקבצים המצורפים תואמים לנדרש" checked={aiCheckAttachments} onchange={handleAiCheckAttachments}></lightning-input>
+                            <lightning-input type="checkbox" label="פנייה יזומה לפונה אם חסר מידע/מסמך" checked={aiContactApplicant} onchange={handleAiContactApplicant}></lightning-input>
+                            <div class="slds-form-element slds-p-top_x-small">
+                                <label class="slds-form-element__label">הנחיות נוספות ל-AI (מה לוודא)</label>
+                                <textarea class="slds-textarea" value={aiInstructions} onchange={handleAiInstructions}
+                                    placeholder="למשל: ודא שצורף צילום תעודת זהות קריא ואישור תושב"></textarea>
+                            </div>
                         </div>
                     </template>
                 </div>

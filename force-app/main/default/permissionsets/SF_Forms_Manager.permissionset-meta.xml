@@ -140,6 +140,16 @@
         <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
+        <field>Form_Template__c.AI_Check_Attachments__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Form_Template__c.AI_Contact_Applicant__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
         <field>Form_Response__c.Department__c</field>
         <readable>true</readable>
         <editable>true</editable>

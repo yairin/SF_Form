@@ -63,6 +63,8 @@
         <members>Form_Answer__c.Value_Date__c</members>
         <members>Form_Template__c.AI_Review_Enabled__c</members>
         <members>Form_Template__c.AI_Review_Instructions__c</members>
+        <members>Form_Template__c.AI_Check_Attachments__c</members>
+        <members>Form_Template__c.AI_Contact_Applicant__c</members>
         <name>CustomField</name>
     </types>
     <types>

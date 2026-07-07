@@ -91,11 +91,18 @@ public without sharing class FormAIReviewService {
         String instructions = '';
         if (String.isNotBlank(r.Form_External_Id__c)) {
             List<Form_Template__c> t = [
-                SELECT AI_Review_Instructions__c FROM Form_Template__c
+                SELECT AI_Review_Instructions__c, AI_Check_Attachments__c, AI_Contact_Applicant__c
+                FROM Form_Template__c
                 WHERE External_Id__c = :r.Form_External_Id__c LIMIT 1
             ];
-            if (!t.isEmpty() && t[0].AI_Review_Instructions__c != null) {
-                instructions = t[0].AI_Review_Instructions__c;
+            if (!t.isEmpty()) {
+                if (t[0].AI_Review_Instructions__c != null) instructions = t[0].AI_Review_Instructions__c;
+                if (t[0].AI_Check_Attachments__c == true) {
+                    instructions += '\n- ודא שכל הקבצים המצורפים קריאים ותואמים למסמכים הנדרשים.';
+                }
+                if (t[0].AI_Contact_Applicant__c == true) {
+                    instructions += '\n- אם חסר מידע או מסמך, ציין במפורש מה חסר כדי שנפנה לפונה להשלמה.';
+                }
             }
         }
 

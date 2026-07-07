@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>AI_Contact_Applicant__c</fullName>
+    <label>AI Contact Applicant</label>
+    <description>Allow the AI agent to proactively email the applicant a completion link when something is missing.</description>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>

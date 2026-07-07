@@ -71,11 +71,13 @@ private class FormBuilderControllerTest {
         String schema = '[{"key":"a","label":"שדה","type":"text","required":true}]';
         Form_Template__c t = FormBuilderController.saveForm(null, 'טופס AI', 'תיאור', schema, 'ai-cfg', null);
         Test.startTest();
-        FormBuilderController.setAIConfig(t.Id, true, 'ודא שצורף צילום תעודת זהות קריא.');
+        FormBuilderController.setAIConfig(t.Id, true, 'ודא שצורף צילום תעודת זהות קריא.', true, true);
         Test.stopTest();
         Form_Template__c fetched = FormBuilderController.getTemplate(t.Id);
         System.assertEquals(true, fetched.AI_Review_Enabled__c, 'AI review enabled persisted');
         System.assert(fetched.AI_Review_Instructions__c.contains('תעודת זהות'), 'instructions persisted');
+        System.assertEquals(true, fetched.AI_Check_Attachments__c, 'check attachments persisted');
+        System.assertEquals(true, fetched.AI_Contact_Applicant__c, 'contact applicant persisted');
     }
 
     @isTest

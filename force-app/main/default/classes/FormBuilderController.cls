@@ -67,7 +67,8 @@ public with sharing class FormBuilderController {
     public static Form_Template__c getTemplate(Id recordId) {
         return [
             SELECT Id, Name, Description__c, Schema_JSON__c, External_Id__c, Active__c, Service_Type__c,
-                   AI_Review_Enabled__c, AI_Review_Instructions__c
+                   AI_Review_Enabled__c, AI_Review_Instructions__c,
+                   AI_Check_Attachments__c, AI_Contact_Applicant__c
             FROM Form_Template__c
             WHERE Id = :recordId
             LIMIT 1
@@ -76,10 +77,13 @@ public with sharing class FormBuilderController {
 
     /** Save the AI-review expectations defined by the form creator. */
     @AuraEnabled
-    public static void setAIConfig(Id recordId, Boolean enabled, String instructions) {
+    public static void setAIConfig(Id recordId, Boolean enabled, String instructions,
+                                   Boolean checkAttachments, Boolean contactApplicant) {
         Form_Template__c f = [SELECT Id FROM Form_Template__c WHERE Id = :recordId LIMIT 1];
         f.AI_Review_Enabled__c = enabled == true;
         f.AI_Review_Instructions__c = instructions;
+        f.AI_Check_Attachments__c = checkAttachments == true;
+        f.AI_Contact_Applicant__c = contactApplicant == true;
         update f;
     }
 

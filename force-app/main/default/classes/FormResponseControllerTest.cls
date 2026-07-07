@@ -128,7 +128,7 @@ private class FormResponseControllerTest {
         FormSettingsController.saveSettings('External', 'https://api.example.com/v1/messages', 'claude-opus-4-8', 'k');
         FormBuilderController.saveForm(null, 'טופס AI', 'תיאור', SCHEMA, 'ai-review-x', null);
         Form_Template__c t = [SELECT Id FROM Form_Template__c WHERE External_Id__c = 'ai-review-x' LIMIT 1];
-        FormBuilderController.setAIConfig(t.Id, true, 'ודא שצורף מסמך רלוונטי.');
+        FormBuilderController.setAIConfig(t.Id, true, 'ודא שצורף מסמך רלוונטי.', true, true);
         FormResponseController.Result r = FormResponseController.submitResponse(
             'טופס AI', 'ai-review-x', '{"full_name":"פלוני","email":"a@b.com"}', 'פלוני', 'a@b.com', null, 'x');
 

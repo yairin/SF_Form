@@ -27,6 +27,8 @@ export default class FormBuilder extends LightningElement {
     serviceTypes = [];
     aiEnabled = false;
     aiInstructions = '';
+    aiCheckAttachments = false;
+    aiContactApplicant = false;
     steps = [{ title: '', fields: [{ type: 'text', label: '', required: true, options: '', mapTo: 'respondentName' }] }];
 
     savedExternalId;
@@ -57,6 +59,8 @@ export default class FormBuilder extends LightningElement {
         this.serviceTypeId = '';
         this.aiEnabled = false;
         this.aiInstructions = '';
+        this.aiCheckAttachments = false;
+        this.aiContactApplicant = false;
         this.steps = [newStep()];
         this._editExternalId = undefined;
         this.savedExternalId = undefined;
@@ -75,6 +79,8 @@ export default class FormBuilder extends LightningElement {
             this.serviceTypeId = t.Service_Type__c || '';
             this.aiEnabled = t.AI_Review_Enabled__c === true;
             this.aiInstructions = t.AI_Review_Instructions__c || '';
+            this.aiCheckAttachments = t.AI_Check_Attachments__c === true;
+            this.aiContactApplicant = t.AI_Contact_Applicant__c === true;
             this._editExternalId = t.External_Id__c;
             let parsed = [];
             try { parsed = JSON.parse(t.Schema_JSON__c || '[]'); } catch (e) { parsed = []; }
@@ -182,6 +188,8 @@ export default class FormBuilder extends LightningElement {
     handleDesc(e) { this.description = e.target.value; }
     handleAiEnabled(e) { this.aiEnabled = e.target.checked; }
     handleAiInstructions(e) { this.aiInstructions = e.target.value; }
+    handleAiCheckAttachments(e) { this.aiCheckAttachments = e.target.checked; }
+    handleAiContactApplicant(e) { this.aiContactApplicant = e.target.checked; }
 
     buildSchema() {
         const seen = {};
@@ -247,7 +255,13 @@ export default class FormBuilder extends LightningElement {
             this.savedExternalId = (saved && saved.External_Id__c) || externalId;
             if (saved && saved.Id) {
                 try {
-                    await setAIConfig({ recordId: saved.Id, enabled: this.aiEnabled, instructions: this.aiInstructions });
+                    await setAIConfig({
+                        recordId: saved.Id,
+                        enabled: this.aiEnabled,
+                        instructions: this.aiInstructions,
+                        checkAttachments: this.aiCheckAttachments,
+                        contactApplicant: this.aiContactApplicant
+                    });
                 } catch (e) { /* non-fatal */ }
             }
             try { this.savedUrl = await getPublicUrl({ externalId: this.savedExternalId }); } catch (e) { /* ignore */ }
