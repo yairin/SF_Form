@@ -1,1 +1,1 @@
-deploy #43 — Gap Wave 2: Results tab (filter/sort/select) + charts + AI insights
+deploy #44 — fix null Boolean NPE in results summary + broaden coverage

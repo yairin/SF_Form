@@ -69,20 +69,29 @@ private class FormBuilderControllerTest {
     @isTest
     static void resultsAggregationAndInsights() {
         String schema = '[{"key":"track","label":"מסלול","type":"select","options":["בוקר","ערב"]},'
-            + '{"key":"num","label":"מספר משתתפים","type":"number"}]';
+            + '{"key":"num","label":"מספר משתתפים","type":"number"},'
+            + '{"key":"note","label":"הערה","type":"textarea"}]';
         FormBuilderController.saveForm(null, 'טופס תוצאות', '', schema, 'res-x', null);
-        FormResponseController.submitResponse('t', 'res-x', '{"track":"בוקר","num":"5"}', null, null, null, 'x');
+        FormResponseController.submitResponse('t', 'res-x', '{"track":"בוקר","num":"5","note":"א"}', null, null, null, 'x');
         FormResponseController.submitResponse('t', 'res-x', '{"track":"בוקר","num":"3"}', null, null, null, 'x');
+        // a second, empty form to cover the no-responses path
+        FormBuilderController.saveForm(null, 'טופס ריק', '', schema, 'res-empty', null);
 
         Test.startTest();
         FormResultsController.Results r = FormResultsController.getResults('res-x');
         String insights = FormResultsController.getAiInsights('res-x');
+        FormResultsController.Results empty = FormResultsController.getResults('res-empty');
+        String emptyInsights = FormResultsController.getAiInsights('res-empty');
+        FormResultsController.Results missing = FormResultsController.getResults('no-such-form');
         Test.stopTest();
 
         System.assertEquals(2, r.total, 'two submissions aggregated');
-        System.assertEquals(2, r.fields.size(), 'two fields analyzed');
+        System.assertEquals(3, r.fields.size(), 'three fields analyzed');
         System.assert(r.summary.contains('2'), 'summary mentions the count');
         System.assert(String.isNotBlank(insights), 'insights returned (rule-based fallback with no engine)');
+        System.assertEquals(0, empty.total, 'empty form has no submissions');
+        System.assert(String.isNotBlank(emptyInsights), 'empty insights handled');
+        System.assertEquals(0, missing.total, 'missing form returns zero');
     }
 
     @isTest

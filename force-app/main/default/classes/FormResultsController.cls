@@ -136,11 +136,11 @@ public with sharing class FormResultsController {
         if (r.total == 0) return 'עדיין אין הגשות לטופס זה.';
         List<String> parts = new List<String>{ 'התקבלו ' + r.total + ' הגשות.' };
         for (FieldResult fr : r.fields) {
-            if (fr.isBar && fr.buckets != null && !fr.buckets.isEmpty()) {
+            if (fr.isBar == true && fr.buckets != null && !fr.buckets.isEmpty()) {
                 Bucket top = null;
                 for (Bucket b : fr.buckets) { if (top == null || b.count > top.count) top = b; }
                 if (top != null) parts.add('בשדה "' + fr.label + '" הבחירה הנפוצה: "' + top.label + '" (' + top.percent + '%).');
-            } else if (fr.isStat && fr.avg != null) {
+            } else if (fr.isStat == true && fr.avg != null) {
                 parts.add('ממוצע "' + fr.label + '": ' + fr.avg + ' (טווח ' + fr.minV + '–' + fr.maxV + ').');
             }
         }
@@ -150,11 +150,11 @@ public with sharing class FormResultsController {
     private static String aggregationText(Results r) {
         List<String> lines = new List<String>();
         for (FieldResult fr : r.fields) {
-            if (fr.isBar && fr.buckets != null) {
+            if (fr.isBar == true && fr.buckets != null) {
                 List<String> bs = new List<String>();
                 for (Bucket b : fr.buckets) bs.add(b.label + '=' + b.count);
                 lines.add('- ' + fr.label + ': ' + String.join(bs, ', '));
-            } else if (fr.isStat && fr.avg != null) {
+            } else if (fr.isStat == true && fr.avg != null) {
                 lines.add('- ' + fr.label + ': ממוצע ' + fr.avg + ', מינ ' + fr.minV + ', מקס ' + fr.maxV);
             } else {
                 lines.add('- ' + fr.label + ': מולא ב-' + fr.filled + ' הגשות');
