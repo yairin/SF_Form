@@ -67,6 +67,25 @@ private class FormBuilderControllerTest {
     }
 
     @isTest
+    static void resultsAggregationAndInsights() {
+        String schema = '[{"key":"track","label":"מסלול","type":"select","options":["בוקר","ערב"]},'
+            + '{"key":"num","label":"מספר משתתפים","type":"number"}]';
+        FormBuilderController.saveForm(null, 'טופס תוצאות', '', schema, 'res-x', null);
+        FormResponseController.submitResponse('t', 'res-x', '{"track":"בוקר","num":"5"}', null, null, null, 'x');
+        FormResponseController.submitResponse('t', 'res-x', '{"track":"בוקר","num":"3"}', null, null, null, 'x');
+
+        Test.startTest();
+        FormResultsController.Results r = FormResultsController.getResults('res-x');
+        String insights = FormResultsController.getAiInsights('res-x');
+        Test.stopTest();
+
+        System.assertEquals(2, r.total, 'two submissions aggregated');
+        System.assertEquals(2, r.fields.size(), 'two fields analyzed');
+        System.assert(r.summary.contains('2'), 'summary mentions the count');
+        System.assert(String.isNotBlank(insights), 'insights returned (rule-based fallback with no engine)');
+    }
+
+    @isTest
     static void aiReviewConfigPersists() {
         String schema = '[{"key":"a","label":"שדה","type":"text","required":true}]';
         Form_Template__c t = FormBuilderController.saveForm(null, 'טופס AI', 'תיאור', schema, 'ai-cfg', null);

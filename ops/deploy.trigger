@@ -1,1 +1,1 @@
-deploy #42 — clickable AI toggle + structured AI options (check attachments / contact applicant)
+deploy #43 — Gap Wave 2: Results tab (filter/sort/select) + charts + AI insights

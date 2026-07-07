@@ -1,0 +1,165 @@
+/**
+ * Aggregates the submissions of a form into per-field distributions/stats and a
+ * summary, for the Results tab. with sharing so per-authority restriction rules
+ * apply (managers see only their authority's data).
+ */
+public with sharing class FormResultsController {
+
+    public class Bucket {
+        @AuraEnabled public String label;
+        @AuraEnabled public Integer count;
+        @AuraEnabled public Integer percent;
+    }
+    public class FieldResult {
+        @AuraEnabled public String key;
+        @AuraEnabled public String label;
+        @AuraEnabled public String type;
+        @AuraEnabled public Boolean isBar;
+        @AuraEnabled public Boolean isStat;
+        @AuraEnabled public Integer filled;
+        @AuraEnabled public List<Bucket> buckets;
+        @AuraEnabled public Decimal avg;
+        @AuraEnabled public Decimal minV;
+        @AuraEnabled public Decimal maxV;
+    }
+    public class Results {
+        @AuraEnabled public String formName;
+        @AuraEnabled public String externalId;
+        @AuraEnabled public Integer total;
+        @AuraEnabled public List<FieldResult> fields;
+        @AuraEnabled public String summary;
+    }
+
+    private static final Set<String> CAT = new Set<String>{ 'select', 'radio', 'checkbox', 'checkboxGroup' };
+
+    @AuraEnabled(cacheable=true)
+    public static Results getResults(String externalId) {
+        Results res = new Results();
+        res.externalId = externalId;
+        res.fields = new List<FieldResult>();
+        res.total = 0;
+
+        List<Form_Template__c> tpls = [
+            SELECT Name, Schema_JSON__c FROM Form_Template__c WHERE External_Id__c = :externalId LIMIT 1
+        ];
+        if (tpls.isEmpty()) { res.summary = 'הטופס לא נמצא.'; return res; }
+        res.formName = tpls[0].Name;
+
+        List<Object> schemaFields = FormValidationService.flattenFields(tpls[0].Schema_JSON__c);
+
+        List<Map<String, Object>> payloads = new List<Map<String, Object>>();
+        for (Form_Response__c r : [
+            SELECT Response_Data__c FROM Form_Response__c WHERE Form_External_Id__c = :externalId
+        ]) {
+            try { payloads.add((Map<String, Object>) JSON.deserializeUntyped(r.Response_Data__c)); }
+            catch (Exception e) { /* skip malformed */ }
+        }
+        res.total = payloads.size();
+
+        for (Object fo : schemaFields) {
+            if (!(fo instanceof Map<String, Object>)) continue;
+            Map<String, Object> f = (Map<String, Object>) fo;
+            String key = (String) f.get('key');
+            String type = (String) f.get('type');
+            FieldResult fr = new FieldResult();
+            fr.key = key;
+            fr.label = f.get('label') == null ? key : (String) f.get('label');
+            fr.type = type;
+
+            if (CAT.contains(type)) {
+                fr.isBar = true;
+                Map<String, Integer> counts = new Map<String, Integer>();
+                Integer nonEmpty = 0;
+                for (Map<String, Object> p : payloads) {
+                    Object v = key == null ? null : p.get(key);
+                    if (v == null) continue;
+                    String sv = String.valueOf(v).trim();
+                    if (String.isBlank(sv)) continue;
+                    nonEmpty++;
+                    for (String part : sv.split(';')) {
+                        String t = part.trim();
+                        if (String.isBlank(t)) continue;
+                        counts.put(t, (counts.containsKey(t) ? counts.get(t) : 0) + 1);
+                    }
+                }
+                fr.filled = nonEmpty;
+                fr.buckets = new List<Bucket>();
+                Integer denom = nonEmpty == 0 ? 1 : nonEmpty;
+                for (String k : counts.keySet()) {
+                    Bucket b = new Bucket();
+                    b.label = k;
+                    b.count = counts.get(k);
+                    b.percent = (Integer) Math.round(100.0 * counts.get(k) / denom);
+                    fr.buckets.add(b);
+                }
+            } else if (type == 'number' || type == 'currency') {
+                fr.isStat = true;
+                Decimal sum = 0; Integer c = 0; Decimal mn = null; Decimal mx = null;
+                for (Map<String, Object> p : payloads) {
+                    Object v = key == null ? null : p.get(key);
+                    if (v == null) continue;
+                    try {
+                        Decimal d = Decimal.valueOf(String.valueOf(v).trim());
+                        sum += d; c++;
+                        if (mn == null || d < mn) mn = d;
+                        if (mx == null || d > mx) mx = d;
+                    } catch (Exception e) { /* non-numeric */ }
+                }
+                fr.filled = c;
+                if (c > 0) { fr.avg = (sum / c).setScale(2); fr.minV = mn; fr.maxV = mx; }
+            } else {
+                Integer c = 0;
+                for (Map<String, Object> p : payloads) {
+                    Object v = key == null ? null : p.get(key);
+                    if (v != null && String.isNotBlank(String.valueOf(v))) c++;
+                }
+                fr.filled = c;
+            }
+            res.fields.add(fr);
+        }
+        res.summary = buildSummary(res);
+        return res;
+    }
+
+    /** LLM-enriched insights when an external engine is configured; else the rule-based summary. */
+    @AuraEnabled
+    public static String getAiInsights(String externalId) {
+        Results r = getResults(externalId);
+        if (r.total == 0) return r.summary;
+        String prompt = 'תוצאות הטופס "' + r.formName + '" (' + r.total + ' הגשות):\n'
+            + aggregationText(r) + '\n\nספק 3–5 תובנות קצרות ומועילות בעברית.';
+        String ai = FormAIReviewService.narrate(prompt);
+        return String.isBlank(ai) ? r.summary : ai;
+    }
+
+    private static String buildSummary(Results r) {
+        if (r.total == 0) return 'עדיין אין הגשות לטופס זה.';
+        List<String> parts = new List<String>{ 'התקבלו ' + r.total + ' הגשות.' };
+        for (FieldResult fr : r.fields) {
+            if (fr.isBar && fr.buckets != null && !fr.buckets.isEmpty()) {
+                Bucket top = null;
+                for (Bucket b : fr.buckets) { if (top == null || b.count > top.count) top = b; }
+                if (top != null) parts.add('בשדה "' + fr.label + '" הבחירה הנפוצה: "' + top.label + '" (' + top.percent + '%).');
+            } else if (fr.isStat && fr.avg != null) {
+                parts.add('ממוצע "' + fr.label + '": ' + fr.avg + ' (טווח ' + fr.minV + '–' + fr.maxV + ').');
+            }
+        }
+        return String.join(parts, ' ');
+    }
+
+    private static String aggregationText(Results r) {
+        List<String> lines = new List<String>();
+        for (FieldResult fr : r.fields) {
+            if (fr.isBar && fr.buckets != null) {
+                List<String> bs = new List<String>();
+                for (Bucket b : fr.buckets) bs.add(b.label + '=' + b.count);
+                lines.add('- ' + fr.label + ': ' + String.join(bs, ', '));
+            } else if (fr.isStat && fr.avg != null) {
+                lines.add('- ' + fr.label + ': ממוצע ' + fr.avg + ', מינ ' + fr.minV + ', מקס ' + fr.maxV);
+            } else {
+                lines.add('- ' + fr.label + ': מולא ב-' + fr.filled + ' הגשות');
+            }
+        }
+        return String.join(lines, '\n');
+    }
+}

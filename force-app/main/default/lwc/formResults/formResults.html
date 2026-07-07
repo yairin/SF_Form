@@ -1,0 +1,94 @@
+<template>
+    <div dir="rtl">
+        <lightning-card title="תוצאות טפסים" icon-name="standard:dashboard">
+            <!-- LIST -->
+            <template lwc:if={isList}>
+                <div class="slds-p-horizontal_small slds-p-bottom_small">
+                    <lightning-input type="search" label="חיפוש טופס" variant="label-hidden"
+                        placeholder="חפש לפי שם או מזהה..." value={search} onchange={handleSearch}></lightning-input>
+                </div>
+                <div class="slds-p-horizontal_small">
+                    <template lwc:if={hasRows}>
+                        <lightning-datatable
+                            key-field="id"
+                            data={rows}
+                            columns={columns}
+                            hide-checkbox-column
+                            sorted-by={sortBy}
+                            sorted-direction={sortDirection}
+                            onsort={handleSort}
+                            onrowaction={handleRowAction}>
+                        </lightning-datatable>
+                    </template>
+                    <template lwc:else>
+                        <p class="slds-text-color_weak slds-p-around_medium slds-text-align_center">אין טפסים.</p>
+                    </template>
+                </div>
+            </template>
+
+            <!-- DETAIL -->
+            <template lwc:else>
+                <div class="slds-p-around_small">
+                    <lightning-button label="← חזרה לרשימה" variant="neutral" onclick={back} class="slds-m-bottom_small"></lightning-button>
+
+                    <template lwc:if={results}>
+                        <h2 class="slds-text-heading_medium">{results.formName}</h2>
+                        <p class="slds-text-title_bold slds-p-vertical_x-small">סה"כ הגשות: {results.total}</p>
+
+                        <template lwc:if={noData}>
+                            <p class="slds-text-color_weak slds-p-around_medium">עדיין אין הגשות לטופס זה.</p>
+                        </template>
+
+                        <template lwc:else>
+                            <!-- Summary / AI insights -->
+                            <div class="slds-box slds-box_x-small slds-m-vertical_small slds-theme_shade">
+                                <div class="slds-text-title_bold slds-p-bottom_xx-small">תובנות</div>
+                                <div style="white-space:pre-wrap;">
+                                    <template lwc:if={aiText}>{aiText}</template>
+                                    <template lwc:else>{results.summary}</template>
+                                </div>
+                                <div class="slds-p-top_x-small">
+                                    <lightning-button label="הפק תובנות AI" variant="brand" onclick={runAi} disabled={loading}></lightning-button>
+                                </div>
+                            </div>
+
+                            <!-- Charts per field -->
+                            <template for:each={results.fields} for:item="f">
+                                <div key={f.key} class="slds-box slds-box_x-small slds-m-bottom_small">
+                                    <div class="slds-text-title_bold slds-p-bottom_xx-small">{f.label}</div>
+
+                                    <template lwc:if={f.isBar}>
+                                        <template for:each={f.buckets} for:item="b">
+                                            <div key={b.label} class="slds-grid slds-grid_vertical-align-center slds-p-vertical_xxx-small">
+                                                <div class="slds-col slds-size_3-of-12 slds-truncate" title={b.label}>{b.label}</div>
+                                                <div class="slds-col slds-size_7-of-12">
+                                                    <div style="background:#e5e5e5;border-radius:4px;overflow:hidden;">
+                                                        <div style={b.barStyle} class="slds-p-vertical_xx-small" data-bar="1">&nbsp;</div>
+                                                    </div>
+                                                </div>
+                                                <div class="slds-col slds-size_2-of-12 slds-text-align_left">{b.count} ({b.percent}%)</div>
+                                            </div>
+                                        </template>
+                                    </template>
+
+                                    <template lwc:elseif={f.isStat}>
+                                        <div class="slds-grid slds-gutters_x-small slds-wrap">
+                                            <div class="slds-col"><span class="slds-text-color_weak">ממוצע:</span> {f.avg}</div>
+                                            <div class="slds-col"><span class="slds-text-color_weak">מינ׳:</span> {f.minV}</div>
+                                            <div class="slds-col"><span class="slds-text-color_weak">מקס׳:</span> {f.maxV}</div>
+                                            <div class="slds-col"><span class="slds-text-color_weak">מולא:</span> {f.filled}</div>
+                                        </div>
+                                    </template>
+
+                                    <template lwc:else>
+                                        <div class="slds-text-body_small slds-text-color_weak">מולא ב-{f.filled} הגשות</div>
+                                    </template>
+                                </div>
+                            </template>
+                        </template>
+                    </template>
+                </div>
+            </template>
+        </lightning-card>
+    </div>
+</template>

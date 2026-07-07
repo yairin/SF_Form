@@ -173,6 +173,38 @@ public without sharing class FormAIReviewService {
             + '\n\nמה נדרש לוודא:\n' + (String.isBlank(instructions) ? 'ודא שההגשה מלאה והצרופות מתאימות.' : instructions);
     }
 
+    /**
+     * Generic narrative helper for analytics: sends a prompt to the org-default
+     * external LLM and returns the text, or null if no external engine is configured
+     * (callers fall back to a rule-based summary).
+     */
+    public static String narrate(String userPrompt) {
+        Form_AI_Setting__c s = Form_AI_Setting__c.getOrgDefaults();
+        if (s == null || s.Engine__c != 'External' || String.isBlank(s.LLM_Endpoint__c)) {
+            return null;
+        }
+        try {
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint(s.LLM_Endpoint__c);
+            req.setMethod('POST');
+            req.setHeader('Content-Type', 'application/json');
+            req.setHeader('x-api-key', s.LLM_API_Key__c == null ? '' : s.LLM_API_Key__c);
+            req.setHeader('anthropic-version', '2023-06-01');
+            req.setTimeout(120000);
+            Map<String, Object> body = new Map<String, Object>{
+                'model' => String.isBlank(s.LLM_Model__c) ? 'claude-opus-4-8' : s.LLM_Model__c,
+                'max_tokens' => 1024,
+                'system' => 'אתה אנליסט נתונים לרשות מקומית. ספק תובנות קצרות, ברורות ומועילות בעברית על תוצאות הטופס.',
+                'messages' => new List<Object>{ new Map<String, Object>{ 'role' => 'user', 'content' => userPrompt } }
+            };
+            req.setBody(JSON.serialize(body));
+            HttpResponse resp = new Http().send(req);
+            return extractText(resp.getBody());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private static String coalesce(String a, String b, String c) {
         if (String.isNotBlank(a)) return a;
         if (String.isNotBlank(b)) return b;
