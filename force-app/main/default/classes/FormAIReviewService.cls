@@ -199,7 +199,10 @@ public without sharing class FormAIReviewService {
             };
             req.setBody(JSON.serialize(body));
             HttpResponse resp = new Http().send(req);
-            return extractText(resp.getBody());
+            if (resp.getStatusCode() != 200) return null; // e.g. low credit / bad key -> caller falls back
+            String txt = extractText(resp.getBody());
+            // if the body wasn't a valid content response, don't surface raw JSON
+            return (txt != null && txt.startsWith('{')) ? null : txt;
         } catch (Exception e) {
             return null;
         }
@@ -234,6 +237,12 @@ public without sharing class FormAIReviewService {
         req.setBody(JSON.serialize(body));
 
         HttpResponse res = new Http().send(req);
+        if (res.getStatusCode() != 200) {
+            ReviewResult err = new ReviewResult();
+            err.status = 'Error';
+            err.findings = 'שגיאת מנוע AI (קוד ' + res.getStatusCode() + '). ודא מפתח/יתרת קרדיט תקינים בהגדרות.';
+            return err;
+        }
         String verdictText = extractText(res.getBody());
         return toResult(verdictText);
     }

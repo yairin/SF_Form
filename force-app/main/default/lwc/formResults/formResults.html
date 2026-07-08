@@ -32,8 +32,15 @@
                     <lightning-button label="← חזרה לרשימה" variant="neutral" onclick={back} class="slds-m-bottom_small"></lightning-button>
 
                     <template lwc:if={results}>
-                        <h2 class="slds-text-heading_medium">{results.formName}</h2>
-                        <p class="slds-text-title_bold slds-p-vertical_x-small">סה"כ הגשות: {results.total}</p>
+                        <h2 class="slds-text-heading_medium slds-p-bottom_x-small">{results.formName}</h2>
+
+                        <!-- KPI tiles -->
+                        <div class="slds-grid slds-gutters_x-small slds-wrap slds-p-bottom_small">
+                            <div class="slds-col"><div class="kpi kpi-total"><div class="kpi-num">{results.total}</div><div class="kpi-lbl">סה"כ הגשות</div></div></div>
+                            <div class="slds-col"><div class="kpi kpi-ok"><div class="kpi-num">{results.approved}</div><div class="kpi-lbl">אושרו</div></div></div>
+                            <div class="slds-col"><div class="kpi kpi-warn"><div class="kpi-num">{results.needsInfo}</div><div class="kpi-lbl">נדרשת השלמה</div></div></div>
+                            <div class="slds-col"><div class="kpi kpi-pending"><div class="kpi-num">{results.pending}</div><div class="kpi-lbl">בהמתנה/לא נבדק</div></div></div>
+                        </div>
 
                         <template lwc:if={noData}>
                             <p class="slds-text-color_weak slds-p-around_medium">עדיין אין הגשות לטופס זה.</p>

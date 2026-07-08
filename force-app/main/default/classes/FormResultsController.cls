@@ -26,6 +26,9 @@ public with sharing class FormResultsController {
         @AuraEnabled public String formName;
         @AuraEnabled public String externalId;
         @AuraEnabled public Integer total;
+        @AuraEnabled public Integer approved;
+        @AuraEnabled public Integer needsInfo;
+        @AuraEnabled public Integer pending;
         @AuraEnabled public List<FieldResult> fields;
         @AuraEnabled public String summary;
     }
@@ -48,13 +51,20 @@ public with sharing class FormResultsController {
         List<Object> schemaFields = FormValidationService.flattenFields(tpls[0].Schema_JSON__c);
 
         List<Map<String, Object>> payloads = new List<Map<String, Object>>();
+        Integer approved = 0, needsInfo = 0, pending = 0;
         for (Form_Response__c r : [
-            SELECT Response_Data__c FROM Form_Response__c WHERE Form_External_Id__c = :externalId
+            SELECT Response_Data__c, AI_Status__c FROM Form_Response__c WHERE Form_External_Id__c = :externalId
         ]) {
             try { payloads.add((Map<String, Object>) JSON.deserializeUntyped(r.Response_Data__c)); }
             catch (Exception e) { /* skip malformed */ }
+            if (r.AI_Status__c == 'Approved') approved++;
+            else if (r.AI_Status__c == 'Needs_Info') needsInfo++;
+            else pending++;
         }
         res.total = payloads.size();
+        res.approved = approved;
+        res.needsInfo = needsInfo;
+        res.pending = pending;
 
         for (Object fo : schemaFields) {
             if (!(fo instanceof Map<String, Object>)) continue;
@@ -134,7 +144,9 @@ public with sharing class FormResultsController {
 
     private static String buildSummary(Results r) {
         if (r.total == 0) return 'עדיין אין הגשות לטופס זה.';
-        List<String> parts = new List<String>{ 'התקבלו ' + r.total + ' הגשות.' };
+        List<String> parts = new List<String>{ 'התקבלו ' + r.total + ' הגשות' +
+            (r.approved != null ? (', מתוכן ' + r.approved + ' אושרו') : '') +
+            (r.needsInfo != null && r.needsInfo > 0 ? (' ו-' + r.needsInfo + ' ממתינות להשלמה') : '') + '.' };
         for (FieldResult fr : r.fields) {
             if (fr.isBar == true && fr.buckets != null && !fr.buckets.isEmpty()) {
                 Bucket top = null;

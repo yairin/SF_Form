@@ -1,1 +1,1 @@
-deploy #48 — admin/management tab: service types + general AI settings
+deploy #49 — graceful AI-engine error fallback + KPI infographics in results
