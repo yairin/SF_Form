@@ -32,6 +32,10 @@
         <apexClass>FormResultsController</apexClass>
         <enabled>true</enabled>
     </classAccesses>
+    <classAccesses>
+        <apexClass>FormAdminController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <description>Full access to form responses, answers and templates for CRM managers who review, manage, build and report on forms.</description>
     <fieldPermissions>
         <field>Form_Response__c.Form_Name__c</field>
@@ -399,6 +403,10 @@
     </tabSettings>
     <tabSettings>
         <tab>SF_Forms_Results</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>SF_Forms_Admin</tab>
         <visibility>Visible</visibility>
     </tabSettings>
 </PermissionSet>

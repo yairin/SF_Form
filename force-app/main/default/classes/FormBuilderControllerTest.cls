@@ -67,6 +67,20 @@ private class FormBuilderControllerTest {
     }
 
     @isTest
+    static void adminServiceTypeManagement() {
+        Department__c d = new Department__c(Name = 'מחלקת בדיקה', Active__c = true);
+        insert d;
+        Test.startTest();
+        Id stId = FormAdminController.saveServiceType(null, 'שירות חדש', d.Id, 24, true);
+        FormAdminController.setServiceTypeActive(stId, false);
+        Test.stopTest();
+        System.assert(FormAdminController.getServiceTypes().size() >= 1, 'service types listed');
+        System.assert(!FormAdminController.getDepartments().isEmpty(), 'departments listed');
+        System.assertEquals(false,
+            [SELECT Active__c FROM Service_Type__c WHERE Id = :stId].Active__c, 'deactivated');
+    }
+
+    @isTest
     static void resultsAggregationAndInsights() {
         String schema = '[{"key":"track","label":"מסלול","type":"select","options":["בוקר","ערב"]},'
             + '{"key":"num","label":"מספר משתתפים","type":"number"},'

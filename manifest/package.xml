@@ -88,6 +88,7 @@
         <members>FormFileService</members>
         <members>FormAIReviewService</members>
         <members>FormResultsController</members>
+        <members>FormAdminController</members>
         <name>ApexClass</name>
     </types>
     <types>
@@ -98,6 +99,7 @@
         <members>formSettings</members>
         <members>formAiReview</members>
         <members>formResults</members>
+        <members>formAdmin</members>
         <name>LightningComponentBundle</name>
     </types>
     <types>
@@ -110,6 +112,7 @@
         <members>SF_Forms_Manage</members>
         <members>SF_Forms_Settings</members>
         <members>SF_Forms_Results</members>
+        <members>SF_Forms_Admin</members>
         <name>FlexiPage</name>
     </types>
     <types>
@@ -118,6 +121,7 @@
         <members>SF_Forms_Manage</members>
         <members>SF_Forms_Settings</members>
         <members>SF_Forms_Results</members>
+        <members>SF_Forms_Admin</members>
         <members>Form_Response__c</members>
         <members>Authority__c</members>
         <name>CustomTab</name>

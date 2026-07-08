@@ -11,5 +11,6 @@
     <tabs>SF_Forms_Results</tabs>
     <tabs>Form_Response__c</tabs>
     <tabs>Authority__c</tabs>
+    <tabs>SF_Forms_Admin</tabs>
     <tabs>SF_Forms_Settings</tabs>
 </CustomApplication>
