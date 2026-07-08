@@ -72,7 +72,6 @@
         <relatedList>Form_Answer__c.Form_Response__c</relatedList>
     </relatedLists>
     <relatedLists>
-        <fields>Name</fields>
         <fields>Interaction_Type__c</fields>
         <fields>Direction__c</fields>
         <fields>Message__c</fields>

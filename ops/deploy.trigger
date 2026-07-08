@@ -1,1 +1,1 @@
-deploy #46 — show AI section + Interactions related list on the response card
+deploy #47 — fix related list (drop Name column)
