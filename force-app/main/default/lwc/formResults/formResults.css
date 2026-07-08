@@ -17,3 +17,8 @@
 .kpi-ok { background-color: #2e844a; }
 .kpi-warn { background-color: #ba0517; }
 .kpi-pending { background-color: #706e6b; }
+
+/* AI interaction thread — color by direction */
+.ix-sys { border-inline-start: 4px solid #706e6b; background-color: #f3f3f3; }
+.ix-to { border-inline-start: 4px solid #1b96ff; background-color: #eef4ff; }
+.ix-from { border-inline-start: 4px solid #2e844a; background-color: #eefaf0; }

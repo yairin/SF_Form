@@ -3,6 +3,8 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import listFormsDetailed from '@salesforce/apex/FormBuilderController.listFormsDetailed';
 import getResults from '@salesforce/apex/FormResultsController.getResults';
 import generateAiInsights from '@salesforce/apex/FormResultsController.generateAiInsights';
+import listResponses from '@salesforce/apex/FormResultsController.listResponses';
+import getResponseDetail from '@salesforce/apex/FormResultsController.getResponseDetail';
 
 const COLUMNS = [
     { label: 'שם הטופס', fieldName: 'name', sortable: true, wrapText: true },
@@ -13,8 +15,23 @@ const COLUMNS = [
     { type: 'action', typeAttributes: { rowActions: [{ label: 'הצג תוצאות', name: 'view' }] } }
 ];
 
+const RESP_COLUMNS = [
+    { label: 'סימוכין', fieldName: 'reference', initialWidth: 130 },
+    { label: 'שם הפונה', fieldName: 'respondentName', wrapText: true },
+    { label: 'הוגש', fieldName: 'submittedStr' },
+    { label: 'סטטוס AI', fieldName: 'aiStatusLabel', initialWidth: 140 },
+    { type: 'action', typeAttributes: { rowActions: [{ label: 'הצג רשומה', name: 'open' }] } }
+];
+
+function fmt(v) {
+    if (!v) return '';
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('he-IL');
+}
+
 export default class FormResults extends LightningElement {
     columns = COLUMNS;
+    respColumns = RESP_COLUMNS;
     allRows = [];
     rows = [];
     mode = 'list';
@@ -29,6 +46,10 @@ export default class FormResults extends LightningElement {
     aiCount;
     loading = false;
     aiLoading = false;
+
+    responses = [];
+    record;
+    recordLoading = false;
 
     connectedCallback() {
         this.load();
@@ -65,7 +86,10 @@ export default class FormResults extends LightningElement {
     handleSort(e) { this.sortBy = e.detail.fieldName; this.sortDirection = e.detail.sortDirection; this.applyFilter(); }
 
     get isList() { return this.mode === 'list'; }
+    get isDetail() { return this.mode === 'detail'; }
+    get isRecord() { return this.mode === 'record'; }
     get hasRows() { return this.rows.length > 0; }
+    get hasResponses() { return this.responses.length > 0; }
     get noData() { return this.results && this.results.total === 0; }
 
     async handleRowAction(e) {
@@ -92,6 +116,9 @@ export default class FormResults extends LightningElement {
             this.aiText = res.insights || undefined;
             this.aiGeneratedAt = res.insightsGeneratedAt || undefined;
             this.aiCount = (res.insightsCount === undefined || res.insightsCount === null) ? undefined : res.insightsCount;
+            // load the individual submissions for the record-level list
+            const list = await listResponses({ externalId });
+            this.responses = list.map((r) => ({ ...r, submittedStr: fmt(r.submittedAt) }));
             this.mode = 'detail';
         } catch (e) {
             this.toast('שגיאה', this.msg(e), 'error');
@@ -100,12 +127,52 @@ export default class FormResults extends LightningElement {
         }
     }
 
-    back() {
+    async handleResponseRowAction(e) {
+        if (e.detail.action.name === 'open') {
+            await this.openRecord(e.detail.row.id);
+        }
+    }
+
+    async openRecord(responseId) {
+        this.recordLoading = true;
+        try {
+            const d = await getResponseDetail({ responseId });
+            this.record = {
+                ...d,
+                submittedStr: fmt(d.submittedAt),
+                aiReviewedStr: fmt(d.aiReviewedAt),
+                hasFiles: (d.files || []).length > 0,
+                hasInteractions: (d.interactions || []).length > 0,
+                interactions: (d.interactions || []).map((i, idx) => ({
+                    ...i,
+                    key: idx,
+                    occurredStr: fmt(i.occurredAt),
+                    fromApplicant: i.direction === 'מהפונה',
+                    itemClass:
+                        'slds-p-around_x-small slds-m-bottom_x-small slds-box slds-box_x-small ' +
+                        (i.direction === 'מהפונה' ? 'ix-from' : i.direction === 'לפונה' ? 'ix-to' : 'ix-sys')
+                }))
+            };
+            this.mode = 'record';
+        } catch (e) {
+            this.toast('שגיאה', this.msg(e), 'error');
+        } finally {
+            this.recordLoading = false;
+        }
+    }
+
+    backToList() {
         this.mode = 'list';
         this.results = undefined;
+        this.responses = [];
         this.aiText = undefined;
         this.aiGeneratedAt = undefined;
         this.aiCount = undefined;
+    }
+
+    backToDetail() {
+        this.mode = 'detail';
+        this.record = undefined;
     }
 
     // button label reflects whether insights already exist
@@ -116,8 +183,7 @@ export default class FormResults extends LightningElement {
     // "נוצר: <date> · על N רשומות" — shown once insights exist
     get aiMeta() {
         if (!this.aiGeneratedAt) return '';
-        const d = new Date(this.aiGeneratedAt);
-        const when = Number.isNaN(d.getTime()) ? '' : d.toLocaleString('he-IL');
+        const when = fmt(this.aiGeneratedAt);
         const countTxt = (this.aiCount === undefined || this.aiCount === null)
             ? '' : ` · על ${this.aiCount} רשומות`;
         return when ? `נוצר: ${when}${countTxt}` : '';

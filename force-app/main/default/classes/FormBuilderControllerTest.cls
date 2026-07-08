@@ -116,6 +116,39 @@ private class FormBuilderControllerTest {
     }
 
     @isTest
+    static void recordLevelDrilldown() {
+        String schema = '[{"key":"full_name","label":"שם","type":"text"},'
+            + '{"key":"note","label":"הערה","type":"textarea"}]';
+        FormBuilderController.saveForm(null, 'טופס רשומה', '', schema, 'rec-x', null);
+        FormResponseController.Result r = FormResponseController.submitResponse(
+            'טופס רשומה', 'rec-x', '{"full_name":"פלוני","note":"בדיקה"}', 'פלוני', 'a@b.com', null, 'x');
+
+        // an uploaded file
+        FormFileService.FileInput fi = new FormFileService.FileInput();
+        fi.name = 'doc.txt';
+        fi.base64 = EncodingUtil.base64Encode(Blob.valueOf('תוכן הקובץ'));
+        FormFileService.attachFiles(r.id, new List<FormFileService.FileInput>{ fi });
+
+        // an AI interaction with the applicant
+        insert new Form_Interaction__c(Form_Response__c = r.id, Direction__c = 'System',
+            Interaction_Type__c = 'AI_Review', Message__c = 'בדיקת AI ראשונית', Occurred_At__c = System.now());
+
+        Test.startTest();
+        List<FormResultsController.ResponseRow> rows = FormResultsController.listResponses('rec-x');
+        FormResultsController.ResponseDetail d = FormResultsController.getResponseDetail(r.id);
+        Test.stopTest();
+
+        System.assert(!rows.isEmpty(), 'individual responses listed');
+        System.assertEquals('פלוני', d.respondentName, 'respondent returned');
+        System.assert(!d.fields.isEmpty(), 'field values returned');
+        System.assertEquals(1, d.files.size(), 'uploaded file listed');
+        System.assert(d.files[0].downloadUrl.contains('/download/'), 'file download link built');
+        System.assertEquals(1, d.interactions.size(), 'AI interaction thread listed');
+        System.assertEquals('בדיקת AI', d.interactions[0].interactionType, 'interaction type shown in Hebrew');
+        System.assertEquals('מערכת', d.interactions[0].direction, 'direction shown in Hebrew');
+    }
+
+    @isTest
     static void aiReviewConfigPersists() {
         String schema = '[{"key":"a","label":"שדה","type":"text","required":true}]';
         Form_Template__c t = FormBuilderController.saveForm(null, 'טופס AI', 'תיאור', schema, 'ai-cfg', null);
