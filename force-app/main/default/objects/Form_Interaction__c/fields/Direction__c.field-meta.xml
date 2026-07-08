@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Direction__c</fullName>
+    <label>כיוון</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>To_Applicant</fullName><default>false</default><label>לפונה</label></value>
+            <value><fullName>From_Applicant</fullName><default>false</default><label>מהפונה</label></value>
+            <value><fullName>System</fullName><default>true</default><label>מערכת</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

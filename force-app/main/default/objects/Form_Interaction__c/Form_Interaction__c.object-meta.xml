@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>A single message in the AI/applicant correspondence history of a form response.</description>
+    <enableActivities>false</enableActivities>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <label>התכתבות</label>
+    <pluralLabel>התכתבויות</pluralLabel>
+    <nameField>
+        <label>מספר התכתבות</label>
+        <type>AutoNumber</type>
+        <displayFormat>INT-{00000}</displayFormat>
+    </nameField>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

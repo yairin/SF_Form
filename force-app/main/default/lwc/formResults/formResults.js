@@ -26,6 +26,7 @@ export default class FormResults extends LightningElement {
     selectedId;
     aiText;
     loading = false;
+    aiLoading = false;
 
     connectedCallback() {
         this.load();
@@ -100,13 +101,19 @@ export default class FormResults extends LightningElement {
     }
 
     async runAi() {
-        this.loading = true;
+        this.aiLoading = true;
         try {
-            this.aiText = await getAiInsights({ externalId: this.selectedId });
+            const txt = await getAiInsights({ externalId: this.selectedId });
+            this.aiText = txt;
+            if (this.results && txt === this.results.summary) {
+                this.toast('סיכום אוטומטי', 'לא מחובר מנוע AI חיצוני — מוצג סיכום מבוסס-חוקים. ניתן לחבר מנוע בטאב "הגדרות".', 'warning');
+            } else {
+                this.toast('הופק', 'תובנות AI הופקו.', 'success');
+            }
         } catch (e) {
             this.toast('שגיאה', this.msg(e), 'error');
         } finally {
-            this.loading = false;
+            this.aiLoading = false;
         }
     }
 

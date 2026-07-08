@@ -8,6 +8,7 @@
         <members>Service_Type__c</members>
         <members>Form_AI_Setting__c</members>
         <members>Authority__c</members>
+        <members>Form_Interaction__c</members>
         <name>CustomObject</name>
     </types>
     <types>
@@ -27,6 +28,11 @@
         <members>Department__c.Authority__c</members>
         <members>Service_Type__c.Authority__c</members>
         <members>User.Authority_Code__c</members>
+        <members>Form_Interaction__c.Form_Response__c</members>
+        <members>Form_Interaction__c.Direction__c</members>
+        <members>Form_Interaction__c.Interaction_Type__c</members>
+        <members>Form_Interaction__c.Message__c</members>
+        <members>Form_Interaction__c.Occurred_At__c</members>
         <name>CustomField</name>
     </types>
     <types>

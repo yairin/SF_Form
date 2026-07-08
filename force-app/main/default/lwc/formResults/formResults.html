@@ -43,12 +43,15 @@
                             <!-- Summary / AI insights -->
                             <div class="slds-box slds-box_x-small slds-m-vertical_small slds-theme_shade">
                                 <div class="slds-text-title_bold slds-p-bottom_xx-small">תובנות</div>
-                                <div style="white-space:pre-wrap;">
+                                <div style="white-space:pre-wrap;position:relative;min-height:1.5rem;">
+                                    <template lwc:if={aiLoading}>
+                                        <lightning-spinner alternative-text="מפיק תובנות..." size="small"></lightning-spinner>
+                                    </template>
                                     <template lwc:if={aiText}>{aiText}</template>
                                     <template lwc:else>{results.summary}</template>
                                 </div>
                                 <div class="slds-p-top_x-small">
-                                    <lightning-button label="הפק תובנות AI" variant="brand" onclick={runAi} disabled={loading}></lightning-button>
+                                    <lightning-button label="הפק תובנות AI" variant="brand" onclick={runAi} disabled={aiLoading}></lightning-button>
                                 </div>
                             </div>
 
