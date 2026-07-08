@@ -35,7 +35,9 @@ public with sharing class FormResultsController {
 
     private static final Set<String> CAT = new Set<String>{ 'select', 'radio', 'checkbox', 'checkboxGroup' };
 
-    @AuraEnabled(cacheable=true)
+    // Not cacheable: results must reflect newly submitted responses immediately
+    // (a stale client cache otherwise shows 0 after new submissions).
+    @AuraEnabled
     public static Results getResults(String externalId) {
         Results res = new Results();
         res.externalId = externalId;

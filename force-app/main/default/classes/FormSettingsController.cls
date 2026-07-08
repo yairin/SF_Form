@@ -12,7 +12,9 @@ public with sharing class FormSettingsController {
         @AuraEnabled public Boolean hasApiKey;
     }
 
-    @AuraEnabled(cacheable=true)
+    // Not cacheable: the settings screen must reflect a save immediately (no stale
+    // client cache showing the previous engine after the user switches it).
+    @AuraEnabled
     public static Settings getSettings() {
         Form_AI_Setting__c s = Form_AI_Setting__c.getOrgDefaults();
         Settings out = new Settings();

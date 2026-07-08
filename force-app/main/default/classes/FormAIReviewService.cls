@@ -126,7 +126,7 @@ public without sharing class FormAIReviewService {
             } else {
                 result = new ReviewResult();
                 result.status = 'Error';
-                result.findings = 'מנוע Agentforce טרם חובר בארגון. בחר "מנוע חיצוני" בהגדרות (עם endpoint ומפתח), או השלם את חיבור Agentforce.';
+                result.findings = 'לא הוגדר מנוע AI פעיל. עבור לטאב "ניהול" → "הגדרות AI", בחר "מנוע חיצוני (LLM דרך API)" והזן endpoint ומפתח, או השלם את חיבור Agentforce.';
             }
         } catch (Exception e) {
             result = new ReviewResult();
@@ -240,11 +240,39 @@ public without sharing class FormAIReviewService {
         if (res.getStatusCode() != 200) {
             ReviewResult err = new ReviewResult();
             err.status = 'Error';
-            err.findings = 'שגיאת מנוע AI (קוד ' + res.getStatusCode() + '). ודא מפתח/יתרת קרדיט תקינים בהגדרות.';
+            err.findings = 'שגיאת מנוע AI (קוד ' + res.getStatusCode() + '): ' + describeApiError(res.getBody());
             return err;
         }
         String verdictText = extractText(res.getBody());
         return toResult(verdictText);
+    }
+
+    /**
+     * Turns an Anthropic-style error body ({"error":{"message":"..."}}) into a
+     * short, human-readable Hebrew explanation. Recognizes the common
+     * "credit balance too low" and auth cases so the card shows a real cause.
+     */
+    private static String describeApiError(String responseBody) {
+        String apiMsg = null;
+        try {
+            Object parsed = JSON.deserializeUntyped(responseBody);
+            if (parsed instanceof Map<String, Object>) {
+                Object err = ((Map<String, Object>) parsed).get('error');
+                if (err instanceof Map<String, Object>) {
+                    Object m = ((Map<String, Object>) err).get('message');
+                    if (m != null) apiMsg = String.valueOf(m);
+                }
+            }
+        } catch (Exception e) { /* non-JSON body */ }
+        if (apiMsg == null) return 'ודא מפתח ויתרת קרדיט תקינים בהגדרות.';
+        String lower = apiMsg.toLowerCase();
+        if (lower.contains('credit balance')) {
+            return 'יתרת הקרדיט בחשבון ה-AI נמוכה מדי. יש לטעון קרדיט ב-Anthropic (Plans & Billing) ולנסות שוב.';
+        }
+        if (lower.contains('authentication') || lower.contains('api key') || lower.contains('x-api-key')) {
+            return 'המפתח שהוזן אינו תקין. הזן מפתח API תקין בהגדרות ("מנוע חיצוני").';
+        }
+        return apiMsg;
     }
 
     /** Pull the assistant text out of an Anthropic-style response, else return the raw body. */

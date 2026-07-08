@@ -26,7 +26,9 @@ public with sharing class FormBuilderController {
     }
 
     /** Richer list for the "Forms" management tab: adds service type, submission count, public URL. */
-    @AuraEnabled(cacheable=true)
+    // Not cacheable: submission counts must be live so newly seeded/submitted
+    // responses show up without a hard refresh.
+    @AuraEnabled
     public static List<TemplateInfo> listFormsDetailed() {
         Map<String, Integer> counts = new Map<String, Integer>();
         for (AggregateResult ar : [

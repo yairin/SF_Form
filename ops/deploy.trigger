@@ -1,1 +1,1 @@
-deploy #49 — graceful AI-engine error fallback + KPI infographics in results
+deploy 2026-07-08T08:48:45Z ux+cleanup

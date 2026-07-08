@@ -142,6 +142,38 @@ private class FormResponseControllerTest {
             [SELECT AI_Status__c FROM Form_Response__c WHERE Id = :r.id].AI_Status__c, 'status written to record');
     }
 
+    private class LlmCreditErrorMock implements HttpCalloutMock {
+        public HttpResponse respond(HttpRequest req) {
+            String body = JSON.serialize(new Map<String, Object>{
+                'type' => 'error',
+                'error' => new Map<String, Object>{
+                    'type' => 'invalid_request_error',
+                    'message' => 'Your credit balance is too low to access the Anthropic API.'
+                }
+            });
+            HttpResponse res = new HttpResponse();
+            res.setStatusCode(400);
+            res.setBody(body);
+            return res;
+        }
+    }
+
+    @isTest
+    static void aiReviewExternalApiErrorIsHumanReadable() {
+        FormSettingsController.saveSettings('External', 'https://api.example.com/v1/messages', 'm', 'k');
+        FormResponseController.Result r = FormResponseController.submitResponse(
+            'טופס', 'preview', '{"x":"1"}', 'פלוני', 'a@b.com', null, 'x');
+
+        Test.startTest();
+        Test.setMock(HttpCalloutMock.class, new LlmCreditErrorMock());
+        FormAIReviewService.ReviewResult rr = FormAIReviewService.runReview(r.id);
+        Test.stopTest();
+
+        System.assertEquals('Error', rr.status, 'non-200 maps to Error');
+        System.assert(rr.findings.contains('קרדיט'),
+            'credit-balance error surfaces a readable Hebrew cause, not raw JSON');
+    }
+
     private class LlmMissingMock implements HttpCalloutMock {
         public HttpResponse respond(HttpRequest req) {
             String verdict = JSON.serialize(new Map<String, Object>{
