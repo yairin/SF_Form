@@ -3,7 +3,7 @@
  * מצרף לכל אחת מ-8 הרשומות הראשונות 4 מסמכי דמו. ניתן להריץ שוב — מוחק תחילה קבצי דמו קודמים.
  */
 String EXT = 'disabled-parking';
-Integer HOW_MANY_RECORDS = 8;
+Integer HOW_MANY_RECORDS = 20;
 
 List<Form_Response__c> resps = [
     SELECT Id, Name, Respondent_Name__c
