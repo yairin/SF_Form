@@ -93,18 +93,25 @@ private class FormBuilderControllerTest {
 
         Test.startTest();
         FormResultsController.Results r = FormResultsController.getResults('res-x');
-        String insights = FormResultsController.getAiInsights('res-x');
+        FormResultsController.Insights insights = FormResultsController.generateAiInsights('res-x');
         FormResultsController.Results empty = FormResultsController.getResults('res-empty');
-        String emptyInsights = FormResultsController.getAiInsights('res-empty');
+        FormResultsController.Insights emptyInsights = FormResultsController.generateAiInsights('res-empty');
         FormResultsController.Results missing = FormResultsController.getResults('no-such-form');
+        // reload to confirm the insights were persisted on the template
+        FormResultsController.Results reloaded = FormResultsController.getResults('res-x');
         Test.stopTest();
 
         System.assertEquals(2, r.total, 'two submissions aggregated');
         System.assertEquals(3, r.fields.size(), 'three fields analyzed');
         System.assert(r.summary.contains('2'), 'summary mentions the count');
-        System.assert(String.isNotBlank(insights), 'insights returned (rule-based fallback with no engine)');
+        System.assert(String.isNotBlank(insights.text), 'insights returned (rule-based fallback with no engine)');
+        System.assertEquals(2, insights.count, 'insights record count captured');
+        System.assertNotEquals(null, insights.generatedAt, 'generation timestamp set');
+        System.assert(String.isNotBlank(reloaded.insights), 'insights persisted and returned on later visits');
+        System.assertEquals(2, reloaded.insightsCount, 'persisted record count returned');
+        System.assertNotEquals(null, reloaded.insightsGeneratedAt, 'persisted timestamp returned');
         System.assertEquals(0, empty.total, 'empty form has no submissions');
-        System.assert(String.isNotBlank(emptyInsights), 'empty insights handled');
+        System.assert(String.isNotBlank(emptyInsights.text), 'empty insights handled');
         System.assertEquals(0, missing.total, 'missing form returns zero');
     }
 

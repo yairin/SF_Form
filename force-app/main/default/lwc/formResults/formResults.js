@@ -2,7 +2,7 @@ import { LightningElement } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import listFormsDetailed from '@salesforce/apex/FormBuilderController.listFormsDetailed';
 import getResults from '@salesforce/apex/FormResultsController.getResults';
-import getAiInsights from '@salesforce/apex/FormResultsController.getAiInsights';
+import generateAiInsights from '@salesforce/apex/FormResultsController.generateAiInsights';
 
 const COLUMNS = [
     { label: 'שם הטופס', fieldName: 'name', sortable: true, wrapText: true },
@@ -25,6 +25,8 @@ export default class FormResults extends LightningElement {
     results;
     selectedId;
     aiText;
+    aiGeneratedAt;
+    aiCount;
     loading = false;
     aiLoading = false;
 
@@ -86,6 +88,10 @@ export default class FormResults extends LightningElement {
                     buckets: (f.buckets || []).map((b) => ({ ...b, barStyle: 'width:' + b.percent + '%' }))
                 }))
             };
+            // show previously generated (persisted) insights on this and later visits
+            this.aiText = res.insights || undefined;
+            this.aiGeneratedAt = res.insightsGeneratedAt || undefined;
+            this.aiCount = (res.insightsCount === undefined || res.insightsCount === null) ? undefined : res.insightsCount;
             this.mode = 'detail';
         } catch (e) {
             this.toast('שגיאה', this.msg(e), 'error');
@@ -98,17 +104,36 @@ export default class FormResults extends LightningElement {
         this.mode = 'list';
         this.results = undefined;
         this.aiText = undefined;
+        this.aiGeneratedAt = undefined;
+        this.aiCount = undefined;
+    }
+
+    // button label reflects whether insights already exist
+    get aiButtonLabel() {
+        return this.aiText ? 'הפק תובנות מחדש' : 'הפק תובנות AI';
+    }
+
+    // "נוצר: <date> · על N רשומות" — shown once insights exist
+    get aiMeta() {
+        if (!this.aiGeneratedAt) return '';
+        const d = new Date(this.aiGeneratedAt);
+        const when = Number.isNaN(d.getTime()) ? '' : d.toLocaleString('he-IL');
+        const countTxt = (this.aiCount === undefined || this.aiCount === null)
+            ? '' : ` · על ${this.aiCount} רשומות`;
+        return when ? `נוצר: ${when}${countTxt}` : '';
     }
 
     async runAi() {
         this.aiLoading = true;
         try {
-            const txt = await getAiInsights({ externalId: this.selectedId });
-            this.aiText = txt;
-            if (this.results && txt === this.results.summary) {
-                this.toast('סיכום אוטומטי', 'לא מחובר מנוע AI חיצוני — מוצג סיכום מבוסס-חוקים. ניתן לחבר מנוע בטאב "הגדרות".', 'warning');
+            const res = await generateAiInsights({ externalId: this.selectedId });
+            this.aiText = res.text;
+            this.aiGeneratedAt = res.generatedAt;
+            this.aiCount = res.count;
+            if (this.results && res.text === this.results.summary) {
+                this.toast('סיכום אוטומטי', 'לא מחובר מנוע AI חיצוני — מוצג סיכום מבוסס-חוקים. ניתן לחבר מנוע בטאב "ניהול".', 'warning');
             } else {
-                this.toast('הופק', 'תובנות AI הופקו.', 'success');
+                this.toast('הופק', 'תובנות AI הופקו ונשמרו.', 'success');
             }
         } catch (e) {
             this.toast('שגיאה', this.msg(e), 'error');

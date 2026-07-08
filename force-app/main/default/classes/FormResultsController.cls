@@ -31,6 +31,17 @@ public with sharing class FormResultsController {
         @AuraEnabled public Integer pending;
         @AuraEnabled public List<FieldResult> fields;
         @AuraEnabled public String summary;
+        // Persisted AI insights (shown on later visits, before/without regenerating).
+        @AuraEnabled public String insights;
+        @AuraEnabled public Datetime insightsGeneratedAt;
+        @AuraEnabled public Integer insightsCount;
+    }
+
+    /** Result of generating (and persisting) AI insights. */
+    public class Insights {
+        @AuraEnabled public String text;
+        @AuraEnabled public Datetime generatedAt;
+        @AuraEnabled public Integer count;
     }
 
     private static final Set<String> CAT = new Set<String>{ 'select', 'radio', 'checkbox', 'checkboxGroup' };
@@ -45,10 +56,15 @@ public with sharing class FormResultsController {
         res.total = 0;
 
         List<Form_Template__c> tpls = [
-            SELECT Name, Schema_JSON__c FROM Form_Template__c WHERE External_Id__c = :externalId LIMIT 1
+            SELECT Name, Schema_JSON__c, AI_Insights__c, AI_Insights_Generated_At__c, AI_Insights_Record_Count__c
+            FROM Form_Template__c WHERE External_Id__c = :externalId LIMIT 1
         ];
         if (tpls.isEmpty()) { res.summary = 'הטופס לא נמצא.'; return res; }
         res.formName = tpls[0].Name;
+        res.insights = tpls[0].AI_Insights__c;
+        res.insightsGeneratedAt = tpls[0].AI_Insights_Generated_At__c;
+        res.insightsCount = tpls[0].AI_Insights_Record_Count__c == null
+            ? null : (Integer) tpls[0].AI_Insights_Record_Count__c;
 
         List<Object> schemaFields = FormValidationService.flattenFields(tpls[0].Schema_JSON__c);
 
@@ -133,15 +149,41 @@ public with sharing class FormResultsController {
         return res;
     }
 
-    /** LLM-enriched insights when an external engine is configured; else the rule-based summary. */
+    /**
+     * Generates AI insights (LLM-enriched when an external engine is configured,
+     * else the rule-based summary) and PERSISTS them on the template with the
+     * generation timestamp and record count, so they show on later visits.
+     */
     @AuraEnabled
-    public static String getAiInsights(String externalId) {
+    public static Insights generateAiInsights(String externalId) {
         Results r = getResults(externalId);
-        if (r.total == 0) return r.summary;
-        String prompt = 'תוצאות הטופס "' + r.formName + '" (' + r.total + ' הגשות):\n'
-            + aggregationText(r) + '\n\nספק 3–5 תובנות קצרות ומועילות בעברית.';
-        String ai = FormAIReviewService.narrate(prompt);
-        return String.isBlank(ai) ? r.summary : ai;
+        String text;
+        if (r.total == 0) {
+            text = r.summary;
+        } else {
+            String prompt = 'תוצאות הטופס "' + r.formName + '" (' + r.total + ' הגשות):\n'
+                + aggregationText(r) + '\n\nספק 3–5 תובנות קצרות ומועילות בעברית.';
+            String ai = FormAIReviewService.narrate(prompt);
+            text = String.isBlank(ai) ? r.summary : ai;
+        }
+
+        Datetime generatedAt = System.now();
+        List<Form_Template__c> tpls = [
+            SELECT Id FROM Form_Template__c WHERE External_Id__c = :externalId LIMIT 1
+        ];
+        if (!tpls.isEmpty()) {
+            Form_Template__c t = tpls[0];
+            t.AI_Insights__c = text;
+            t.AI_Insights_Generated_At__c = generatedAt;
+            t.AI_Insights_Record_Count__c = r.total;
+            update t;
+        }
+
+        Insights out = new Insights();
+        out.text = text;
+        out.generatedAt = generatedAt;
+        out.count = r.total;
+        return out;
     }
 
     private static String buildSummary(Results r) {

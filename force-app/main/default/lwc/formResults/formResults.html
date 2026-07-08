@@ -57,8 +57,11 @@
                                     <template lwc:if={aiText}>{aiText}</template>
                                     <template lwc:else>{results.summary}</template>
                                 </div>
+                                <template lwc:if={aiMeta}>
+                                    <div class="slds-text-body_small slds-text-color_weak slds-p-top_xx-small">{aiMeta}</div>
+                                </template>
                                 <div class="slds-p-top_x-small">
-                                    <lightning-button label="הפק תובנות AI" variant="brand" onclick={runAi} disabled={aiLoading}></lightning-button>
+                                    <lightning-button label={aiButtonLabel} variant="brand" onclick={runAi} disabled={aiLoading}></lightning-button>
                                 </div>
                             </div>
 
