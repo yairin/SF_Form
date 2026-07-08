@@ -18,5 +18,15 @@ jobs:
           echo "${{ secrets.SF_AUTH_URL }}" > ./SF_AUTH.txt
           sf org login sfdx-url --sfdx-url-file ./SF_AUTH.txt --alias target --set-default
           rm -f ./SF_AUTH.txt
-      - name: Run diagnostic
-        run: sf apex run --file scripts/diag-ai-live.apex --target-org target
+      - name: Run diagnostic (fail unless HTTP 200)
+        run: |
+          out=$(sf apex run --file scripts/diag-ai-live.apex --target-org target --json)
+          logs=$(echo "$out" | python3 -c "import sys,json;print(json.load(sys.stdin)['result']['logs'])")
+          echo "$logs" | grep -E "SETTINGS\||CALLOUT\||VERDICT\|" || true
+          if echo "$logs" | grep -q "status=200"; then
+            echo "::notice::AI callout returned 200 — credit is usable."
+            exit 0
+          else
+            echo "::error::AI callout did NOT return 200 (see CALLOUT line above)."
+            exit 1
+          fi
