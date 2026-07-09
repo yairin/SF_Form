@@ -158,6 +158,11 @@
         <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
+        <field>Form_Response__c.Approval_Route__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
         <field>Form_Template__c.AI_Insights__c</field>
         <readable>true</readable>
         <editable>true</editable>

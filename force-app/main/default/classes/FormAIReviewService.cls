@@ -147,6 +147,14 @@ public without sharing class FormAIReviewService {
                 result.status = dec.aiStatus;
                 result.findings = (String.isBlank(result.findings) ? '' : result.findings + '\n\n')
                     + 'החלטת ניתוב (אוטומטית, ניתנת לביקורת): ' + dec.routeTo + ' — ' + dec.reason;
+                // stamp the structured route so the native approval process + reports can use it
+                Map<String, String> routeApi = new Map<String, String>{
+                    'AUTO_APPROVE' => 'Auto_Approve',
+                    'EXCEPTIONS_COMMITTEE' => 'Exceptions_Committee',
+                    'MANUAL_REVIEW' => 'Manual_Review',
+                    'NEEDS_INFO' => 'Needs_Info'
+                };
+                if (routeApi.containsKey(dec.outcome)) r.Approval_Route__c = routeApi.get(dec.outcome);
             }
         }
 
