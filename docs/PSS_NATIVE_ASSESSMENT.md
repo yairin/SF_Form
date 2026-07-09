@@ -86,7 +86,9 @@
 | #2 Agentforce Prompt Templates | ⏳ ממתין להפעלת Einstein GenAI/Agentforce בארגון | המנוע החיצוני (Anthropic) כבר עובד ומספק את אותו ערך |
 | OCR / חילוץ ממסמכים | ✅ נפרס (דרך קלוד) | IDR הנייטיבי לא מורשה — במקומו קלוד המולטי-מודלי קורא תמונות/PDF ב-callout הקיים |
 | DCI (מסמכים נדרשים) | 🟡 זמין חלקית (DocumentChecklistItem קיים) | ניתן לבנות לאחר השלמת DocumentType |
-| Action Plans | ⏳ ממתין להפעלת Action Plans | ניתן לבנות תבנית לאחר הפעלה |
+| Action Plans | 📄 עיצוב מוכן (`docs/ACTION_PLANS_DESIGN.md`) | פריסת תבנית ליעד מותאם החזירה שגיאת-פנים; דורש הפעלת `Form_Response__c` ל-Action Plans בהגדרות |
+| BRE נייטיבי (Expression Set) | 📄 עיצוב מוכן (`docs/BRE_EXPRESSION_SET_DESIGN.md`) | דורש אימות דקדוק ב-Expression Set Builder לפני פריסה; הרנטיים הפעיל הוא ה-Apex |
+| ולידציית קובץ בזמן העלאה (סוג + התאמת פרטים) | ✅ נפרס | `FormFileValidationService` + `dynamicForm` — בדיקת סוג מיידית + אימות תוכן/זהות ב-קלוד |
 | #4 OmniScript/Discovery | 📋 מתוכנן (גל 4) | הסבת טפסים הדרגתית |
 
 > תשתית CI: תוקנה רגרסיה — כל ה-workflows הועלו ל-Node 22 (הגרסה החדשה של `@salesforce/cli` קורסת על Node 20).
