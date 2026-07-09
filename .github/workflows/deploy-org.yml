@@ -49,6 +49,7 @@ jobs:
             --tests FormBuilderControllerTest \
             --tests FormRoutingServiceTest \
             --tests ApprovalDecisionServiceTest \
+            --tests FormFileValidationServiceTest \
             --target-org target \
             --wait 30
 

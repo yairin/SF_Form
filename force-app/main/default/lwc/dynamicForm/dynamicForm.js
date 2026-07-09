@@ -3,8 +3,10 @@ import { CurrentPageReference } from 'lightning/navigation';
 import getForm from '@salesforce/apex/FormRenderController.getForm';
 import submitResponse from '@salesforce/apex/FormResponseController.submitResponse';
 import attachFiles from '@salesforce/apex/FormFileService.attachFiles';
+import validateFile from '@salesforce/apex/FormFileValidationService.validateFile';
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024; // ~4MB per file (Apex heap/base64 guard)
+const DEFAULT_ACCEPT = ['pdf', 'png', 'jpg', 'jpeg'];
 
 const TEXT_TYPES = {
     text: 'text', email: 'email', phone: 'tel', number: 'number',
@@ -66,6 +68,7 @@ export default class DynamicForm extends LightningElement {
     fields = [];
     values = {};
     files = {}; // key -> [{name, base64}]
+    fileStatus = {}; // key -> {checking, ok, message, cssClass}
     reference;
     error;
     loading = false;
@@ -75,6 +78,10 @@ export default class DynamicForm extends LightningElement {
 
     get isWizard() { return this.stepTitles.length > 1; }
     get currentFields() { return this.fields.filter((f) => f.step === this.stepIndex); }
+    // fields for the current step decorated with any per-file validation status
+    get currentFieldsView() {
+        return this.currentFields.map((f) => ({ ...f, status: this.fileStatus[f.key] }));
+    }
     get isFirstStep() { return this.stepIndex === 0; }
     get isLastStep() { return this.stepIndex >= this.stepTitles.length - 1; }
     get currentStepTitle() { return this.stepTitles[this.stepIndex]; }
@@ -155,7 +162,12 @@ export default class DynamicForm extends LightningElement {
                     isRadio: f.type === 'radio',
                     isCheckbox: f.type === 'checkbox',
                     isCheckboxGroup: f.type === 'checkboxGroup',
-                    isFile: f.type === 'file'
+                    isFile: f.type === 'file',
+                    // per-file-field validation config (optional in schema)
+                    acceptList: Array.isArray(f.accept) && f.accept.length ? f.accept.map((x) => String(x).toLowerCase()) : DEFAULT_ACCEPT,
+                    accept: '.' + (Array.isArray(f.accept) && f.accept.length ? f.accept : DEFAULT_ACCEPT).join(',.'),
+                    docLabel: f.docLabel || f.label,
+                    verifyKeys: Array.isArray(f.verify) && f.verify.length ? f.verify : null
                 });
             });
         });
@@ -179,18 +191,59 @@ export default class DynamicForm extends LightningElement {
 
     handleFileChange(event) {
         const key = event.target.dataset.key;
+        const f = this.fields.find((x) => x.key === key);
         const fileList = Array.from(event.target.files || []);
         this.error = undefined;
-        const tooBig = fileList.find((f) => f.size > MAX_FILE_BYTES);
+        const tooBig = fileList.find((file) => file.size > MAX_FILE_BYTES);
         if (tooBig) {
-            this.error = 'הקובץ "' + tooBig.name + '" גדול מדי (מקסימום 4MB).';
+            this.setFileStatus(key, { ok: false, message: 'הקובץ "' + tooBig.name + '" גדול מדי (מקסימום 4MB).' });
             event.target.value = null;
             return;
         }
+        // immediate client-side file-type check (during field fill)
+        const accept = (f && f.acceptList) || DEFAULT_ACCEPT;
+        const badType = fileList.find((file) => {
+            const ext = (file.name.split('.').pop() || '').toLowerCase();
+            return !accept.includes(ext);
+        });
+        if (badType) {
+            this.setFileStatus(key, { ok: false, message: 'סוג הקובץ אינו מתאים. נדרש: ' + accept.join(', ') + '.' });
+            event.target.value = null;
+            return;
+        }
+        this.setFileStatus(key, { checking: true, message: 'בודק את הקובץ…' });
         Promise.all(fileList.map((file) => this.readFile(file))).then((read) => {
             this.files = { ...this.files, [key]: read };
             this.values[key] = read.map((r) => r.name).join('; ');
+            // AI content check (correct document type + details match applicant) on upload
+            this.verifyFile(f, read[0]);
         });
+    }
+
+    async verifyFile(f, fileObj) {
+        if (!f || !fileObj) return;
+        try {
+            const v = await validateFile({
+                docLabel: f.docLabel,
+                acceptExt: f.acceptList,
+                fileName: fileObj.name,
+                base64: fileObj.base64,
+                applicantJson: JSON.stringify(this.values || {}),
+                matchKeys: f.verifyKeys
+            });
+            const ok = v.typeOk !== false && v.aiOk !== false;
+            this.setFileStatus(f.key, { ok, message: v.message });
+        } catch (e) {
+            // non-blocking: a verification error shouldn't stop submission
+            this.setFileStatus(f.key, { ok: true, message: 'הקובץ התקבל (בדיקת תוכן לא הושלמה).' });
+        }
+    }
+
+    setFileStatus(key, status) {
+        const cssClass = status.checking
+            ? 'slds-text-color_weak'
+            : (status.ok === false ? 'slds-text-color_error' : 'slds-text-color_success');
+        this.fileStatus = { ...this.fileStatus, [key]: { ...status, cssClass } };
     }
 
     readFile(file) {
@@ -231,6 +284,17 @@ export default class DynamicForm extends LightningElement {
             && !this.isEmpty(this.values[f.key]) && !isValidIsraeliId(this.values[f.key]));
         if (badId.length) {
             this.error = 'תעודת זהות לא תקינה: ' + badId.map((f) => f.label).join(', ');
+            return;
+        }
+        // block submission on files that failed type/content validation
+        const stillChecking = this.fields.filter((f) => this.fileStatus[f.key] && this.fileStatus[f.key].checking);
+        if (stillChecking.length) {
+            this.error = 'המתן לסיום בדיקת הקבצים: ' + stillChecking.map((f) => f.label).join(', ');
+            return;
+        }
+        const badFiles = this.fields.filter((f) => this.fileStatus[f.key] && this.fileStatus[f.key].ok === false);
+        if (badFiles.length) {
+            this.error = 'יש לתקן את הקבצים שנכשלו בבדיקה: ' + badFiles.map((f) => f.label).join(', ');
             return;
         }
         this.loading = true;

@@ -24,7 +24,7 @@
                 </div>
             </template>
 
-            <template for:each={currentFields} for:item="f">
+            <template for:each={currentFieldsView} for:item="f">
                 <div key={f.key} class="slds-form-element slds-p-vertical_xx-small">
                     <template lwc:if={f.isCheckbox}>
                         <label class="slds-checkbox_standalone">
@@ -38,7 +38,10 @@
                                 <input type={f.inputType} data-key={f.key} class="slds-input" onchange={handleChange} />
                             </template>
                             <template lwc:elseif={f.isFile}>
-                                <input type="file" multiple data-key={f.key} class="slds-input" onchange={handleFileChange} />
+                                <input type="file" multiple data-key={f.key} accept={f.accept} class="slds-input" onchange={handleFileChange} />
+                                <template lwc:if={f.status}>
+                                    <div class={f.status.cssClass} style="font-size:0.8rem;margin-top:0.25rem;">{f.status.message}</div>
+                                </template>
                             </template>
                             <template lwc:elseif={f.isTextarea}>
                                 <textarea data-key={f.key} class="slds-textarea" onchange={handleChange}></textarea>
