@@ -134,6 +134,22 @@ public without sharing class FormAIReviewService {
             result.findings = 'שגיאה בבדיקת AI: ' + e.getMessage();
         }
 
+        // Deterministic routing decision (BRE-style), separated from the LLM: the AI
+        // only verifies documents; the approve/committee/review routing is decided by
+        // an auditable decision table when the submission carries a numeric decision
+        // field (e.g. disabilityPct). Generic forms without such a field are unaffected.
+        if (result != null && result.status != 'Error'
+            && r.Response_Data__c != null && r.Response_Data__c.contains('disabilityPct')) {
+            Boolean docsComplete = (result.status == 'Approved');
+            ApprovalDecisionService.Decision dec =
+                ApprovalDecisionService.evaluateForResponse(r.Id, 'disabilityPct', docsComplete);
+            if (dec != null && dec.outcome != null) {
+                result.status = dec.aiStatus;
+                result.findings = (String.isBlank(result.findings) ? '' : result.findings + '\n\n')
+                    + 'החלטת ניתוב (אוטומטית, ניתנת לביקורת): ' + dec.routeTo + ' — ' + dec.reason;
+            }
+        }
+
         r.AI_Status__c = result.status;
         r.AI_Findings__c = result.findings;
         r.AI_Reviewed_At__c = System.now();
