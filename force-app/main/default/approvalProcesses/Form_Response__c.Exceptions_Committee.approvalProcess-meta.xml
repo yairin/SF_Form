@@ -15,7 +15,7 @@
         <allowDelegate>false</allowDelegate>
         <assignedApprover>
             <approver>
-                <queue>SF_Forms_Committee</queue>
+                <name>SF_Forms_Committee</name>
                 <type>queue</type>
             </approver>
         </assignedApprover>

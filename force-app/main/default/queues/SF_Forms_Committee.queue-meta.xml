@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Queue xmlns="http://soap.sforce.com/2006/04/metadata">
     <name>SF_Forms_Committee</name>
-    <label>ועדת חריגים - טפסים</label>
     <queueSobject>
         <sobjectType>Form_Response__c</sobjectType>
     </queueSobject>
