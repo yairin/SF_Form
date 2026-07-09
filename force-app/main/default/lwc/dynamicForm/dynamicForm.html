@@ -17,8 +17,8 @@
 
             <template lwc:if={isWizard}>
                 <div class="slds-p-bottom_small">
-                    <p class="slds-text-title_bold slds-p-bottom_xx-small">{stepProgressLabel}</p>
-                    <div class="slds-progress-bar" role="progressbar">
+                    <p class="slds-text-title_bold slds-p-bottom_xx-small" aria-live="polite">{stepProgressLabel}</p>
+                    <div class="slds-progress-bar" role="progressbar" aria-label={stepProgressLabel}>
                         <span class="slds-progress-bar__value" style={progressStyle}></span>
                     </div>
                 </div>
@@ -27,28 +27,35 @@
             <template for:each={currentFieldsView} for:item="f">
                 <div key={f.key} class="slds-form-element slds-p-vertical_xx-small">
                     <template lwc:if={f.isCheckbox}>
-                        <label class="slds-checkbox_standalone">
-                            <input type="checkbox" data-key={f.key} onchange={handleChange} /> {f.label}
+                        <label class="slds-checkbox_standalone" for={f.key}>
+                            <input type="checkbox" id={f.key} data-key={f.key} aria-required={f.ariaRequired} onchange={handleChange} /> {f.label}
+                            <template lwc:if={f.required}> <abbr class="slds-required" title="חובה">*</abbr></template>
                         </label>
                     </template>
                     <template lwc:else>
-                        <label class="slds-form-element__label">{f.label}</label>
+                        <label class="slds-form-element__label" for={f.key}>
+                            <template lwc:if={f.required}><abbr class="slds-required" title="חובה">* </abbr></template>{f.label}
+                        </label>
                         <div class="slds-form-element__control">
                             <template lwc:if={f.isText}>
-                                <input type={f.inputType} data-key={f.key} class="slds-input" onchange={handleChange} />
+                                <input type={f.inputType} id={f.key} data-key={f.key} class="slds-input"
+                                    aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid} onchange={handleChange} />
                             </template>
                             <template lwc:elseif={f.isFile}>
-                                <input type="file" multiple data-key={f.key} accept={f.accept} class="slds-input" onchange={handleFileChange} />
+                                <input type="file" multiple id={f.key} data-key={f.key} accept={f.accept} class="slds-input"
+                                    aria-required={f.ariaRequired} onchange={handleFileChange} />
                                 <template lwc:if={f.status}>
-                                    <div class={f.status.cssClass} style="font-size:0.8rem;margin-top:0.25rem;">{f.status.message}</div>
+                                    <div class={f.status.cssClass} style="font-size:0.8rem;margin-top:0.25rem;" role="status">{f.status.message}</div>
                                 </template>
                             </template>
                             <template lwc:elseif={f.isTextarea}>
-                                <textarea data-key={f.key} class="slds-textarea" onchange={handleChange}></textarea>
+                                <textarea id={f.key} data-key={f.key} class="slds-textarea"
+                                    aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid} onchange={handleChange}></textarea>
                             </template>
                             <template lwc:elseif={f.isSelect}>
                                 <div class="slds-select_container">
-                                    <select data-key={f.key} class="slds-select" onchange={handleChange}>
+                                    <select id={f.key} data-key={f.key} class="slds-select"
+                                        aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid} onchange={handleChange}>
                                         <option value="">— בחר —</option>
                                         <template for:each={f.options} for:item="o">
                                             <option key={o.value} value={o.value}>{o.label}</option>
@@ -71,6 +78,12 @@
                                 </template>
                             </template>
                         </div>
+                    </template>
+                    <template lwc:if={f.helpText}>
+                        <div class="slds-form-element__help slds-text-color_weak">{f.helpText}</div>
+                    </template>
+                    <template lwc:if={f.fieldError}>
+                        <div class="slds-form-element__help slds-text-color_error" role="alert">{f.fieldError}</div>
                     </template>
                 </div>
             </template>
