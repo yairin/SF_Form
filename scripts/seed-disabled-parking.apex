@@ -111,6 +111,8 @@ for (Integer i = 0; i < 20; i++) {
             'אחוז נכות ' + pct + '% (90% ומעלה) → עומד בסף לאישור אוטומטי. הבקשה אושרה.';
     }
     r.AI_Reviewed_At__c = base.addDays(i).addHours(2);
+    // structured routing for the native approval process
+    r.Approval_Route__c = (pct >= 90) ? 'Auto_Approve' : 'Exceptions_Committee';
     resps.add(r);
 }
 insert resps;

@@ -1,0 +1,24 @@
+name: Stamp approval route
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/**", "main"]
+    paths: [".github/workflows/stamp-approval-route.yml", "ops/stamp-approval-route.trigger"]
+jobs:
+  stamp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --global @salesforce/cli@latest
+      - name: Authorize target org
+        run: |
+          echo "${{ secrets.SF_AUTH_URL }}" > ./SF_AUTH.txt
+          sf org login sfdx-url --sfdx-url-file ./SF_AUTH.txt --alias target --set-default
+          rm -f ./SF_AUTH.txt
+      - name: Stamp approval route
+        run: |
+          out=$(sf apex run --file scripts/stamp-approval-route.apex --target-org target --json)
+          echo "$out" | python3 -c "import sys,json; d=json.load(sys.stdin)['result']; print('compiled=',d.get('compiled'),'success=',d.get('success')); sys.exit(0 if d.get('compiled') and d.get('success') else 1)"
