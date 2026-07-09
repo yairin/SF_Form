@@ -54,8 +54,8 @@ public without sharing class FormFileValidationService {
             v.message = 'הקובץ התקבל. (בדיקת תוכן אוטומטית זמינה לתמונות/PDF בלבד.)';
             return v;
         }
-        Form_AI_Setting__c s = Form_AI_Setting__c.getOrgDefaults();
-        if (s == null || s.Engine__c != 'External' || String.isBlank(s.LLM_Endpoint__c)) {
+        AnthropicClient.Config cfg = AnthropicClient.orgConfig();
+        if (!cfg.isExternal) {
             v.message = 'הקובץ התקבל. (בדיקת תוכן AI אינה מוגדרת.)';
             return v;
         }
@@ -80,26 +80,12 @@ public without sharing class FormFileValidationService {
                 new Map<String, Object>{ 'type' => (isPdf ? 'document' : 'image'), 'source' => source }
             };
 
-            HttpRequest req = new HttpRequest();
-            req.setEndpoint(s.LLM_Endpoint__c);
-            req.setMethod('POST');
-            req.setHeader('Content-Type', 'application/json');
-            req.setHeader('x-api-key', s.LLM_API_Key__c == null ? '' : s.LLM_API_Key__c);
-            req.setHeader('anthropic-version', '2023-06-01');
-            if (isPdf) req.setHeader('anthropic-beta', 'pdfs-2024-09-25');
-            req.setTimeout(120000);
-            req.setBody(JSON.serialize(new Map<String, Object>{
-                'model' => String.isBlank(s.LLM_Model__c) ? 'claude-opus-4-8' : s.LLM_Model__c,
-                'max_tokens' => 512,
-                'messages' => new List<Object>{ new Map<String, Object>{ 'role' => 'user', 'content' => content } }
-            }));
-
-            HttpResponse res = new Http().send(req);
+            HttpResponse res = AnthropicClient.sendMessage(cfg.endpoint, cfg.model, cfg.apiKey, null, content, 512);
             if (res.getStatusCode() != 200) {
                 v.message = 'הקובץ התקבל. בדיקת התוכן לא הושלמה כרגע (ננסה שוב בעת הבדיקה).';
                 return v;
             }
-            Map<String, Object> verdict = parseVerdict(extractText(res.getBody()));
+            Map<String, Object> verdict = parseVerdict(AnthropicClient.extractText(res.getBody()));
             Boolean isType = verdict.get('isCorrectType') == true;
             Boolean matches = verdict.get('detailsMatch') == true;
             String notes = verdict.get('notes') == null ? '' : String.valueOf(verdict.get('notes'));
@@ -150,22 +136,5 @@ public without sharing class FormFileValidationService {
             if (parsed instanceof Map<String, Object>) return (Map<String, Object>) parsed;
         } catch (Exception e) { /* fall through */ }
         return new Map<String, Object>();
-    }
-
-    private static String extractText(String responseBody) {
-        try {
-            Object parsed = JSON.deserializeUntyped(responseBody);
-            if (parsed instanceof Map<String, Object>) {
-                Object content = ((Map<String, Object>) parsed).get('content');
-                if (content instanceof List<Object> && !((List<Object>) content).isEmpty()) {
-                    Object first = ((List<Object>) content)[0];
-                    if (first instanceof Map<String, Object>) {
-                        Object txt = ((Map<String, Object>) first).get('text');
-                        if (txt != null) return String.valueOf(txt);
-                    }
-                }
-            }
-        } catch (Exception e) { /* fall through */ }
-        return responseBody;
     }
 }

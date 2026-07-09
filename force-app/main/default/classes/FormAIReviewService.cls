@@ -254,28 +254,14 @@ public without sharing class FormAIReviewService {
      * (callers fall back to a rule-based summary).
      */
     public static String narrate(String userPrompt) {
-        Form_AI_Setting__c s = Form_AI_Setting__c.getOrgDefaults();
-        if (s == null || s.Engine__c != 'External' || String.isBlank(s.LLM_Endpoint__c)) {
-            return null;
-        }
+        AnthropicClient.Config cfg = AnthropicClient.orgConfig();
+        if (!cfg.isExternal) return null;
         try {
-            HttpRequest req = new HttpRequest();
-            req.setEndpoint(s.LLM_Endpoint__c);
-            req.setMethod('POST');
-            req.setHeader('Content-Type', 'application/json');
-            req.setHeader('x-api-key', s.LLM_API_Key__c == null ? '' : s.LLM_API_Key__c);
-            req.setHeader('anthropic-version', '2023-06-01');
-            req.setTimeout(120000);
-            Map<String, Object> body = new Map<String, Object>{
-                'model' => String.isBlank(s.LLM_Model__c) ? 'claude-opus-4-8' : s.LLM_Model__c,
-                'max_tokens' => 1024,
-                'system' => 'אתה אנליסט נתונים לרשות מקומית. ספק תובנות קצרות, ברורות ומועילות בעברית על תוצאות הטופס.',
-                'messages' => new List<Object>{ new Map<String, Object>{ 'role' => 'user', 'content' => userPrompt } }
-            };
-            req.setBody(JSON.serialize(body));
-            HttpResponse resp = new Http().send(req);
+            HttpResponse resp = AnthropicClient.sendMessage(cfg.endpoint, cfg.model, cfg.apiKey,
+                'אתה אנליסט נתונים לרשות מקומית. ספק תובנות קצרות, ברורות ומועילות בעברית על תוצאות הטופס.',
+                userPrompt, 1024);
             if (resp.getStatusCode() != 200) return null; // e.g. low credit / bad key -> caller falls back
-            String txt = extractText(resp.getBody());
+            String txt = AnthropicClient.extractText(resp.getBody());
             // if the body wasn't a valid content response, don't surface raw JSON
             return (txt != null && txt.startsWith('{')) ? null : txt;
         } catch (Exception e) {
@@ -299,88 +285,16 @@ public without sharing class FormAIReviewService {
 
         // multimodal content: the text prompt followed by any image/PDF attachment blocks
         List<Object> content = new List<Object>{ new Map<String, Object>{ 'type' => 'text', 'text' => prompt } };
-        Boolean hasPdf = false;
-        if (mediaBlocks != null) {
-            for (Object b : mediaBlocks) {
-                content.add(b);
-                if (b instanceof Map<String, Object>
-                    && 'document'.equals(((Map<String, Object>) b).get('type'))) {
-                    hasPdf = true;
-                }
-            }
-        }
+        if (mediaBlocks != null) content.addAll(mediaBlocks);
 
-        HttpRequest req = new HttpRequest();
-        req.setEndpoint(endpoint);
-        req.setMethod('POST');
-        req.setHeader('Content-Type', 'application/json');
-        req.setHeader('x-api-key', apiKey == null ? '' : apiKey);
-        req.setHeader('anthropic-version', '2023-06-01');
-        if (hasPdf) req.setHeader('anthropic-beta', 'pdfs-2024-09-25');
-        req.setTimeout(120000);
-        Map<String, Object> body = new Map<String, Object>{
-            'model' => String.isBlank(model) ? 'claude-opus-4-8' : model,
-            'max_tokens' => 1024,
-            'system' => systemPrompt,
-            'messages' => new List<Object>{ new Map<String, Object>{ 'role' => 'user', 'content' => content } }
-        };
-        req.setBody(JSON.serialize(body));
-
-        HttpResponse res = new Http().send(req);
+        HttpResponse res = AnthropicClient.sendMessage(endpoint, model, apiKey, systemPrompt, content, 1024);
         if (res.getStatusCode() != 200) {
             ReviewResult err = new ReviewResult();
             err.status = 'Error';
-            err.findings = 'שגיאת מנוע AI (קוד ' + res.getStatusCode() + '): ' + describeApiError(res.getBody());
+            err.findings = 'שגיאת מנוע AI (קוד ' + res.getStatusCode() + '): ' + AnthropicClient.describeApiError(res.getBody());
             return err;
         }
-        String verdictText = extractText(res.getBody());
-        return toResult(verdictText);
-    }
-
-    /**
-     * Turns an Anthropic-style error body ({"error":{"message":"..."}}) into a
-     * short, human-readable Hebrew explanation. Recognizes the common
-     * "credit balance too low" and auth cases so the card shows a real cause.
-     */
-    private static String describeApiError(String responseBody) {
-        String apiMsg = null;
-        try {
-            Object parsed = JSON.deserializeUntyped(responseBody);
-            if (parsed instanceof Map<String, Object>) {
-                Object err = ((Map<String, Object>) parsed).get('error');
-                if (err instanceof Map<String, Object>) {
-                    Object m = ((Map<String, Object>) err).get('message');
-                    if (m != null) apiMsg = String.valueOf(m);
-                }
-            }
-        } catch (Exception e) { /* non-JSON body */ }
-        if (apiMsg == null) return 'ודא מפתח ויתרת קרדיט תקינים בהגדרות.';
-        String lower = apiMsg.toLowerCase();
-        if (lower.contains('credit balance')) {
-            return 'יתרת הקרדיט בחשבון ה-AI נמוכה מדי. יש לטעון קרדיט ב-Anthropic (Plans & Billing) ולנסות שוב.';
-        }
-        if (lower.contains('authentication') || lower.contains('api key') || lower.contains('x-api-key')) {
-            return 'המפתח שהוזן אינו תקין. הזן מפתח API תקין בהגדרות ("מנוע חיצוני").';
-        }
-        return apiMsg;
-    }
-
-    /** Pull the assistant text out of an Anthropic-style response, else return the raw body. */
-    private static String extractText(String responseBody) {
-        try {
-            Object parsed = JSON.deserializeUntyped(responseBody);
-            if (parsed instanceof Map<String, Object>) {
-                Object content = ((Map<String, Object>) parsed).get('content');
-                if (content instanceof List<Object> && !((List<Object>) content).isEmpty()) {
-                    Object first = ((List<Object>) content)[0];
-                    if (first instanceof Map<String, Object>) {
-                        Object txt = ((Map<String, Object>) first).get('text');
-                        if (txt != null) return String.valueOf(txt);
-                    }
-                }
-            }
-        } catch (Exception e) { /* fall through */ }
-        return responseBody;
+        return toResult(AnthropicClient.extractText(res.getBody()));
     }
 
     private static ReviewResult toResult(String verdictText) {
