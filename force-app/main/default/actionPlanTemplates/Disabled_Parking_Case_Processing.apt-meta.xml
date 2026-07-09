@@ -88,7 +88,6 @@
         <name>שליחת מכתב תשובה לפונה</name>
         <uniqueName>Send_Response_Letter</uniqueName>
     </actionPlanTemplateItem>
-    <actionPlanType>Industries</actionPlanType>
     <description>רשימת משימות לטיפול בבקשה לתו חניה לנכה (אימות מסמכים, ניתוב, ועדת חריגים/אישור סופי, ומכתב תשובה).</description>
     <isAdHocItemCreationEnabled>false</isAdHocItemCreationEnabled>
     <name>טיפול בבקשה לתו חניה לנכה</name>
