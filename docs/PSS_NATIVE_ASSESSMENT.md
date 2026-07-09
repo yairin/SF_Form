@@ -77,5 +77,18 @@
 
 ---
 
+## סטטוס יישום (מתעדכן)
+
+| המלצה | סטטוס | הערה |
+|---|---|---|
+| #1 החלטה דטרמיניסטית (BRE-style) | ✅ נפרס | `ApprovalDecisionService` — טבלת החלטה, מנותקת מה-LLM |
+| #3 Approval Process נייטיבי | ✅ נפרס | Queue `SF_Forms_Committee` + Approval Process על route=ועדת חריגים + שדה `Approval_Route__c` |
+| #2 Agentforce Prompt Templates | ⏳ ממתין להפעלת Einstein GenAI/Agentforce בארגון | המנוע החיצוני (Anthropic) כבר עובד ומספק את אותו ערך |
+| DCI + IDR (מסמכים+OCR) | ⏳ ממתין להפעלת Document Tracking + Intelligent Document Reader | דורש רישוי/הגדרה בצד הארגון |
+| Action Plans | ⏳ ממתין להפעלת Action Plans | ניתן לבנות תבנית לאחר הפעלה |
+| #4 OmniScript/Discovery | 📋 מתוכנן (גל 4) | הסבת טפסים הדרגתית |
+
+> תשתית CI: תוקנה רגרסיה — כל ה-workflows הועלו ל-Node 22 (הגרסה החדשה של `@salesforce/cli` קורסת על Node 20).
+
 ## שורה תחתונה
 בהנחת PSS מלא, **4 ההחלפות בעלות ה-ROI הגבוה** הן: **BRE** (לוגיקת אישור), **DCI + IDR** (מסמכים + OCR), **Agentforce/Prompt Templates** (AI מנוהל), ו-**Approval Processes/Action Plans** (תהליך). אלה מפחיתות קוד מותאם, מוסיפות ממשל/ביקורת/אמון, וסוגרות את פער ה-OCR — תוך שמירה על מה שכבר נייטיבי (Experience Cloud, Restriction Rules).
