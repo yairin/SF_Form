@@ -52,6 +52,7 @@ public with sharing class FormResultsController {
         @AuraEnabled public Datetime submittedAt;
         @AuraEnabled public String aiStatus;
         @AuraEnabled public String aiStatusLabel;
+        @AuraEnabled public String approvalRoute;
     }
     public class FieldValue {
         @AuraEnabled public String label;
@@ -81,6 +82,7 @@ public with sharing class FormResultsController {
         @AuraEnabled public String aiFindings;
         @AuraEnabled public Datetime aiReviewedAt;
         @AuraEnabled public Boolean updateRequested;
+        @AuraEnabled public String approvalRoute;
         @AuraEnabled public List<FieldValue> fields;
         @AuraEnabled public List<FileRef> files;
         @AuraEnabled public List<InteractionRow> interactions;
@@ -96,6 +98,10 @@ public with sharing class FormResultsController {
         'AI_Review' => 'בדיקת AI', 'Info_Request' => 'בקשת השלמה', 'Applicant_Reply' => 'תשובת פונה',
         'Re_Review' => 'בדיקה חוזרת', 'Approval' => 'אישור/העברה לעובד', 'Note' => 'הערה'
     };
+    private static final Map<String, String> ROUTE_LABELS = new Map<String, String>{
+        'Auto_Approve' => 'אישור אוטומטי', 'Exceptions_Committee' => 'ועדת חריגים',
+        'Manual_Review' => 'בדיקה ידנית', 'Needs_Info' => 'השלמת מסמכים'
+    };
     private static String lbl(Map<String, String> m, String v) {
         if (v == null) return '';
         return m.containsKey(v) ? m.get(v) : v;
@@ -106,7 +112,7 @@ public with sharing class FormResultsController {
     public static List<ResponseRow> listResponses(String externalId) {
         List<ResponseRow> out = new List<ResponseRow>();
         for (Form_Response__c r : [
-            SELECT Id, Name, Respondent_Name__c, Submitted_At__c, AI_Status__c
+            SELECT Id, Name, Respondent_Name__c, Submitted_At__c, AI_Status__c, Approval_Route__c
             FROM Form_Response__c
             WHERE Form_External_Id__c = :externalId
             ORDER BY Submitted_At__c DESC NULLS LAST, CreatedDate DESC
@@ -119,6 +125,7 @@ public with sharing class FormResultsController {
             row.submittedAt = r.Submitted_At__c;
             row.aiStatus = r.AI_Status__c;
             row.aiStatusLabel = r.AI_Status__c == null ? 'לא נבדק' : lbl(AI_LABELS, r.AI_Status__c);
+            row.approvalRoute = r.Approval_Route__c == null ? '' : lbl(ROUTE_LABELS, r.Approval_Route__c);
             out.add(row);
         }
         return out;
@@ -130,7 +137,7 @@ public with sharing class FormResultsController {
         Form_Response__c r = [
             SELECT Id, Name, Form_External_Id__c, Respondent_Name__c, Email__c, Phone__c,
                    Submitted_At__c, Response_Data__c, AI_Status__c, AI_Findings__c,
-                   AI_Reviewed_At__c, Update_Requested__c
+                   AI_Reviewed_At__c, Update_Requested__c, Approval_Route__c
             FROM Form_Response__c WHERE Id = :responseId LIMIT 1
         ];
         ResponseDetail d = new ResponseDetail();
@@ -145,6 +152,7 @@ public with sharing class FormResultsController {
         d.aiFindings = r.AI_Findings__c;
         d.aiReviewedAt = r.AI_Reviewed_At__c;
         d.updateRequested = r.Update_Requested__c == true;
+        d.approvalRoute = r.Approval_Route__c == null ? '' : lbl(ROUTE_LABELS, r.Approval_Route__c);
         d.fields = new List<FieldValue>();
         d.files = new List<FileRef>();
         d.interactions = new List<InteractionRow>();

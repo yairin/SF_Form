@@ -19,7 +19,8 @@ const RESP_COLUMNS = [
     { label: 'סימוכין', fieldName: 'reference', initialWidth: 130 },
     { label: 'שם הפונה', fieldName: 'respondentName', wrapText: true },
     { label: 'הוגש', fieldName: 'submittedStr' },
-    { label: 'סטטוס AI', fieldName: 'aiStatusLabel', initialWidth: 140 },
+    { label: 'סטטוס AI', fieldName: 'aiStatusLabel', initialWidth: 130 },
+    { label: 'מסלול אישור', fieldName: 'approvalRoute', initialWidth: 130 },
     { type: 'action', typeAttributes: { rowActions: [{ label: 'הצג רשומה', name: 'open' }] } }
 ];
 
