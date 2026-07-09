@@ -84,7 +84,8 @@
 | #1 החלטה דטרמיניסטית (BRE-style) | ✅ נפרס | `ApprovalDecisionService` — טבלת החלטה, מנותקת מה-LLM |
 | #3 Approval Process נייטיבי | ✅ נפרס | Queue `SF_Forms_Committee` + Approval Process על route=ועדת חריגים + שדה `Approval_Route__c` |
 | #2 Agentforce Prompt Templates | ⏳ ממתין להפעלת Einstein GenAI/Agentforce בארגון | המנוע החיצוני (Anthropic) כבר עובד ומספק את אותו ערך |
-| DCI + IDR (מסמכים+OCR) | ⏳ ממתין להפעלת Document Tracking + Intelligent Document Reader | דורש רישוי/הגדרה בצד הארגון |
+| OCR / חילוץ ממסמכים | ✅ נפרס (דרך קלוד) | IDR הנייטיבי לא מורשה — במקומו קלוד המולטי-מודלי קורא תמונות/PDF ב-callout הקיים |
+| DCI (מסמכים נדרשים) | 🟡 זמין חלקית (DocumentChecklistItem קיים) | ניתן לבנות לאחר השלמת DocumentType |
 | Action Plans | ⏳ ממתין להפעלת Action Plans | ניתן לבנות תבנית לאחר הפעלה |
 | #4 OmniScript/Discovery | 📋 מתוכנן (גל 4) | הסבת טפסים הדרגתית |
 

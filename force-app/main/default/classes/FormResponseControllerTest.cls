@@ -142,6 +142,25 @@ private class FormResponseControllerTest {
             [SELECT AI_Status__c FROM Form_Response__c WHERE Id = :r.id].AI_Status__c, 'status written to record');
     }
 
+    @isTest
+    static void aiReviewSendsImageAttachmentForOcr() {
+        FormSettingsController.saveSettings('External', 'https://api.example.com/v1/messages', 'claude-opus-4-8', 'k');
+        FormResponseController.Result r = FormResponseController.submitResponse(
+            'טופס', 'preview', '{"x":"1"}', 'פלוני', 'a@b.com', null, 'x');
+        // attach an image so the multimodal (OCR) content-block path runs
+        FormFileService.FileInput fi = new FormFileService.FileInput();
+        fi.name = 'id-card.png';
+        fi.base64 = EncodingUtil.base64Encode(Blob.valueOf('fake-image-bytes'));
+        FormFileService.attachFiles(r.id, new List<FormFileService.FileInput>{ fi });
+
+        Test.startTest();
+        Test.setMock(HttpCalloutMock.class, new LlmMock());
+        FormAIReviewService.ReviewResult rr = FormAIReviewService.runReview(r.id);
+        Test.stopTest();
+
+        System.assertEquals('Approved', rr.status, 'review completes with an image attachment sent for OCR');
+    }
+
     private class LlmCreditErrorMock implements HttpCalloutMock {
         public HttpResponse respond(HttpRequest req) {
             String body = JSON.serialize(new Map<String, Object>{

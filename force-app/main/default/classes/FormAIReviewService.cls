@@ -122,7 +122,9 @@ public without sharing class FormAIReviewService {
         ReviewResult result;
         try {
             if (engine == 'External') {
-                result = reviewExternal(endpoint, model, apiKey, prompt);
+                // Claude is multimodal: send the attached images/PDFs so it performs
+                // OCR + data extraction itself (native IDR not licensed in this org).
+                result = reviewExternal(endpoint, model, apiKey, prompt, attachmentBlocks(responseId));
             } else {
                 result = new ReviewResult();
                 result.status = 'Error';
@@ -183,7 +185,7 @@ public without sharing class FormAIReviewService {
             }
             String line = '- ' + cv.Title + ' (' + cv.FileType + ', ' + cv.ContentSize + ' bytes)';
             if (String.isNotBlank(text)) line += '\nתוכן:\n' + text.left(4000);
-            else line += ' [לא ניתן לחלץ טקסט אוטומטית — נדרש OCR]';
+            else line += ' [תמונה/PDF — נשלח לקלוד לקריאה (OCR)]';
             parts.add(line);
         }
         return String.join(parts, '\n');
@@ -193,8 +195,57 @@ public without sharing class FormAIReviewService {
         return 'טופס: ' + r.Form_Name__c
             + '\nממלא: ' + r.Respondent_Name__c + ' <' + r.Email__c + '>'
             + '\nנתוני ההגשה (JSON): ' + r.Response_Data__c
-            + '\nצרופות:\n' + attachments
+            + '\nרשימת צרופות:\n' + attachments
+            + '\n\nהמסמכים המצורפים (תמונות/PDF) צורפו להודעה זו — קרא אותם בעצמך (OCR), '
+            + 'חלץ מהם את הנתונים הרלוונטיים, והשווה מול נתוני ההגשה והדרישות.'
             + '\n\nמה נדרש לוודא:\n' + (String.isBlank(instructions) ? 'ודא שההגשה מלאה והצרופות מתאימות.' : instructions);
+    }
+
+    private static final Map<String, String> IMG_MEDIA = new Map<String, String>{
+        'png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg',
+        'gif' => 'image/gif', 'webp' => 'image/webp'
+    };
+
+    /**
+     * Builds Anthropic multimodal content blocks (base64) for a response's image/PDF
+     * attachments, so Claude can OCR and read them directly. Skips non-visual files,
+     * files > 3MB (heap/callout guard), and caps at 5 files.
+     */
+    private static List<Object> attachmentBlocks(Id responseId) {
+        List<Object> blocks = new List<Object>();
+        Set<Id> docIds = new Set<Id>();
+        for (ContentDocumentLink l : [
+            SELECT ContentDocumentId FROM ContentDocumentLink WHERE LinkedEntityId = :responseId
+        ]) {
+            docIds.add(l.ContentDocumentId);
+        }
+        if (docIds.isEmpty()) return blocks;
+        Integer count = 0;
+        for (ContentVersion cv : [
+            SELECT FileExtension, ContentSize, VersionData
+            FROM ContentVersion WHERE ContentDocumentId IN :docIds AND IsLatest = true
+            ORDER BY ContentSize ASC
+        ]) {
+            if (count >= 5) break;
+            String ext = cv.FileExtension == null ? '' : cv.FileExtension.toLowerCase();
+            Boolean isPdf = (ext == 'pdf');
+            String media = IMG_MEDIA.get(ext);
+            if (media == null && !isPdf) continue;                 // only images / PDF go to vision
+            if (cv.ContentSize == null || cv.ContentSize > 3000000) continue; // size guard
+            String b64;
+            try { b64 = EncodingUtil.base64Encode(cv.VersionData); } catch (Exception e) { continue; }
+            Map<String, Object> source = new Map<String, Object>{
+                'type' => 'base64',
+                'media_type' => isPdf ? 'application/pdf' : media,
+                'data' => b64
+            };
+            blocks.add(new Map<String, Object>{
+                'type' => isPdf ? 'document' : 'image',
+                'source' => source
+            });
+            count++;
+        }
+        return blocks;
     }
 
     /**
@@ -238,12 +289,26 @@ public without sharing class FormAIReviewService {
         return c;
     }
 
-    private static ReviewResult reviewExternal(String endpoint, String model, String apiKey, String prompt) {
+    private static ReviewResult reviewExternal(String endpoint, String model, String apiKey, String prompt, List<Object> mediaBlocks) {
         if (String.isBlank(endpoint)) {
             throw new CalloutException('לא הוגדר endpoint למנוע חיצוני (ברמת הרשות או ברירת המחדל).');
         }
-        String systemPrompt = 'אתה בודק טפסים לרשות מקומית. בדוק את ההגשה מול הדרישות. '
+        String systemPrompt = 'אתה בודק טפסים לרשות מקומית. קרא בעצמך את המסמכים המצורפים (OCR) '
+            + 'וחלץ מהם נתונים, בדוק את ההגשה מול הדרישות. '
             + 'החזר אך ורק JSON תקין במבנה: {"complete": true|false, "missing": ["..."], "notes": "סיכום קצר בעברית"}.';
+
+        // multimodal content: the text prompt followed by any image/PDF attachment blocks
+        List<Object> content = new List<Object>{ new Map<String, Object>{ 'type' => 'text', 'text' => prompt } };
+        Boolean hasPdf = false;
+        if (mediaBlocks != null) {
+            for (Object b : mediaBlocks) {
+                content.add(b);
+                if (b instanceof Map<String, Object>
+                    && 'document'.equals(((Map<String, Object>) b).get('type'))) {
+                    hasPdf = true;
+                }
+            }
+        }
 
         HttpRequest req = new HttpRequest();
         req.setEndpoint(endpoint);
@@ -251,12 +316,13 @@ public without sharing class FormAIReviewService {
         req.setHeader('Content-Type', 'application/json');
         req.setHeader('x-api-key', apiKey == null ? '' : apiKey);
         req.setHeader('anthropic-version', '2023-06-01');
+        if (hasPdf) req.setHeader('anthropic-beta', 'pdfs-2024-09-25');
         req.setTimeout(120000);
         Map<String, Object> body = new Map<String, Object>{
             'model' => String.isBlank(model) ? 'claude-opus-4-8' : model,
             'max_tokens' => 1024,
             'system' => systemPrompt,
-            'messages' => new List<Object>{ new Map<String, Object>{ 'role' => 'user', 'content' => prompt } }
+            'messages' => new List<Object>{ new Map<String, Object>{ 'role' => 'user', 'content' => content } }
         };
         req.setBody(JSON.serialize(body));
 
