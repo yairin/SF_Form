@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ActionPlanTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionPlanTemplateItem>
+        <actionPlanTemplateItemValue>
+            <name>Subject</name>
+            <valueLiteral>אימות מסמכים</valueLiteral>
+            <itemEntityType>Task</itemEntityType>
+        </actionPlanTemplateItemValue>
+        <actionPlanTemplateItemValue>
+            <name>Priority</name>
+            <valueLiteral>High</valueLiteral>
+            <itemEntityType>Task</itemEntityType>
+        </actionPlanTemplateItemValue>
+        <actionPlanTemplateItemValue>
+            <name>ActivityDate</name>
+            <valueFormula>StartDate + 2</valueFormula>
+            <itemEntityType>Task</itemEntityType>
+        </actionPlanTemplateItemValue>
+        <displayOrder>1</displayOrder>
+        <isRequired>true</isRequired>
+        <itemEntityType>Task</itemEntityType>
+        <name>אימות מסמכים</name>
+        <uniqueName>Verify_Documents</uniqueName>
+    </actionPlanTemplateItem>
+    <actionPlanTemplateItem>
+        <actionPlanTemplateItemValue>
+            <name>Subject</name>
+            <valueLiteral>החלטת ניתוב</valueLiteral>
+            <itemEntityType>Task</itemEntityType>
+        </actionPlanTemplateItemValue>
+        <actionPlanTemplateItemValue>
+            <name>Priority</name>
+            <valueLiteral>Normal</valueLiteral>
+            <itemEntityType>Task</itemEntityType>
+        </actionPlanTemplateItemValue>
+        <actionPlanTemplateItemValue>
+            <name>ActivityDate</name>
+            <valueFormula>StartDate + 5</valueFormula>
+            <itemEntityType>Task</itemEntityType>
+        </actionPlanTemplateItemValue>
+        <displayOrder>2</displayOrder>
+        <isRequired>true</isRequired>
+        <itemEntityType>Task</itemEntityType>
+        <name>החלטת ניתוב</name>
+        <uniqueName>Routing_Decision</uniqueName>
+    </actionPlanTemplateItem>
+    <actionPlanTemplateItem>
+        <actionPlanTemplateItemValue>
+            <name>Subject</name>
+            <valueLiteral>החלטת ועדת חריגים / אישור סופי</valueLiteral>
+            <itemEntityType>Task</itemEntityType>
+        </actionPlanTemplateItemValue>
+        <actionPlanTemplateItemValue>
+            <name>Priority</name>
+            <valueLiteral>High</valueLiteral>
+            <itemEntityType>Task</itemEntityType>
+        </actionPlanTemplateItemValue>
+        <actionPlanTemplateItemValue>
+            <name>ActivityDate</name>
+            <valueFormula>StartDate + 10</valueFormula>
+            <itemEntityType>Task</itemEntityType>
+        </actionPlanTemplateItemValue>
+        <displayOrder>3</displayOrder>
+        <isRequired>true</isRequired>
+        <itemEntityType>Task</itemEntityType>
+        <name>החלטת ועדת חריגים / אישור סופי</name>
+        <uniqueName>Committee_Final_Approval</uniqueName>
+    </actionPlanTemplateItem>
+    <actionPlanTemplateItem>
+        <actionPlanTemplateItemValue>
+            <name>Subject</name>
+            <valueLiteral>שליחת מכתב תשובה לפונה</valueLiteral>
+            <itemEntityType>Task</itemEntityType>
+        </actionPlanTemplateItemValue>
+        <actionPlanTemplateItemValue>
+            <name>Priority</name>
+            <valueLiteral>Normal</valueLiteral>
+            <itemEntityType>Task</itemEntityType>
+        </actionPlanTemplateItemValue>
+        <actionPlanTemplateItemValue>
+            <name>ActivityDate</name>
+            <valueFormula>StartDate + 14</valueFormula>
+            <itemEntityType>Task</itemEntityType>
+        </actionPlanTemplateItemValue>
+        <displayOrder>4</displayOrder>
+        <isRequired>true</isRequired>
+        <itemEntityType>Task</itemEntityType>
+        <name>שליחת מכתב תשובה לפונה</name>
+        <uniqueName>Send_Response_Letter</uniqueName>
+    </actionPlanTemplateItem>
+    <actionPlanType>Industries</actionPlanType>
+    <description>רשימת משימות לטיפול בבקשה לתו חניה לנכה (אימות מסמכים, ניתוב, ועדת חריגים/אישור סופי, ומכתב תשובה).</description>
+    <isAdHocItemCreationEnabled>false</isAdHocItemCreationEnabled>
+    <name>טיפול בבקשה לתו חניה לנכה</name>
+    <targetEntityType>Form_Response__c</targetEntityType>
+    <uniqueName>Disabled_Parking_Case_Processing</uniqueName>
+</ActionPlanTemplate>
