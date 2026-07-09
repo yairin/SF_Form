@@ -1,101 +1,94 @@
-# SF Anonymous Form — טופס אנונימי לSalesforce Sandbox
+# בית אחד 🏠 — מערכת ניהול משפחתית
 
-טופס אינטרקטיבי דו-שלבי לשליחת פניות אנונימיות. הנתונים נשמרים כ-Lead בSalesforce Sandbox.
+אפליקציית ווב (RTL, עברית) לניהול חיי הבית המשותפים: **מטלות בית, דמי כיס, רשימת קניות וסקרים/החלטות**.
+נגישה מכל מכשיר, עם הזדהות פשוטה של שם + קוד PIN והבחנה בין **הורה** (מנהל) ל**ילד/ה**.
+
+> הפרויקט אינו קשור יותר ל-Salesforce — הוא אפליקציה עצמאית שמאחסנת את הנתונים בענן (Postgres) או בקובץ מקומי.
+
+## היכולות
+
+| מודול | הורה | ילד/ה |
+|---|---|---|
+| **מטלות בית** | יוצר/מקצה מטלה, מאשר או מחזיר ביצוע | רואה את המטלות שלו, מסמן "סיימתי" |
+| **דמי כיס** | מוסיף זיכוי/חיוב, רואה יתרות של כולם | רואה את היתרה שלו (ושל אחים אם הוגדר) |
+| **רשימת קניות** | מוסיף ישירות, מאשר/דוחה בקשות | מבקש מוצר → ממתין לאישור הורה |
+| **סקרים והחלטות** | יוצר/מצביע/סוגר | יוצר/מצביע בסקרים משפחתיים |
+
+- **קישור מטלות ← דמי כיס**: אישור מטלה עם שווי (₪) זוקף אוטומטית זיכוי דמי כיס לילד שביצע.
+- **אלוף/ת הבית**: סיכום שבועי עם דירוג לפי מטלות שהושלמו ונקודות שנצברו.
+- **הרשאות צפייה**: דמי הכיס של כל ילד פרטיים כברירת מחדל; ההורה יכול לחשוף אותם לאחים.
 
 ## Tech Stack
 
-- **Backend**: Node.js + Express
-- **Frontend**: HTML / CSS / Vanilla JS (RTL, עברית)
-- **Salesforce SDK**: jsforce
-- **Rate limiting**: express-rate-limit
+- **Backend**: Node.js + Express, JWT + PIN (bcrypt)
+- **Frontend**: HTML / CSS / Vanilla JS (RTL, עברית), ללא שלב build
+- **אחסון**: שכבת נתונים מופשטת —
+  - **Postgres** בענן כשמוגדר `DATABASE_URL` (טבלת `collections` נוצרת אוטומטית),
+  - אחרת **קובץ JSON מקומי** (`data/db.json`) — נוח לפיתוח והרצה מהירה.
 
-## התקנה
+## התקנה והרצה מקומית
 
 ```bash
 npm install
+cp .env.example .env      # ערוך את JWT_SECRET (וב-DATABASE_URL אם רוצים Postgres)
+npm start                 # או: npm run dev (עם hot reload)
 ```
 
-## הגדרת Salesforce Sandbox
+האפליקציה תעלה בכתובת **http://localhost:3000**. בכניסה הראשונה תתבקש להקים את הבית (יצירת הורה מנהל).
 
-### 1. צור Connected App בSalesforce Sandbox
-- **Setup → App Manager → New Connected App**
-- Enable OAuth Settings
-- Callback URL: `http://localhost:3000/callback`
-- Selected OAuth Scopes: `api`, `refresh_token`
-- שמור ורשום את ה-Consumer Key/Secret
-
-### 2. הגדרת Security Token
-- **Setup → My Personal Information → Reset My Security Token**
-- הtoken יישלח לאימייל שלך
-
-### 3. קובץ `.env`
+### בדיקות
 
 ```bash
-cp .env.example .env
+npm start                 # בטרמינל אחד
+npm run test:api          # בטרמינל שני — בדיקת עשן מקצה לקצה של ה-API
 ```
 
-ערוך את `.env`:
+## פריסה לענן (מומלץ: Railway)
 
-```
-SF_LOGIN_URL=https://test.salesforce.com
-SF_USERNAME=your_username@example.com.sandbox
-SF_PASSWORD=YourPassword123
-SF_SECURITY_TOKEN=YourTokenHere
-PORT=3000
-```
+Railway מספק גם שרת Node וגם Postgres מנוהל, עם פריסה אוטומטית מ-git:
 
-> **שים לב**: ב-Salesforce Sandbox השם המלא הוא `username@email.com.sandboxname`
+1. פתח חשבון ב-[railway.app](https://railway.app) וחבר את מאגר ה-git.
+2. הוסף **PostgreSQL** לפרויקט (Railway יגדיר `DATABASE_URL` אוטומטית).
+3. הגדר משתני סביבה:
+   - `JWT_SECRET` — מחרוזת אקראית ארוכה (חובה).
+   - `PGSSL=true` (ברירת מחדל מתאימה לרוב הספקים).
+   - `SETUP_CODE` — אופציונלי, קוד שנדרש כדי להקים את הבית (הורה ראשון).
+4. Railway יריץ `npm start` וייתן כתובת ציבורית נגישה מכל מקום.
 
-## הרצה
-
-```bash
-# Development (עם hot reload)
-npm run dev
-
-# Production
-npm start
-```
-
-הטופס יהיה זמין בכתובת: **http://localhost:3000**
+> אותה תצורה עובדת גם ב-**Render** / **Fly.io** / **Supabase (Postgres)** — כל מה שצריך הוא להזין `DATABASE_URL` ו-`JWT_SECRET`.
 
 ## מבנה הפרויקט
 
 ```
 SF_Form/
-├── server.js          # Express server + Salesforce API
-├── package.json
-├── .env               # (לא ב-git!) credentials
-├── .env.example       # דוגמה לקובץ .env
-└── public/
-    ├── index.html     # ממשק הטופס (RTL, עברית)
-    ├── styles.css     # עיצוב
-    └── app.js         # לוגיקת הטופס
+├── server.js                 # נקודת כניסה + חיבור הנתיבים
+├── src/
+│   ├── store.js              # שכבת נתונים ברמה גבוהה
+│   ├── auth.js               # PIN + JWT + הרשאות
+│   ├── backends/
+│   │   ├── json.js           # אחסון קובץ מקומי
+│   │   └── pg.js             # אחסון Postgres (ענן)
+│   └── routes/               # auth, tasks, allowance, shopping, surveys, summary
+├── public/                   # ממשק המשתמש (index.html, styles.css, app.js)
+├── scripts/smoke.js          # בדיקת עשן ל-API
+└── .env.example
 ```
 
-## API Endpoints
+## API עיקרי
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/submit` | שליחת הטופס → יוצר Lead בSalesforce |
-| `GET`  | `/api/health` | בדיקת חיבור לSalesforce |
+| Method | Path | תיאור |
+|--------|------|-------|
+| `GET`  | `/api/auth/status` | האם הבית אותחל |
+| `POST` | `/api/auth/setup` | יצירת הורה מנהל ראשון |
+| `POST` | `/api/auth/login` | התחברות (שם/מזהה + PIN) |
+| `GET/POST/PATCH/DELETE` | `/api/auth/members` | ניהול בני משפחה (הורה) |
+| `GET/POST` + `/:id/submit\|approve\|reject` | `/api/tasks` | מטלות |
+| `GET/POST` + `/:memberId` + `/txn/:id` | `/api/allowance` | דמי כיס |
+| `GET/POST` + `/:id/approve\|reject\|purchased` | `/api/shopping` | קניות |
+| `GET/POST` + `/:id/vote\|close` | `/api/surveys` | סקרים |
+| `GET`  | `/api/summary/weekly` | סיכום שבועי + אלוף הבית |
 
-### דוגמה לשליחה ידנית
+## הרחבות עתידיות
 
-```bash
-curl -X POST http://localhost:3000/api/submit \
-  -H "Content-Type: application/json" \
-  -d '{
-    "firstName": "ישראל",
-    "lastName": "ישראלי",
-    "email": "israel@example.com",
-    "subject": "בקשת מידע",
-    "message": "אני מעוניין לקבל פרטים נוספים על השירות.",
-    "rating": "Warm"
-  }'
-```
-
-## הערות חשובות
-
-- **Rate limiting**: מוגבל ל-10 בקשות לכל IP בכל 15 דקות
-- **אנונימיות**: הטופס לא דורש הזדהות. שדות phone ו-company אופציונליים
-- **Custom field**: אם רוצים לשמור את ה-subject בשדה נפרד בSalesforce, צור שדה `Subject__c` ב-Lead Object, אחרת הוא נכלל ב-Description
+- התראות וסיכום שבועי ל-WhatsApp/Telegram (המבנה מוכן — סיכום זמין ב-`/api/summary/weekly`).
+- מטלות מחזוריות אוטומטיות.
