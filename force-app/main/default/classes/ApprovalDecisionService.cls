@@ -87,10 +87,10 @@ public without sharing class ApprovalDecisionService {
         return evaluate(pct, docsComplete);
     }
 
-    private static Decimal extractNumber(String json, String key) {
-        if (String.isBlank(json) || String.isBlank(key)) return null;
+    private static Decimal extractNumber(String raw, String key) {
+        if (String.isBlank(raw) || String.isBlank(key)) return null;
         try {
-            Object parsed = JSON.deserializeUntyped(json);
+            Object parsed = JSON.deserializeUntyped(raw);
             if (parsed instanceof Map<String, Object>) {
                 Object v = ((Map<String, Object>) parsed).get(key);
                 if (v == null) return null;
