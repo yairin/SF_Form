@@ -1,1 +1,1 @@
-deploy 2026-07-10T14:56:34Z UX colored-status + loading
+deploy 2026-07-10T15:57:34Z test manager user-mode

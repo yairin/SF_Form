@@ -149,6 +149,45 @@ private class FormBuilderControllerTest {
     }
 
     @isTest
+    static void managerUserModeReadsSucceed() {
+        // Seed a form as admin (non-setup DML first, to keep MIXED_DML isolation clean).
+        FormBuilderController.saveForm(null, 'טופס הרשאה', '', '[{"key":"a","label":"שדה","type":"text"}]', 'perm-x', null);
+
+        // Provision a real (non-admin) manager user + the SF_Forms_Manager permset.
+        // Defensive: if the org can't allocate a license/profile for a test user, skip cleanly.
+        User mgr;
+        try {
+            List<Profile> profs = [SELECT Id FROM Profile WHERE UserType = 'Standard' ORDER BY Name LIMIT 1];
+            if (profs.isEmpty()) return;
+            mgr = new User(
+                FirstName = 'Mgr', LastName = 'Test', Alias = 'mgrt',
+                Email = 'mgr.test@example.com.invalid',
+                Username = 'mgr.test.' + DateTime.now().getTime() + '@example.com.invalid',
+                ProfileId = profs[0].Id, TimeZoneSidKey = 'America/Los_Angeles',
+                LocaleSidKey = 'en_US', EmailEncodingKey = 'UTF-8', LanguageLocaleKey = 'en_US');
+            // setup DML wrapped in runAs to avoid MIXED_DML with the seed above
+            System.runAs(new User(Id = UserInfo.getUserId())) {
+                insert mgr;
+                List<PermissionSet> ps = [SELECT Id FROM PermissionSet WHERE Name = 'SF_Forms_Manager' LIMIT 1];
+                if (!ps.isEmpty()) insert new PermissionSetAssignment(AssigneeId = mgr.Id, PermissionSetId = ps[0].Id);
+            }
+        } catch (Exception e) {
+            return; // environment can't provision a test user -> skip (no deploy failure)
+        }
+
+        // Run the WITH USER_MODE / as-user paths as a real manager; they must not throw.
+        System.runAs(mgr) {
+            Test.startTest();
+            FormResultsController.Results r = FormResultsController.getResults('perm-x');
+            FormResultsController.listResponses('perm-x');
+            FormBuilderController.listFormsDetailed();
+            FormAdminController.getServiceTypes();
+            Test.stopTest();
+            System.assertNotEquals(null, r, 'manager reads results under USER_MODE without error');
+        }
+    }
+
+    @isTest
     static void aiReviewConfigPersists() {
         String schema = '[{"key":"a","label":"שדה","type":"text","required":true}]';
         Form_Template__c t = FormBuilderController.saveForm(null, 'טופס AI', 'תיאור', schema, 'ai-cfg', null);
