@@ -115,6 +115,7 @@ public with sharing class FormResultsController {
             SELECT Id, Name, Respondent_Name__c, Submitted_At__c, AI_Status__c, Approval_Route__c
             FROM Form_Response__c
             WHERE Form_External_Id__c = :externalId
+            WITH USER_MODE
             ORDER BY Submitted_At__c DESC NULLS LAST, CreatedDate DESC
             LIMIT 2000
         ]) {
@@ -138,7 +139,7 @@ public with sharing class FormResultsController {
             SELECT Id, Name, Form_External_Id__c, Respondent_Name__c, Email__c, Phone__c,
                    Submitted_At__c, Response_Data__c, AI_Status__c, AI_Findings__c,
                    AI_Reviewed_At__c, Update_Requested__c, Approval_Route__c
-            FROM Form_Response__c WHERE Id = :responseId LIMIT 1
+            FROM Form_Response__c WHERE Id = :responseId WITH USER_MODE LIMIT 1
         ];
         ResponseDetail d = new ResponseDetail();
         d.id = r.Id;
@@ -162,7 +163,7 @@ public with sharing class FormResultsController {
         catch (Exception e) { data = new Map<String, Object>(); }
 
         List<Form_Template__c> tpls = [
-            SELECT Schema_JSON__c FROM Form_Template__c WHERE External_Id__c = :r.Form_External_Id__c LIMIT 1
+            SELECT Schema_JSON__c FROM Form_Template__c WHERE External_Id__c = :r.Form_External_Id__c WITH USER_MODE LIMIT 1
         ];
         if (!tpls.isEmpty()) {
             for (Object fo : FormValidationService.flattenFields(tpls[0].Schema_JSON__c)) {
@@ -192,14 +193,14 @@ public with sharing class FormResultsController {
 
         Set<Id> docIds = new Set<Id>();
         for (ContentDocumentLink l : [
-            SELECT ContentDocumentId FROM ContentDocumentLink WHERE LinkedEntityId = :responseId
+            SELECT ContentDocumentId FROM ContentDocumentLink WHERE LinkedEntityId = :responseId WITH USER_MODE
         ]) {
             docIds.add(l.ContentDocumentId);
         }
         if (!docIds.isEmpty()) {
             for (ContentVersion cv : [
                 SELECT ContentDocumentId, Title, FileType FROM ContentVersion
-                WHERE ContentDocumentId IN :docIds AND IsLatest = true
+                WHERE ContentDocumentId IN :docIds AND IsLatest = true WITH USER_MODE
             ]) {
                 FileRef fr = new FileRef();
                 fr.title = cv.Title;
@@ -213,6 +214,7 @@ public with sharing class FormResultsController {
         for (Form_Interaction__c i : [
             SELECT Direction__c, Interaction_Type__c, Message__c, Occurred_At__c
             FROM Form_Interaction__c WHERE Form_Response__c = :responseId
+            WITH USER_MODE
             ORDER BY Occurred_At__c ASC NULLS FIRST
         ]) {
             InteractionRow ir = new InteractionRow();
@@ -238,7 +240,7 @@ public with sharing class FormResultsController {
 
         List<Form_Template__c> tpls = [
             SELECT Name, Schema_JSON__c, AI_Insights__c, AI_Insights_Generated_At__c, AI_Insights_Record_Count__c
-            FROM Form_Template__c WHERE External_Id__c = :externalId LIMIT 1
+            FROM Form_Template__c WHERE External_Id__c = :externalId WITH USER_MODE LIMIT 1
         ];
         if (tpls.isEmpty()) { res.summary = 'הטופס לא נמצא.'; return res; }
         res.formName = tpls[0].Name;
@@ -252,7 +254,7 @@ public with sharing class FormResultsController {
         List<Map<String, Object>> payloads = new List<Map<String, Object>>();
         Integer approved = 0, needsInfo = 0, pending = 0;
         for (Form_Response__c r : [
-            SELECT Response_Data__c, AI_Status__c FROM Form_Response__c WHERE Form_External_Id__c = :externalId
+            SELECT Response_Data__c, AI_Status__c FROM Form_Response__c WHERE Form_External_Id__c = :externalId WITH USER_MODE
         ]) {
             try { payloads.add((Map<String, Object>) JSON.deserializeUntyped(r.Response_Data__c)); }
             catch (Exception e) { /* skip malformed */ }
@@ -350,7 +352,7 @@ public with sharing class FormResultsController {
 
         Datetime generatedAt = System.now();
         List<Form_Template__c> tpls = [
-            SELECT Id FROM Form_Template__c WHERE External_Id__c = :externalId LIMIT 1
+            SELECT Id FROM Form_Template__c WHERE External_Id__c = :externalId WITH USER_MODE LIMIT 1
         ];
         if (!tpls.isEmpty()) {
             Form_Template__c t = tpls[0];
