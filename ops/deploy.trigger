@@ -1,1 +1,1 @@
-deploy 2026-07-10T15:57:34Z test manager user-mode
+deploy 2026-07-10T16:02:55Z UX record-csv + legend

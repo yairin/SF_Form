@@ -91,6 +91,26 @@ export default class FormResults extends LightningElement {
         anchor.click();
     }
 
+    // Export a single record (details + fields + AI interaction thread) to CSV.
+    exportRecordCsv() {
+        const r = this.record;
+        if (!r) return;
+        const esc = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+        const lines = [['סוג', 'פרט', 'ערך'].map(esc).join(',')];
+        lines.push(['פרטים', 'סימוכין', r.reference].map(esc).join(','));
+        lines.push(['פרטים', 'שם הפונה', r.respondentName].map(esc).join(','));
+        lines.push(['פרטים', 'סטטוס AI', r.aiStatusLabel].map(esc).join(','));
+        lines.push(['פרטים', 'מסלול אישור', r.approvalRoute].map(esc).join(','));
+        (r.fields || []).forEach((f) => lines.push(['שדה', f.label, f.value].map(esc).join(',')));
+        (r.interactions || []).forEach((i) =>
+            lines.push(['התכתבות', i.interactionType + ' · ' + i.direction + ' · ' + i.occurredStr, i.message].map(esc).join(',')));
+        const anchor = this.template.querySelector('a.record-csv-download');
+        if (!anchor) return;
+        anchor.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('﻿' + lines.join('\r\n'));
+        anchor.download = (r.reference || 'record') + '.csv';
+        anchor.click();
+    }
+
     connectedCallback() {
         this.load();
     }

@@ -114,10 +114,17 @@
 
                                 <!-- approval-route distribution -->
                                 <template lwc:if={hasResponses}>
-                                    <div class="slds-grid slds-wrap slds-gutters_xx-small slds-p-bottom_x-small">
+                                    <div class="slds-grid slds-wrap slds-gutters_xx-small slds-p-bottom_xxx-small">
                                         <template for:each={routeSummary} for:item="rs">
                                             <span key={rs.key} class="slds-badge slds-m-right_xx-small">{rs.label}: {rs.count}</span>
                                         </template>
+                                    </div>
+                                    <!-- AI status color legend -->
+                                    <div class="slds-text-body_small slds-p-bottom_x-small">
+                                        <span class="slds-text-color_weak">מקרא סטטוס AI: </span>
+                                        <span class="slds-text-color_success slds-m-right_x-small">● אושר</span>
+                                        <span class="slds-text-color_error slds-m-right_x-small">● נדרשת השלמה / שגיאה</span>
+                                        <span class="slds-text-color_weak">● ממתין / לא נבדק</span>
                                     </div>
                                 </template>
 
@@ -143,7 +150,13 @@
             <!-- SINGLE RECORD -->
             <template lwc:elseif={isRecord}>
                 <div class="slds-p-around_small">
-                    <lightning-button label="← חזרה לתוצאות" variant="neutral" onclick={backToDetail} class="slds-m-bottom_small"></lightning-button>
+                    <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                        <lightning-button label="← חזרה לתוצאות" variant="neutral" onclick={backToDetail}></lightning-button>
+                        <template lwc:if={record}>
+                            <lightning-button label="ייצוא CSV" icon-name="utility:download" variant="neutral" onclick={exportRecordCsv}></lightning-button>
+                        </template>
+                    </div>
+                    <a class="record-csv-download slds-hide" aria-hidden="true"></a>
 
                     <template lwc:if={recordLoading}>
                         <lightning-spinner alternative-text="טוען רשומה..." size="small"></lightning-spinner>
