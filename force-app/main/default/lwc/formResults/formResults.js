@@ -19,10 +19,20 @@ const RESP_COLUMNS = [
     { label: 'סימוכין', fieldName: 'reference', initialWidth: 130 },
     { label: 'שם הפונה', fieldName: 'respondentName', wrapText: true },
     { label: 'הוגש', fieldName: 'submittedStr' },
-    { label: 'סטטוס AI', fieldName: 'aiStatusLabel', initialWidth: 130 },
+    { label: 'סטטוס AI', fieldName: 'aiStatusLabel', initialWidth: 130,
+      cellAttributes: { class: { fieldName: 'aiStatusClass' } } },
     { label: 'מסלול אישור', fieldName: 'approvalRoute', initialWidth: 130 },
     { type: 'action', typeAttributes: { rowActions: [{ label: 'הצג רשומה', name: 'open' }] } }
 ];
+
+// AI status -> SLDS text-color class (used in the table and record view)
+const STATUS_CLASS = {
+    Approved: 'slds-text-color_success',
+    Needs_Info: 'slds-text-color_error',
+    Error: 'slds-text-color_error',
+    Pending: 'slds-text-color_weak'
+};
+function statusClass(s) { return STATUS_CLASS[s] || 'slds-text-color_weak'; }
 
 function fmt(v) {
     if (!v) return '';
@@ -148,7 +158,7 @@ export default class FormResults extends LightningElement {
             this.aiCount = (res.insightsCount === undefined || res.insightsCount === null) ? undefined : res.insightsCount;
             // load the individual submissions for the record-level list
             const list = await listResponses({ externalId });
-            this.responses = list.map((r) => ({ ...r, submittedStr: fmt(r.submittedAt) }));
+            this.responses = list.map((r) => ({ ...r, submittedStr: fmt(r.submittedAt), aiStatusClass: statusClass(r.aiStatus) }));
             this.mode = 'detail';
         } catch (e) {
             this.toast('שגיאה', this.msg(e), 'error');
@@ -171,6 +181,7 @@ export default class FormResults extends LightningElement {
                 ...d,
                 submittedStr: fmt(d.submittedAt),
                 aiReviewedStr: fmt(d.aiReviewedAt),
+                aiStatusClass: statusClass(d.aiStatus),
                 hasFiles: (d.files || []).length > 0,
                 hasInteractions: (d.interactions || []).length > 0,
                 interactions: (d.interactions || []).map((i, idx) => ({

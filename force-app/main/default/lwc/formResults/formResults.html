@@ -7,7 +7,10 @@
                     <lightning-input type="search" label="חיפוש טופס" variant="label-hidden"
                         placeholder="חפש לפי שם או מזהה..." value={search} onchange={handleSearch}></lightning-input>
                 </div>
-                <div class="slds-p-horizontal_small">
+                <div class="slds-p-horizontal_small slds-is-relative">
+                    <template lwc:if={loading}>
+                        <lightning-spinner alternative-text="טוען תוצאות..." size="small"></lightning-spinner>
+                    </template>
                     <template lwc:if={hasRows}>
                         <lightning-datatable
                             key-field="id"
@@ -157,7 +160,7 @@
                         <!-- AI status + findings -->
                         <div class="slds-box slds-box_x-small slds-m-bottom_small slds-theme_shade">
                             <div class="slds-grid slds-grid_vertical-align-center slds-wrap">
-                                <div class="slds-text-title_bold slds-m-left_small">סטטוס AI: {record.aiStatusLabel}</div>
+                                <div class="slds-text-title_bold slds-m-left_small">סטטוס AI: <span class={record.aiStatusClass}>{record.aiStatusLabel}</span></div>
                                 <template lwc:if={record.approvalRoute}>
                                     <lightning-badge label={record.approvalRoute} icon-name="utility:routing_offline"></lightning-badge>
                                 </template>
