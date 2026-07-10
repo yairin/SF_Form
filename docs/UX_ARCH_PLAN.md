@@ -30,7 +30,7 @@
 - ✅ **A — נגישות + שגיאות אינליין** (נפרס): labels/for, `*`+aria, aria-invalid, role=alert, aria-live, שגיאות פר-שדה, helpText.
 - ✅ **B — החצנת מסלול אישור** (נפרס): תג צבעוני בכרטיס + עמודה בטבלת הרשומות.
 - ✅ **C — DRY: `AnthropicClient`** (נפרס): מקור אמת אחד לקריאות קלוד; הוסרה כפילות משני שירותים.
-- ⏸️ **D — אכיפת FLS (`WITH USER_MODE`)**: נדחה בכוונה. הבדיקות בפייפליין רצות ללא ה-permset,
-  ולכן אכיפת FLS הייתה מכשילה שאילתות בבדיקות. יישום מומלץ יחד עם בדיקות מודעות-הרשאה
-  (הקצאת `SF_Forms_Manager` למשתמש בדיקה ב-`@testSetup`), ואז להוסיף `WITH USER_MODE`
-  לשאילתות בקונטרולרים הפנימיים (`FormResultsController`, `FormBuilderController`).
+- ✅ **D — אכיפת FLS (`WITH USER_MODE`)** (נפרס): כל שאילתות הקריאה ב-`FormResultsController`
+  רצות ב-user mode ואוכפות FLS/CRUD של המשתמש הרץ (בנוסף ל-sharing/restriction). בוצע אודִיט
+  שה-permset מעניק FLS לכל שדה נשלף, כך שהמנהלים אינם מושפעים והבדיקות (כאדמין) עוברות.
+  המשך אפשרי: הרחבה ל-`FormBuilderController` ואכיפת user-mode ב-DML.
