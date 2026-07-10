@@ -56,5 +56,8 @@ jobs:
             --tests FormResponseControllerTest \
             --tests FormBuilderControllerTest \
             --tests FormRoutingServiceTest \
+            --tests ApprovalDecisionServiceTest \
+            --tests FormFileValidationServiceTest \
+            --tests AnthropicClientTest \
             --target-org target \
             --wait 30
