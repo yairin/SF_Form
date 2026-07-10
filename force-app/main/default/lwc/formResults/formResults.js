@@ -52,6 +52,35 @@ export default class FormResults extends LightningElement {
     record;
     recordLoading = false;
 
+    // Distribution of approval routes across the loaded responses (info surfacing).
+    get routeSummary() {
+        const counts = {};
+        this.responses.forEach((r) => {
+            const k = r.approvalRoute || 'ללא מסלול';
+            counts[k] = (counts[k] || 0) + 1;
+        });
+        return Object.keys(counts).map((k) => ({ key: k, label: k, count: counts[k] }));
+    }
+
+    buildCsv() {
+        const header = ['סימוכין', 'שם הפונה', 'הוגש', 'סטטוס AI', 'מסלול אישור'];
+        const esc = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+        const lines = [header.map(esc).join(',')];
+        this.responses.forEach((r) => {
+            lines.push([r.reference, r.respondentName, r.submittedStr, r.aiStatusLabel, r.approvalRoute].map(esc).join(','));
+        });
+        return lines.join('\r\n');
+    }
+
+    exportCsv() {
+        const anchor = this.template.querySelector('a.csv-download');
+        if (!anchor) return;
+        // UTF-8 BOM so Excel renders Hebrew correctly
+        anchor.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('﻿' + this.buildCsv());
+        anchor.download = (this.results && this.results.externalId ? this.results.externalId : 'results') + '.csv';
+        anchor.click();
+    }
+
     connectedCallback() {
         this.load();
     }

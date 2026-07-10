@@ -101,7 +101,23 @@
 
                             <!-- Individual submissions (record-level) -->
                             <div class="slds-box slds-box_x-small slds-m-top_small">
-                                <div class="slds-text-title_bold slds-p-bottom_xx-small">רשומות פרטניות</div>
+                                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-p-bottom_xx-small">
+                                    <div class="slds-text-title_bold">רשומות פרטניות</div>
+                                    <template lwc:if={hasResponses}>
+                                        <lightning-button label="ייצוא CSV" icon-name="utility:download"
+                                            variant="neutral" onclick={exportCsv}></lightning-button>
+                                    </template>
+                                </div>
+
+                                <!-- approval-route distribution -->
+                                <template lwc:if={hasResponses}>
+                                    <div class="slds-grid slds-wrap slds-gutters_xx-small slds-p-bottom_x-small">
+                                        <template for:each={routeSummary} for:item="rs">
+                                            <span key={rs.key} class="slds-badge slds-m-right_xx-small">{rs.label}: {rs.count}</span>
+                                        </template>
+                                    </div>
+                                </template>
+
                                 <template lwc:if={hasResponses}>
                                     <lightning-datatable
                                         key-field="id"
@@ -114,6 +130,7 @@
                                 <template lwc:else>
                                     <p class="slds-text-color_weak slds-p-around_small">אין רשומות להצגה.</p>
                                 </template>
+                                <a class="csv-download slds-hide" aria-hidden="true"></a>
                             </div>
                         </template>
                     </template>
