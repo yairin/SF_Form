@@ -19,7 +19,7 @@ public with sharing class FormAdminController {
         List<ServiceTypeInfo> out = new List<ServiceTypeInfo>();
         for (Service_Type__c s : [
             SELECT Id, Name, Department__c, Department__r.Name, Default_SLA_Hours__c, Active__c
-            FROM Service_Type__c ORDER BY Name
+            FROM Service_Type__c WITH USER_MODE ORDER BY Name
         ]) {
             ServiceTypeInfo i = new ServiceTypeInfo();
             i.id = s.Id;
@@ -36,26 +36,26 @@ public with sharing class FormAdminController {
 
     @AuraEnabled(cacheable=true)
     public static List<Department__c> getDepartments() {
-        return [SELECT Id, Name FROM Department__c WHERE Active__c = true ORDER BY Name];
+        return [SELECT Id, Name FROM Department__c WHERE Active__c = true WITH USER_MODE ORDER BY Name];
     }
 
     @AuraEnabled
     public static Id saveServiceType(Id recordId, String name, Id departmentId, Decimal slaHours, Boolean active) {
         Service_Type__c s = (recordId == null)
             ? new Service_Type__c()
-            : [SELECT Id FROM Service_Type__c WHERE Id = :recordId LIMIT 1];
+            : [SELECT Id FROM Service_Type__c WHERE Id = :recordId WITH USER_MODE LIMIT 1];
         s.Name = name;
         s.Department__c = departmentId;
         s.Default_SLA_Hours__c = slaHours;
         s.Active__c = active == null ? true : active;
-        upsert s;
+        upsert as user s;
         return s.Id;
     }
 
     @AuraEnabled
     public static void setServiceTypeActive(Id recordId, Boolean active) {
-        Service_Type__c s = [SELECT Id FROM Service_Type__c WHERE Id = :recordId LIMIT 1];
+        Service_Type__c s = [SELECT Id FROM Service_Type__c WHERE Id = :recordId WITH USER_MODE LIMIT 1];
         s.Active__c = active;
-        update s;
+        update as user s;
     }
 }
