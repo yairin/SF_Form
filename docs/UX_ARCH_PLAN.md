@@ -33,4 +33,6 @@
 - ✅ **D — אכיפת FLS (`WITH USER_MODE`)** (נפרס): כל שאילתות הקריאה ב-`FormResultsController`
   רצות ב-user mode ואוכפות FLS/CRUD של המשתמש הרץ (בנוסף ל-sharing/restriction). בוצע אודִיט
   שה-permset מעניק FLS לכל שדה נשלף, כך שהמנהלים אינם מושפעים והבדיקות (כאדמין) עוברות.
-  המשך אפשרי: הרחבה ל-`FormBuilderController` ואכיפת user-mode ב-DML.
+  **הורחב:** כל שלושת הקונטרולרים הפנימיים — `FormResultsController`, `FormBuilderController`,
+  `FormAdminController` — אוכפים עכשיו FLS/CRUD ב-user mode (קריאות `WITH USER_MODE` ו-DML `as user`).
+  מסלול ההגשה הציבורי (`FormResponseController`, guest) נשאר במצב מערכת בכוונה.
