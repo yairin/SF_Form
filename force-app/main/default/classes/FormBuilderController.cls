@@ -21,6 +21,7 @@ public with sharing class FormBuilderController {
         return [
             SELECT Id, Name, External_Id__c, Active__c, Description__c
             FROM Form_Template__c
+            WITH USER_MODE
             ORDER BY CreatedDate DESC
         ];
     }
@@ -35,6 +36,7 @@ public with sharing class FormBuilderController {
             SELECT Form_External_Id__c ext, COUNT(Id) c
             FROM Form_Response__c
             WHERE Form_External_Id__c != null
+            WITH USER_MODE
             GROUP BY Form_External_Id__c
         ]) {
             counts.put((String) ar.get('ext'), (Integer) ar.get('c'));
@@ -43,6 +45,7 @@ public with sharing class FormBuilderController {
         for (Form_Template__c t : [
             SELECT Id, Name, External_Id__c, Active__c, Description__c, Service_Type__r.Name
             FROM Form_Template__c
+            WITH USER_MODE
             ORDER BY CreatedDate DESC
         ]) {
             TemplateInfo ti = new TemplateInfo();
@@ -61,7 +64,7 @@ public with sharing class FormBuilderController {
 
     @AuraEnabled(cacheable=true)
     public static List<Service_Type__c> listServiceTypes() {
-        return [SELECT Id, Name FROM Service_Type__c WHERE Active__c = true ORDER BY Name];
+        return [SELECT Id, Name FROM Service_Type__c WHERE Active__c = true WITH USER_MODE ORDER BY Name];
     }
 
     /** Full template for editing in the builder. */
@@ -73,6 +76,7 @@ public with sharing class FormBuilderController {
                    AI_Check_Attachments__c, AI_Contact_Applicant__c
             FROM Form_Template__c
             WHERE Id = :recordId
+            WITH USER_MODE
             LIMIT 1
         ];
     }
@@ -81,19 +85,19 @@ public with sharing class FormBuilderController {
     @AuraEnabled
     public static void setAIConfig(Id recordId, Boolean enabled, String instructions,
                                    Boolean checkAttachments, Boolean contactApplicant) {
-        Form_Template__c f = [SELECT Id FROM Form_Template__c WHERE Id = :recordId LIMIT 1];
+        Form_Template__c f = [SELECT Id FROM Form_Template__c WHERE Id = :recordId WITH USER_MODE LIMIT 1];
         f.AI_Review_Enabled__c = enabled == true;
         f.AI_Review_Instructions__c = instructions;
         f.AI_Check_Attachments__c = checkAttachments == true;
         f.AI_Contact_Applicant__c = contactApplicant == true;
-        update f;
+        update as user f;
     }
 
     @AuraEnabled
     public static Form_Template__c saveForm(String recordId, String title, String description, String schemaJson, String externalId, String serviceTypeId) {
         Form_Template__c f;
         if (String.isNotBlank(recordId)) {
-            f = [SELECT Id, External_Id__c FROM Form_Template__c WHERE Id = :recordId LIMIT 1];
+            f = [SELECT Id, External_Id__c FROM Form_Template__c WHERE Id = :recordId WITH USER_MODE LIMIT 1];
         } else {
             f = new Form_Template__c(External_Id__c = externalId);
         }
@@ -102,16 +106,16 @@ public with sharing class FormBuilderController {
         f.Schema_JSON__c = schemaJson;
         f.Active__c = true;
         f.Service_Type__c = String.isBlank(serviceTypeId) ? null : (Id) serviceTypeId;
-        upsert f;
+        upsert as user f;
         return f;
     }
 
     /** Activate / deactivate a form (deactivated forms stop rendering for the public). */
     @AuraEnabled
     public static void setActive(Id recordId, Boolean active) {
-        Form_Template__c f = [SELECT Id FROM Form_Template__c WHERE Id = :recordId LIMIT 1];
+        Form_Template__c f = [SELECT Id FROM Form_Template__c WHERE Id = :recordId WITH USER_MODE LIMIT 1];
         f.Active__c = active;
-        update f;
+        update as user f;
     }
 
     /** Duplicate a form. The copy starts inactive with a fresh external id so it never collides. */
@@ -121,6 +125,7 @@ public with sharing class FormBuilderController {
             SELECT Name, Description__c, Schema_JSON__c, External_Id__c, Service_Type__c
             FROM Form_Template__c
             WHERE Id = :recordId
+            WITH USER_MODE
             LIMIT 1
         ];
         String base = String.isBlank(src.External_Id__c) ? 'form' : src.External_Id__c;
@@ -132,13 +137,13 @@ public with sharing class FormBuilderController {
             External_Id__c  = base + '-copy-' + String.valueOf(Datetime.now().getTime()),
             Active__c       = false
         );
-        insert copy;
+        insert as user copy;
         return copy;
     }
 
     @AuraEnabled
     public static void deleteForm(Id recordId) {
-        delete [SELECT Id FROM Form_Template__c WHERE Id = :recordId LIMIT 1];
+        delete as user [SELECT Id FROM Form_Template__c WHERE Id = :recordId WITH USER_MODE LIMIT 1];
     }
 
     /** Public (Experience Cloud) URL for a given form external id, or null if not configured. */
