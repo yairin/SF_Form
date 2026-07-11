@@ -19,37 +19,49 @@ jobs:
   validate:
     name: Deploy to scratch org + run Apex tests
     runs-on: ubuntu-latest
+    # Scratch-org CI requires a Dev Hub. When the secret isn't configured, skip
+    # gracefully (the validate-org + deploy-org workflows cover testing against the
+    # real sandbox), so a missing optional secret doesn't show a false red X.
+    env:
+      HAS_DEVHUB: ${{ secrets.DEVHUB_SFDX_AUTH_URL != '' }}
     steps:
+      - name: Skip notice (no Dev Hub configured)
+        if: env.HAS_DEVHUB != 'true'
+        run: echo "::notice::DEVHUB_SFDX_AUTH_URL not set — skipping scratch-org CI. Org testing runs in 'Validate against org' and 'Deploy to org'."
+
       - name: Checkout
+        if: env.HAS_DEVHUB == 'true'
         uses: actions/checkout@v4
 
       - name: Setup Node
+        if: env.HAS_DEVHUB == 'true'
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Install Salesforce CLI
+        if: env.HAS_DEVHUB == 'true'
         run: npm install --global @salesforce/cli@latest
 
       - name: Authorize Dev Hub
+        if: env.HAS_DEVHUB == 'true'
         run: |
-          if [ -z "${{ secrets.DEVHUB_SFDX_AUTH_URL }}" ]; then
-            echo "::error::Missing secret DEVHUB_SFDX_AUTH_URL. See docs/DEPLOY.md."
-            exit 1
-          fi
           echo "${{ secrets.DEVHUB_SFDX_AUTH_URL }}" > ./DEVHUB_AUTH.txt
           sf org login sfdx-url --sfdx-url-file ./DEVHUB_AUTH.txt --set-default-dev-hub --alias devhub
           rm -f ./DEVHUB_AUTH.txt
 
       - name: Create scratch org
+        if: env.HAS_DEVHUB == 'true'
         run: sf org create scratch --definition-file config/project-scratch-def.json --alias ci --set-default --duration-days 1 --wait 10
 
       - name: Deploy source
+        if: env.HAS_DEVHUB == 'true'
         run: sf project deploy start --source-dir force-app --target-org ci --wait 20
 
       - name: Run Apex tests
+        if: env.HAS_DEVHUB == 'true'
         run: sf apex run test --target-org ci --code-coverage --result-format human --wait 20 --test-level RunLocalTests
 
       - name: Delete scratch org
-        if: always()
+        if: ${{ always() && env.HAS_DEVHUB == 'true' }}
         run: sf org delete scratch --target-org ci --no-prompt

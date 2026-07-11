@@ -8,6 +8,14 @@
         <apexClass>FormRenderController</apexClass>
         <enabled>true</enabled>
     </classAccesses>
+    <classAccesses>
+        <apexClass>FormFileService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>FormFileValidationService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <description>Guest create-only access for public form submissions: create on Form_Response__c and read on Form_Template__c (for rendering). Form_Answer__c is populated by the after-insert trigger (system context).</description>
     <fieldPermissions>
         <field>Form_Response__c.Form_Name__c</field>

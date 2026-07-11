@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>AI_Review_Instructions__c</fullName>
+    <label>AI Review Instructions</label>
+    <description>What the AI agent must verify in each submission (e.g. required attachments and their content).</description>
+    <type>LongTextArea</type>
+    <length>32768</length>
+    <visibleLines>4</visibleLines>
+</CustomField>

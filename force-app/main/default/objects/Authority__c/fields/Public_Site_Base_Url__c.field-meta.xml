@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Public_Site_Base_Url__c</fullName>
+    <label>Public Site Base URL</label>
+    <description>Per-authority public form page base URL. Falls back to the org custom label when blank.</description>
+    <type>Text</type>
+    <length>255</length>
+</CustomField>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>AI_Check_Attachments__c</fullName>
+    <label>AI Check Attachments</label>
+    <description>Ask the AI to verify the uploaded files match what the form requires.</description>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>LLM_API_Key__c</fullName>
+    <label>LLM API Key</label>
+    <description>Per-authority external LLM API key. For production prefer a Named/External Credential.</description>
+    <type>Text</type>
+    <length>255</length>
+</CustomField>

@@ -48,11 +48,34 @@
             <layoutItems><behavior>Readonly</behavior><field>LastModifiedById</field></layoutItems>
         </layoutColumns>
     </layoutSections>
+    <layoutSections>
+        <customLabel>true</customLabel>
+        <detailHeading>true</detailHeading>
+        <editHeading>true</editHeading>
+        <label>בדיקת AI וניתוב</label>
+        <style>TwoColumnsTopToBottom</style>
+        <layoutColumns>
+            <layoutItems><behavior>Readonly</behavior><field>AI_Status__c</field></layoutItems>
+            <layoutItems><behavior>Readonly</behavior><field>AI_Reviewed_At__c</field></layoutItems>
+            <layoutItems><behavior>Readonly</behavior><field>Update_Requested__c</field></layoutItems>
+            <layoutItems><behavior>Readonly</behavior><field>Authority__c</field></layoutItems>
+        </layoutColumns>
+        <layoutColumns>
+            <layoutItems><behavior>Edit</behavior><field>AI_Findings__c</field></layoutItems>
+        </layoutColumns>
+    </layoutSections>
     <relatedLists>
         <fields>Field_Key__c</fields>
         <fields>Value_Text__c</fields>
         <fields>Value_Number__c</fields>
         <fields>Value_Date__c</fields>
         <relatedList>Form_Answer__c.Form_Response__c</relatedList>
+    </relatedLists>
+    <relatedLists>
+        <fields>Interaction_Type__c</fields>
+        <fields>Direction__c</fields>
+        <fields>Message__c</fields>
+        <fields>Occurred_At__c</fields>
+        <relatedList>Form_Interaction__c.Form_Response__c</relatedList>
     </relatedLists>
 </Layout>

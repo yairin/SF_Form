@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Engine__c</fullName>
+    <label>AI Engine</label>
+    <description>Which engine runs the AI form review: Agentforce or External.</description>
+    <type>Text</type>
+    <length>40</length>
+    <required>false</required>
+</CustomField>

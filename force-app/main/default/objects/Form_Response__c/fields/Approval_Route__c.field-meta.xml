@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Approval_Route__c</fullName>
+    <label>Approval Route</label>
+    <description>Deterministic routing decision (set by ApprovalDecisionService): drives the native approval process and reporting.</description>
+    <type>Picklist</type>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Auto_Approve</fullName><default>false</default><label>אישור אוטומטי</label></value>
+            <value><fullName>Exceptions_Committee</fullName><default>false</default><label>ועדת חריגים</label></value>
+            <value><fullName>Manual_Review</fullName><default>false</default><label>בדיקה ידנית</label></value>
+            <value><fullName>Needs_Info</fullName><default>false</default><label>השלמת מסמכים</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

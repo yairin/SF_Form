@@ -1,0 +1,32 @@
+<template>
+    <div dir="rtl">
+        <lightning-card title="בדיקת AI" icon-name="utility:einstein">
+            <div class="slds-p-around_medium">
+                <p>
+                    סטטוס: <span class={statusClass}>{statusLabel}</span>
+                    <template lwc:if={reviewedAt}>
+                        <span class="slds-text-body_small slds-text-color_weak"> · נבדק: <lightning-formatted-date-time value={reviewedAt}></lightning-formatted-date-time></span>
+                    </template>
+                </p>
+
+                <template lwc:if={findings}>
+                    <div class="slds-box slds-box_xx-small slds-m-top_x-small" style="white-space:pre-wrap;">{findings}</div>
+                </template>
+
+                <template lwc:if={updateRequested}>
+                    <p class="slds-text-body_small slds-text-color_success slds-p-top_xx-small">✓ נשלחה בקשת השלמה לפונה</p>
+                </template>
+
+                <div class="slds-p-top_medium">
+                    <lightning-button label="הרץ בדיקת AI" variant="brand" onclick={runNow} disabled={loading}></lightning-button>
+                    <template lwc:if={canRequest}>
+                        <lightning-button label="בקש השלמה מהפונה" variant="neutral" class="slds-m-right_x-small" onclick={ask} disabled={loading}></lightning-button>
+                    </template>
+                </div>
+                <template lwc:if={noEmail}>
+                    <p class="slds-text-body_small slds-text-color_weak slds-p-top_xx-small">אין אימייל לפונה — לא ניתן לשלוח בקשת השלמה.</p>
+                </template>
+            </div>
+        </lightning-card>
+    </div>
+</template>

@@ -1,0 +1,24 @@
+[data-bar] {
+    background-color: #1b96ff;
+    min-height: 0.85rem;
+    border-radius: 4px;
+}
+
+.kpi {
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    color: #fff;
+    min-width: 7rem;
+}
+.kpi-num { font-size: 1.9rem; font-weight: 700; line-height: 1.1; }
+.kpi-lbl { font-size: 0.8rem; opacity: 0.95; }
+.kpi-total { background-color: #032d60; }
+.kpi-ok { background-color: #2e844a; }
+.kpi-warn { background-color: #ba0517; }
+.kpi-pending { background-color: #706e6b; }
+
+/* AI interaction thread — color by direction */
+.ix-sys { border-inline-start: 4px solid #706e6b; background-color: #f3f3f3; }
+.ix-to { border-inline-start: 4px solid #1b96ff; background-color: #eef4ff; }
+.ix-from { border-inline-start: 4px solid #2e844a; background-color: #eefaf0; }

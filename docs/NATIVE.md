@@ -14,15 +14,27 @@
 הטריגר הקיים ממשיך לפרק את `Response_Data__c` ל-`Form_Answer__c` — הדיווח עובד כרגיל.
 
 ## חשיפה כטופס ציבורי אנונימי (שלבים חד-פעמיים בארגון)
-1. **Setup → Digital Experiences → Settings** — הפעל אם צריך.
+> **דרישת קדם (חוסם נפוץ):** יש לפרוס תחילה את **My Domain** (הדומיין שלי) —
+> ללא דומיין פרוס, הפעלת Digital Experiences נכשלת.
+> Setup → **My Domain** → רשום שם דומיין → **Check Availability** → **Register Domain**,
+> המתן ל"Registration succeeded", ואז **Deploy to Users**.
+
+0. **My Domain** — ודא שהדומיין רשום ופרוס (ראו דרישת הקדם למעלה).
+1. **Setup → Digital Experiences → Settings** — סמן **Enable Digital Experiences**,
+   בחר שם דומיין לאתרים ושמור.
 2. **All Sites → New** — בחר תבנית **Build Your Own (LWR)**, תן שם וכתובת.
-3. ב-**Experience Builder**: גרור את הרכיב **"Public Form (SF Forms)"** לעמוד. ניתן
-   להגדיר את המאפיינים `Form Name` / `Form External Id` בפאנל הימני.
+3. ב-**Experience Builder**: גרור את הרכיב **"Dynamic Form (SF Forms)"** לעמוד ובפאנל
+   הימני הגדר את המאפיין **Form External Id = `event-registration`** (טופס ציבורי
+   שנזרע אוטומטית ע"י `scripts/seed.apex`, פעיל ומנותב ל"תרבות" עם SLA 48 שעות).
+   לחלופין ניתן להשתמש ברכיב **"Public Form (SF Forms)"** (שדות קבועים).
 4. **גישת אורח (Guest):** Settings → General → אפשר גישת אורח לאתר; ואז
-   **Public Access Settings** → למשתמש ה-Guest הקצה את ה-Permission Set
-   **SF_Forms_Public_Submit** (יצירה ל-`Form_Response__c` + הרשאת ה-Apex
-   `FormResponseController`).
+   **Administration → Pages → Public Access Settings** (או פרופיל ה-Guest של האתר)
+   → הקצה את ה-Permission Set **SF_Forms_Public_Submit** (יצירה ל-`Form_Response__c`
+   + הרשאות Apex `FormResponseController` / `FormRenderController`).
 5. **Publish**. הכתובת הציבורית זמינה ללא התחברות.
+
+> הרכיבים `FormRenderController` ו-`FormResponseController` רצים `without sharing`,
+> ולכן **אין צורך** בכלל שיתוף (Guest Sharing Rule) — הגישה נשלטת ע"י ה-Permission Set.
 
 ## תוצאה
 פונה אנונימי ממלא → ה-LWC קורא ל-Apex → נוצרת `Form_Response__c` → הטריגר יוצר

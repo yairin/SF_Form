@@ -6,7 +6,42 @@
         <members>Form_Template__c</members>
         <members>Department__c</members>
         <members>Service_Type__c</members>
+        <members>Form_AI_Setting__c</members>
+        <members>Authority__c</members>
+        <members>Form_Interaction__c</members>
         <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Form_AI_Setting__c.Engine__c</members>
+        <members>Form_AI_Setting__c.LLM_Endpoint__c</members>
+        <members>Form_AI_Setting__c.LLM_Model__c</members>
+        <members>Form_AI_Setting__c.LLM_API_Key__c</members>
+        <members>Authority__c.Code__c</members>
+        <members>Authority__c.Active__c</members>
+        <members>Authority__c.AI_Engine__c</members>
+        <members>Authority__c.LLM_Endpoint__c</members>
+        <members>Authority__c.LLM_Model__c</members>
+        <members>Authority__c.LLM_API_Key__c</members>
+        <members>Authority__c.Public_Site_Base_Url__c</members>
+        <members>Form_Template__c.Authority__c</members>
+        <members>Form_Response__c.Authority__c</members>
+        <members>Department__c.Authority__c</members>
+        <members>Service_Type__c.Authority__c</members>
+        <members>User.Authority_Code__c</members>
+        <members>Form_Interaction__c.Form_Response__c</members>
+        <members>Form_Interaction__c.Direction__c</members>
+        <members>Form_Interaction__c.Interaction_Type__c</members>
+        <members>Form_Interaction__c.Message__c</members>
+        <members>Form_Interaction__c.Occurred_At__c</members>
+        <name>CustomField</name>
+    </types>
+    <types>
+        <members>Anthropic_API</members>
+        <name>RemoteSiteSetting</name>
+    </types>
+    <types>
+        <members>Form_Public_Site_Base_Url</members>
+        <name>CustomLabel</name>
     </types>
     <types>
         <members>Form_Response__c.Form_Name__c</members>
@@ -19,12 +54,23 @@
         <members>Form_Response__c.Subject__c</members>
         <members>Form_Response__c.Status__c</members>
         <members>Form_Response__c.Source_IP__c</members>
+        <members>Form_Response__c.AI_Status__c</members>
+        <members>Form_Response__c.AI_Findings__c</members>
+        <members>Form_Response__c.AI_Reviewed_At__c</members>
+        <members>Form_Response__c.Update_Token__c</members>
+        <members>Form_Response__c.Update_Requested__c</members>
+        <members>Form_Response__c.Authority_Code__c</members>
+        <members>Form_Response__c.Tenant_Code__c</members>
         <members>Form_Answer__c.Form_Response__c</members>
         <members>Form_Answer__c.Field_Key__c</members>
         <members>Form_Answer__c.Field_Label__c</members>
         <members>Form_Answer__c.Value_Text__c</members>
         <members>Form_Answer__c.Value_Number__c</members>
         <members>Form_Answer__c.Value_Date__c</members>
+        <members>Form_Template__c.AI_Review_Enabled__c</members>
+        <members>Form_Template__c.AI_Review_Instructions__c</members>
+        <members>Form_Template__c.AI_Check_Attachments__c</members>
+        <members>Form_Template__c.AI_Contact_Applicant__c</members>
         <name>CustomField</name>
     </types>
     <types>
@@ -37,12 +83,23 @@
         <members>FormBuilderControllerTest</members>
         <members>FormRoutingService</members>
         <members>FormRoutingServiceTest</members>
+        <members>FormValidationService</members>
+        <members>FormSettingsController</members>
+        <members>FormFileService</members>
+        <members>FormAIReviewService</members>
+        <members>FormResultsController</members>
+        <members>FormAdminController</members>
         <name>ApexClass</name>
     </types>
     <types>
         <members>publicForm</members>
         <members>dynamicForm</members>
         <members>formBuilder</members>
+        <members>formManager</members>
+        <members>formSettings</members>
+        <members>formAiReview</members>
+        <members>formResults</members>
+        <members>formAdmin</members>
         <name>LightningComponentBundle</name>
     </types>
     <types>
@@ -52,12 +109,21 @@
     <types>
         <members>SF_Forms_Home</members>
         <members>SF_Forms_Builder</members>
+        <members>SF_Forms_Manage</members>
+        <members>SF_Forms_Settings</members>
+        <members>SF_Forms_Results</members>
+        <members>SF_Forms_Admin</members>
         <name>FlexiPage</name>
     </types>
     <types>
         <members>SF_Forms_Home</members>
         <members>SF_Forms_Builder</members>
+        <members>SF_Forms_Manage</members>
+        <members>SF_Forms_Settings</members>
+        <members>SF_Forms_Results</members>
+        <members>SF_Forms_Admin</members>
         <members>Form_Response__c</members>
+        <members>Authority__c</members>
         <name>CustomTab</name>
     </types>
     <types>

@@ -1,26 +1,135 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, wire } from 'lwc';
+import { CurrentPageReference } from 'lightning/navigation';
 import getForm from '@salesforce/apex/FormRenderController.getForm';
 import submitResponse from '@salesforce/apex/FormResponseController.submitResponse';
+import attachFiles from '@salesforce/apex/FormFileService.attachFiles';
+import validateFile from '@salesforce/apex/FormFileValidationService.validateFile';
 
-const TEXT_TYPES = { text: 'text', email: 'email', phone: 'tel', number: 'number', date: 'date' };
+const MAX_FILE_BYTES = 4 * 1024 * 1024; // ~4MB per file (Apex heap/base64 guard)
+const DEFAULT_ACCEPT = ['pdf', 'png', 'jpg', 'jpeg'];
+
+const TEXT_TYPES = {
+    text: 'text', email: 'email', phone: 'tel', number: 'number',
+    currency: 'number', idNumber: 'text', date: 'date'
+};
+
+// Accepts a plain array (legacy single-step) or { steps:[{title,fields}] } / { fields:[...] }.
+function normalizeSteps(parsed) {
+    if (Array.isArray(parsed)) return [{ title: null, fields: parsed }];
+    if (parsed && Array.isArray(parsed.steps)) {
+        return parsed.steps.map((s) => ({ title: s.title || null, fields: s.fields || [] }));
+    }
+    if (parsed && Array.isArray(parsed.fields)) return [{ title: null, fields: parsed.fields }];
+    return [{ title: null, fields: [] }];
+}
+
+function isValidIsraeliId(id) {
+    const digits = String(id || '').replace(/\D/g, '');
+    if (!digits.length || digits.length > 9) return false;
+    const padded = digits.padStart(9, '0');
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+        let p = Number(padded[i]) * ((i % 2 === 0) ? 1 : 2);
+        if (p > 9) p -= 9;
+        sum += p;
+    }
+    return sum % 10 === 0;
+}
 
 export default class DynamicForm extends LightningElement {
     _ext;
+    _urlExt;
     @api
     get externalId() { return this._ext; }
     set externalId(v) {
+        // A ?formId= URL param (read via the wire) always wins over the static
+        // property, so a single published page can serve every form.
+        if (!this._urlExt) this.applyExternalId(v);
+    }
+
+    // Read ?formId= (or ?c__formId=) from the Experience page URL.
+    @wire(CurrentPageReference)
+    setPageRef(ref) {
+        const fromUrl = ref && ref.state && (ref.state.formId || ref.state.c__formId);
+        if (fromUrl) {
+            this._urlExt = fromUrl;
+            this.applyExternalId(fromUrl);
+        }
+    }
+
+    applyExternalId(v) {
+        if (!v || v === this._ext) return;
         this._ext = v;
-        if (v) this.load();
+        this.load();
     }
 
     title = 'טופס';
     description = '';
     fields = [];
     values = {};
+    files = {}; // key -> [{name, base64}]
+    fileStatus = {}; // key -> {checking, ok, message, cssClass}
+    fieldErrors = {}; // key -> message (inline, per-field)
     reference;
     error;
     loading = false;
     notFound = false;
+    stepIndex = 0;
+    stepTitles = [];
+
+    get isWizard() { return this.stepTitles.length > 1; }
+    get currentFields() { return this.fields.filter((f) => f.step === this.stepIndex); }
+    // fields for the current step decorated with per-file status and inline errors
+    get currentFieldsView() {
+        return this.currentFields.map((f) => ({
+            ...f,
+            status: this.fileStatus[f.key],
+            fieldError: this.fieldErrors[f.key],
+            ariaInvalid: this.fieldErrors[f.key] ? 'true' : 'false',
+            ariaRequired: f.required ? 'true' : 'false'
+        }));
+    }
+    get isFirstStep() { return this.stepIndex === 0; }
+    get isLastStep() { return this.stepIndex >= this.stepTitles.length - 1; }
+    get currentStepTitle() { return this.stepTitles[this.stepIndex]; }
+    get stepProgressLabel() {
+        return 'שלב ' + (this.stepIndex + 1) + ' מתוך ' + this.stepTitles.length + ': ' + this.currentStepTitle;
+    }
+    get progressStyle() {
+        const pct = this.stepTitles.length ? Math.round(((this.stepIndex + 1) / this.stepTitles.length) * 100) : 100;
+        return 'width:' + pct + '%';
+    }
+
+    // Validates a set of fields, writing inline per-field errors. Returns true if any invalid.
+    validateFields(fieldsToCheck) {
+        const errs = { ...this.fieldErrors };
+        let bad = false;
+        fieldsToCheck.forEach((f) => {
+            delete errs[f.key];
+            let m;
+            if (f.required && this.isEmpty(this.values[f.key])) m = 'שדה חובה';
+            else if (f.type === 'idNumber' && !this.isEmpty(this.values[f.key]) && !isValidIsraeliId(this.values[f.key])) m = 'תעודת זהות לא תקינה';
+            if (m) { errs[f.key] = m; bad = true; }
+        });
+        this.fieldErrors = errs;
+        this.error = bad ? 'נא לתקן את השדות המסומנים.' : undefined;
+        return bad;
+    }
+
+    stepHasErrors() {
+        return this.validateFields(this.currentFields);
+    }
+
+    nextStep() {
+        this.error = undefined;
+        if (this.stepHasErrors()) return;
+        if (!this.isLastStep) this.stepIndex += 1;
+    }
+
+    prevStep() {
+        this.error = undefined;
+        if (!this.isFirstStep) this.stepIndex -= 1;
+    }
 
     connectedCallback() {
         if (this._ext && this.fields.length === 0) this.load();
@@ -40,29 +149,56 @@ export default class DynamicForm extends LightningElement {
         this.title = title || 'טופס';
         this.description = description || '';
         this.values = {};
+        this.files = {};
+        this.fileStatus = {};
+        this.fieldErrors = {};
         this.reference = undefined;
+        this.stepIndex = 0;
         let parsed = [];
         try { parsed = JSON.parse(schemaJson || '[]'); } catch (e) { parsed = []; }
-        this.fields = parsed.map((f) => ({
-            key: f.key,
-            label: f.label,
-            required: !!f.required,
-            mapTo: f.mapTo,
-            options: (f.options || []).map((o) => ({ label: o, value: o })),
-            isText: Object.keys(TEXT_TYPES).includes(f.type),
-            inputType: TEXT_TYPES[f.type] || 'text',
-            isTextarea: f.type === 'textarea',
-            isSelect: f.type === 'select',
-            isRadio: f.type === 'radio',
-            isCheckbox: f.type === 'checkbox',
-            isCheckboxGroup: f.type === 'checkboxGroup'
-        }));
+        const steps = normalizeSteps(parsed);
+        this.stepTitles = steps.map((s, i) => s.title || ('שלב ' + (i + 1)));
+        const flat = [];
+        steps.forEach((s, si) => {
+            (s.fields || []).forEach((f) => {
+                flat.push({
+                    key: f.key,
+                    label: f.label,
+                    type: f.type,
+                    step: si,
+                    required: !!f.required,
+                    mapTo: f.mapTo,
+                    options: (f.options || []).map((o) => ({ label: o, value: o })),
+                    isText: Object.keys(TEXT_TYPES).includes(f.type),
+                    inputType: TEXT_TYPES[f.type] || 'text',
+                    isTextarea: f.type === 'textarea',
+                    isSelect: f.type === 'select',
+                    isRadio: f.type === 'radio',
+                    isCheckbox: f.type === 'checkbox',
+                    isCheckboxGroup: f.type === 'checkboxGroup',
+                    isFile: f.type === 'file',
+                    helpText: f.helpText || f.help || null,
+                    // per-file-field validation config (optional in schema)
+                    acceptList: Array.isArray(f.accept) && f.accept.length ? f.accept.map((x) => String(x).toLowerCase()) : DEFAULT_ACCEPT,
+                    accept: '.' + (Array.isArray(f.accept) && f.accept.length ? f.accept : DEFAULT_ACCEPT).join(',.'),
+                    docLabel: f.docLabel || f.label,
+                    verifyKeys: Array.isArray(f.verify) && f.verify.length ? f.verify : null
+                });
+            });
+        });
+        this.fields = flat;
     }
 
     handleChange(event) {
         const key = event.target.dataset.key;
         const f = this.fields.find((x) => x.key === key);
         if (!f) return;
+        // clear an inline error as soon as the user edits the field
+        if (this.fieldErrors[key]) {
+            const e = { ...this.fieldErrors };
+            delete e[key];
+            this.fieldErrors = e;
+        }
         if (f.isCheckbox) {
             this.values[key] = event.target.checked ? 'כן' : '';
         } else if (f.isCheckboxGroup) {
@@ -74,15 +210,107 @@ export default class DynamicForm extends LightningElement {
         }
     }
 
+    handleFileChange(event) {
+        const key = event.target.dataset.key;
+        const f = this.fields.find((x) => x.key === key);
+        const fileList = Array.from(event.target.files || []);
+        this.error = undefined;
+        const tooBig = fileList.find((file) => file.size > MAX_FILE_BYTES);
+        if (tooBig) {
+            this.setFileStatus(key, { ok: false, message: 'הקובץ "' + tooBig.name + '" גדול מדי (מקסימום 4MB).' });
+            event.target.value = null;
+            return;
+        }
+        // immediate client-side file-type check (during field fill)
+        const accept = (f && f.acceptList) || DEFAULT_ACCEPT;
+        const badType = fileList.find((file) => {
+            const ext = (file.name.split('.').pop() || '').toLowerCase();
+            return !accept.includes(ext);
+        });
+        if (badType) {
+            this.setFileStatus(key, { ok: false, message: 'סוג הקובץ אינו מתאים. נדרש: ' + accept.join(', ') + '.' });
+            event.target.value = null;
+            return;
+        }
+        this.setFileStatus(key, { checking: true, message: 'בודק את הקובץ…' });
+        Promise.all(fileList.map((file) => this.readFile(file))).then((read) => {
+            this.files = { ...this.files, [key]: read };
+            this.values[key] = read.map((r) => r.name).join('; ');
+            // AI content check (correct document type + details match applicant) on upload
+            this.verifyFile(f, read[0]);
+        });
+    }
+
+    async verifyFile(f, fileObj) {
+        if (!f || !fileObj) return;
+        try {
+            const v = await validateFile({
+                docLabel: f.docLabel,
+                acceptExt: f.acceptList,
+                fileName: fileObj.name,
+                base64: fileObj.base64,
+                applicantJson: JSON.stringify(this.values || {}),
+                matchKeys: f.verifyKeys
+            });
+            const ok = v.typeOk !== false && v.aiOk !== false;
+            this.setFileStatus(f.key, { ok, message: v.message });
+        } catch (e) {
+            // non-blocking: a verification error shouldn't stop submission
+            this.setFileStatus(f.key, { ok: true, message: 'הקובץ התקבל (בדיקת תוכן לא הושלמה).' });
+        }
+    }
+
+    setFileStatus(key, status) {
+        const cssClass = status.checking
+            ? 'slds-text-color_weak'
+            : (status.ok === false ? 'slds-text-color_error' : 'slds-text-color_success');
+        this.fileStatus = { ...this.fileStatus, [key]: { ...status, cssClass } };
+    }
+
+    readFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = reader.result || '';
+                const base64 = String(result).split(',')[1] || '';
+                resolve({ name: file.name, base64 });
+            };
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(file);
+        });
+    }
+
     isEmpty(v) {
         return v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
     }
 
+    collectFiles() {
+        const out = [];
+        Object.keys(this.files).forEach((k) => {
+            (this.files[k] || []).forEach((f) => {
+                if (f && f.base64) out.push({ name: f.name, base64: f.base64 });
+            });
+        });
+        return out;
+    }
+
     async handleSubmit() {
         this.error = undefined;
-        const missing = this.fields.filter((f) => f.required && this.isEmpty(this.values[f.key]));
-        if (missing.length) {
-            this.error = 'נא למלא את שדות החובה: ' + missing.map((f) => f.label).join(', ');
+        // full-form validation with inline per-field errors; jump to the first step with an error
+        if (this.validateFields(this.fields)) {
+            const firstBad = this.fields.find((f) => this.fieldErrors[f.key]);
+            if (firstBad && firstBad.step !== this.stepIndex) this.stepIndex = firstBad.step;
+            return;
+        }
+        // block submission on files that failed type/content validation
+        const stillChecking = this.fields.filter((f) => this.fileStatus[f.key] && this.fileStatus[f.key].checking);
+        if (stillChecking.length) {
+            this.error = 'המתן לסיום בדיקת הקבצים: ' + stillChecking.map((f) => f.label).join(', ');
+            return;
+        }
+        const badFiles = this.fields.filter((f) => this.fileStatus[f.key] && this.fileStatus[f.key].ok === false);
+        if (badFiles.length) {
+            this.error = 'יש לתקן את הקבצים שנכשלו בבדיקה: ' + badFiles.map((f) => f.label).join(', ');
             return;
         }
         this.loading = true;
@@ -105,6 +333,10 @@ export default class DynamicForm extends LightningElement {
                 phone: mapped.phone || null,
                 subject: mapped.subject || this.title
             });
+            const toAttach = this.collectFiles();
+            if (toAttach.length) {
+                try { await attachFiles({ responseId: res.id, files: toAttach }); } catch (e) { /* non-fatal */ }
+            }
             this.reference = res.name;
         } catch (e) {
             this.error = (e && e.body && e.body.message) || 'אירעה שגיאה בשליחה.';

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApprovalProcess xmlns="http://soap.sforce.com/2006/04/metadata">
+    <active>true</active>
+    <allowRecall>true</allowRecall>
+    <allowedSubmitters>
+        <type>owner</type>
+    </allowedSubmitters>
+    <approvalPageFields>
+        <field>Name</field>
+        <field>Respondent_Name__c</field>
+        <field>Approval_Route__c</field>
+        <field>AI_Findings__c</field>
+    </approvalPageFields>
+    <approvalStep>
+        <allowDelegate>false</allowDelegate>
+        <assignedApprover>
+            <approver>
+                <name>SF_Forms_Committee</name>
+                <type>queue</type>
+            </approver>
+        </assignedApprover>
+        <label>החלטת ועדת חריגים</label>
+        <name>Committee_Decision</name>
+    </approvalStep>
+    <enableMobileDeviceAccess>false</enableMobileDeviceAccess>
+    <entryCriteria>
+        <formula>ISPICKVAL(Approval_Route__c, "Exceptions_Committee")</formula>
+    </entryCriteria>
+    <label>אישור בקשה - ועדת חריגים</label>
+    <recordEditability>AdminOnly</recordEditability>
+    <showApprovalHistory>true</showApprovalHistory>
+</ApprovalProcess>

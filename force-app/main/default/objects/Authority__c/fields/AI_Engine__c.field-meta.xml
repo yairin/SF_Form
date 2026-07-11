@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>AI_Engine__c</fullName>
+    <label>AI Engine</label>
+    <description>Per-authority AI engine: Agentforce or External. Falls back to the org default when blank.</description>
+    <type>Text</type>
+    <length>40</length>
+</CustomField>

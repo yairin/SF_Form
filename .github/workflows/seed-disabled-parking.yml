@@ -1,0 +1,46 @@
+name: Seed disabled-parking form
+
+# One-shot: runs scripts/seed-disabled-parking.apex against the target org to
+# populate the "בקשה להקצאת חניה לנכה" form with 20 varied requests, each with a
+# full AI correspondence thread (Form_Interaction__c) and an approval Task.
+#
+# Requires the SF_AUTH_URL repository secret (same as deploy-org.yml).
+# Run by bumping ops/seed-disabled-parking.trigger, or via the Actions "Run workflow" button.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/**", "main"]
+    paths: [".github/workflows/seed-disabled-parking.yml", "ops/seed-disabled-parking.trigger"]
+
+jobs:
+  seed:
+    name: Seed disabled-parking responses
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Salesforce CLI
+        run: npm install --global @salesforce/cli@latest
+
+      - name: Authorize target org
+        run: |
+          if [ -z "${{ secrets.SF_AUTH_URL }}" ]; then
+            echo "::error::Missing secret SF_AUTH_URL. See docs/DEPLOY.md."
+            exit 1
+          fi
+          echo "${{ secrets.SF_AUTH_URL }}" > ./SF_AUTH.txt
+          sf org login sfdx-url --sfdx-url-file ./SF_AUTH.txt --alias target --set-default
+          rm -f ./SF_AUTH.txt
+
+      - name: Seed disabled-parking form (20 responses + AI threads + tasks)
+        run: |
+          out=$(sf apex run --file scripts/seed-disabled-parking.apex --target-org target --json)
+          echo "$out"
+          echo "$out" | python3 -c "import sys,json; d=json.load(sys.stdin)['result']; print('compiled=', d.get('compiled'), 'success=', d.get('success')); sys.exit(0 if d.get('compiled') and d.get('success') else 1)"

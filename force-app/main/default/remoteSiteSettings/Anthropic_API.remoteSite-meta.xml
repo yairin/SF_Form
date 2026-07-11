@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RemoteSiteSetting xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Allowlist for the external LLM (Anthropic) used by the AI form-review engine. Contains no secret — the API key is stored per local authority in the Settings tab.</description>
+    <disableProtocolSecurity>false</disableProtocolSecurity>
+    <isActive>true</isActive>
+    <url>https://api.anthropic.com</url>
+</RemoteSiteSetting>

@@ -24,64 +24,115 @@
                     </div>
                 </div>
 
-                <template for:each={fieldRows} for:item="f">
-                    <div key={f.index} class="slds-box slds-box_xx-small slds-m-bottom_x-small">
-                        <div class="slds-grid slds-gutters_xx-small slds-wrap slds-grid_vertical-align-center">
-                            <div class="slds-col slds-size_5-of-12">
-                                <input type="text" class="slds-input" data-i={f.index} data-p="label"
-                                    value={f.label} onchange={handleField} placeholder="תווית השדה" />
+                <!-- AI review configuration -->
+                <div class="slds-box slds-box_xx-small slds-m-bottom_small slds-theme_shade">
+                    <lightning-input type="checkbox" label="בדיקת AI לטופס זה" checked={aiEnabled} onchange={handleAiEnabled}></lightning-input>
+                    <template lwc:if={aiEnabled}>
+                        <div class="slds-p-top_x-small">
+                            <lightning-input type="checkbox" label="בדוק שהקבצים המצורפים תואמים לנדרש" checked={aiCheckAttachments} onchange={handleAiCheckAttachments}></lightning-input>
+                            <lightning-input type="checkbox" label="פנייה יזומה לפונה אם חסר מידע/מסמך" checked={aiContactApplicant} onchange={handleAiContactApplicant}></lightning-input>
+                            <div class="slds-form-element slds-p-top_x-small">
+                                <label class="slds-form-element__label">הנחיות נוספות ל-AI (מה לוודא)</label>
+                                <textarea class="slds-textarea" value={aiInstructions} onchange={handleAiInstructions}
+                                    placeholder="למשל: ודא שצורף צילום תעודת זהות קריא ואישור תושב"></textarea>
                             </div>
-                            <div class="slds-col slds-size_4-of-12">
-                                <select class="slds-select" data-i={f.index} data-p="type" onchange={handleField}>
-                                    <template for:each={f.typeOptions} for:item="t">
-                                        <option key={t.value} value={t.value} selected={t.selected}>{t.label}</option>
-                                    </template>
-                                </select>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Steps -->
+                <template for:each={stepRows} for:item="step">
+                    <div key={step.index} class="slds-box slds-box_x-small slds-m-bottom_small slds-theme_shade">
+                        <div class="slds-grid slds-gutters_xx-small slds-grid_vertical-align-center slds-p-bottom_x-small">
+                            <div class="slds-col slds-size_2-of-12 slds-text-title_bold">{step.label}</div>
+                            <div class="slds-col slds-size_8-of-12">
+                                <input type="text" class="slds-input" data-s={step.index} data-p="title"
+                                    value={step.title} onchange={handleStepTitle} placeholder="כותרת השלב (אופציונלי)" />
                             </div>
                             <div class="slds-col slds-size_2-of-12">
-                                <label class="slds-checkbox_standalone">
-                                    <input type="checkbox" data-i={f.index} data-p="required" checked={f.required} onchange={handleField} /> חובה
-                                </label>
-                            </div>
-                            <div class="slds-col slds-size_1-of-12">
-                                <button class="slds-button slds-button_destructive" data-i={f.index} onclick={removeField}>×</button>
+                                <template lwc:if={step.canRemove}>
+                                    <button class="slds-button slds-button_destructive" data-s={step.index} onclick={removeStep}>מחק שלב</button>
+                                </template>
                             </div>
                         </div>
-                        <div class="slds-grid slds-gutters_xx-small slds-wrap slds-p-top_xx-small">
-                            <div class="slds-col slds-size_6-of-12">
-                                <select class="slds-select" data-i={f.index} data-p="mapTo" onchange={handleField}>
-                                    <template for:each={f.mapOptions} for:item="m">
-                                        <option key={m.value} value={m.value} selected={m.selected}>{m.label}</option>
-                                    </template>
-                                </select>
-                            </div>
-                            <template lwc:if={f.showOptions}>
-                                <div class="slds-col slds-size_6-of-12">
-                                    <textarea class="slds-textarea" data-i={f.index} data-p="options"
-                                        onchange={handleField} placeholder="אפשרות בכל שורה">{f.options}</textarea>
+
+                        <template for:each={step.fields} for:item="f">
+                            <div key={f.i} class="slds-box slds-box_xx-small slds-m-bottom_x-small slds-theme_default">
+                                <div class="slds-grid slds-gutters_xx-small slds-wrap slds-grid_vertical-align-center">
+                                    <div class="slds-col slds-size_5-of-12">
+                                        <input type="text" class="slds-input" data-s={f.s} data-i={f.i} data-p="label"
+                                            value={f.label} onchange={handleField} placeholder="תווית השדה" />
+                                    </div>
+                                    <div class="slds-col slds-size_4-of-12">
+                                        <select class="slds-select" data-s={f.s} data-i={f.i} data-p="type" onchange={handleField}>
+                                            <template for:each={f.typeOptions} for:item="t">
+                                                <option key={t.value} value={t.value} selected={t.selected}>{t.label}</option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-12">
+                                        <lightning-input type="checkbox" label="חובה" data-s={f.s} data-i={f.i} data-p="required" checked={f.required} onchange={handleField}></lightning-input>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-12">
+                                        <button class="slds-button slds-button_destructive" data-s={f.s} data-i={f.i} onclick={removeField}>×</button>
+                                    </div>
                                 </div>
-                            </template>
-                        </div>
+                                <div class="slds-grid slds-gutters_xx-small slds-wrap slds-p-top_xx-small">
+                                    <div class="slds-col slds-size_6-of-12">
+                                        <select class="slds-select" data-s={f.s} data-i={f.i} data-p="mapTo" onchange={handleField}>
+                                            <template for:each={f.mapOptions} for:item="m">
+                                                <option key={m.value} value={m.value} selected={m.selected}>{m.label}</option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <template lwc:if={f.showOptions}>
+                                        <div class="slds-col slds-size_6-of-12">
+                                            <textarea class="slds-textarea" data-s={f.s} data-i={f.i} data-p="options"
+                                                onchange={handleField} placeholder="אפשרות בכל שורה">{f.options}</textarea>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        <button class="slds-button slds-button_neutral" data-s={step.index} onclick={addField}>+ הוסף שדה</button>
                     </div>
                 </template>
 
-                <button class="slds-button slds-button_neutral slds-m-top_x-small" onclick={addField}>+ הוסף שדה</button>
+                <button class="slds-button slds-button_neutral slds-m-top_x-small" onclick={addStep}>+ הוסף שלב</button>
+
                 <div class="slds-p-top_medium">
-                    <button class="slds-button slds-button_brand" onclick={save}>שמור ופרסם</button>
+                    <button class="slds-button slds-button_brand" onclick={save}>{saveLabel}</button>
+                    <template lwc:if={embedded}>
+                        <button class="slds-button slds-button_neutral" onclick={cancel}>חזרה לרשימה</button>
+                    </template>
                 </div>
 
                 <template lwc:if={error}><div class="slds-text-color_error slds-p-top_small">{error}</div></template>
-                <template lwc:if={savedMsg}><div class="slds-text-color_success slds-p-top_small">{savedMsg}</div></template>
-            </div>
-
-            <div class="slds-box slds-m-top_small">
-                <h2 class="slds-text-title_bold slds-p-bottom_x-small">טפסים קיימים</h2>
-                <template for:each={existing} for:item="e">
-                    <div key={e.Id} class="slds-p-vertical_xxx-small">
-                        {e.Name} <span class="slds-text-body_small slds-text-color_weak">· {e.External_Id__c}</span>
-                    </div>
+                <template lwc:if={savedMsg}>
+                    <div class="slds-text-color_success slds-p-top_small">{savedMsg}</div>
+                    <template lwc:if={savedUrl}>
+                        <div class="slds-box slds-box_xx-small slds-m-top_x-small">
+                            <div class="slds-text-title_bold">קישור ציבורי לטופס:</div>
+                            <a href={savedUrl} target="_blank" class="slds-text-link">{savedUrl}</a>
+                            <div class="slds-p-top_xx-small">
+                                <button class="slds-button slds-button_neutral" onclick={copyUrl}>העתק קישור</button>
+                            </div>
+                        </div>
+                    </template>
                 </template>
             </div>
+
+            <template lwc:if={notEmbedded}>
+                <div class="slds-box slds-m-top_small">
+                    <h2 class="slds-text-title_bold slds-p-bottom_x-small">טפסים קיימים</h2>
+                    <template for:each={existing} for:item="e">
+                        <div key={e.Id} class="slds-p-vertical_xxx-small">
+                            {e.Name} <span class="slds-text-body_small slds-text-color_weak">· {e.External_Id__c}</span>
+                        </div>
+                    </template>
+                </div>
+            </template>
         </div>
 
         <!-- Live test of the saved form -->

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Tenant_Code__c</fullName>
+    <label>Tenant Code</label>
+    <description>Stamped authority code (from the form's authority) used by the restriction rule for per-authority isolation. Restriction rules do not support formula fields, so this is a real stamped field.</description>
+    <type>Text</type>
+    <length>40</length>
+    <required>false</required>
+</CustomField>
