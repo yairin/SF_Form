@@ -51,6 +51,13 @@ jobs:
           sf project deploy start \
             --source-dir force-app \
             --dry-run \
-            --test-level RunLocalTests \
+            --test-level RunSpecifiedTests \
+            --tests FormResponseAnswerServiceTest \
+            --tests FormResponseControllerTest \
+            --tests FormBuilderControllerTest \
+            --tests FormRoutingServiceTest \
+            --tests ApprovalDecisionServiceTest \
+            --tests FormFileValidationServiceTest \
+            --tests AnthropicClientTest \
             --target-org target \
             --wait 30

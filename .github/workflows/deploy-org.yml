@@ -40,10 +40,22 @@ jobs:
           rm -f ./SF_AUTH.txt
 
       - name: Deploy metadata (real)
+        # NOTE: RunSpecifiedTests (not RunLocalTests) on purpose — the target org
+        # contains unrelated packages with ~12 pre-existing failing tests
+        # (ContactPointPhoneShare*, LightningSelfRegister*). RunLocalTests would run
+        # those and fail the deploy. Keep this list in sync with validate-org.yml when
+        # adding an Apex class + test.
         run: |
           sf project deploy start \
             --source-dir force-app \
-            --test-level RunLocalTests \
+            --test-level RunSpecifiedTests \
+            --tests FormResponseAnswerServiceTest \
+            --tests FormResponseControllerTest \
+            --tests FormBuilderControllerTest \
+            --tests FormRoutingServiceTest \
+            --tests ApprovalDecisionServiceTest \
+            --tests FormFileValidationServiceTest \
+            --tests AnthropicClientTest \
             --target-org target \
             --wait 30
 
