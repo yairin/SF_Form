@@ -1,1 +1,1 @@
-deploy 2026-07-10T16:24:34Z fix PR CI: validate test list + ci skip
+deploy 2026-07-11T19:00:30Z RunLocalTests
