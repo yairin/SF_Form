@@ -18,10 +18,12 @@ public without sharing class FormTaskService {
         if (extIds.isEmpty()) return;
 
         Map<String, Form_Template__c> byExt = new Map<String, Form_Template__c>();
+        // NB: Tasks_JSON__c is a LongTextArea and cannot be filtered in SOQL — the
+        // blank check happens in Apex below.
         for (Form_Template__c t : [
             SELECT External_Id__c, Tasks_JSON__c, OwnerId
             FROM Form_Template__c
-            WHERE External_Id__c IN :extIds AND Tasks_JSON__c != null
+            WHERE External_Id__c IN :extIds
         ]) {
             byExt.put(t.External_Id__c, t);
         }
