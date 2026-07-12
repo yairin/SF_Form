@@ -1,0 +1,48 @@
+name: Retrieve Action Plan Template
+# Pulls the ActionPlanTemplate metadata built in the org UI into force-app source
+# and commits it back to this branch, so the native Action Plan lives in git.
+# Re-run by bumping ops/retrieve-actionplan.trigger.
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/**"]
+    paths: [".github/workflows/retrieve-actionplan.yml","ops/retrieve-actionplan.trigger"]
+permissions:
+  contents: write
+jobs:
+  retrieve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --global @salesforce/cli@latest
+      - name: Auth
+        run: |
+          echo "${{ secrets.SF_AUTH_URL }}" > ./A.txt
+          sf org login sfdx-url --sfdx-url-file ./A.txt --alias target --set-default
+          rm -f ./A.txt
+      - name: Retrieve ActionPlanTemplate
+        run: sf project retrieve start --metadata ActionPlanTemplate --target-org target
+      - name: List retrieved
+        run: |
+          echo "=== retrieved ActionPlanTemplate files ==="
+          find force-app -type d -name actionPlanTemplates -print -exec ls -R {} \; || true
+          find force-app -iname "*actionPlan*" || true
+      - name: Commit back to branch
+        run: |
+          git config user.name "Claude"
+          git config user.email "noreply@anthropic.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A force-app
+            git commit -m "Retrieve native Action Plan Template (טיפול בבקשה לתו חניה לנכה) into source
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01JzE1Q86iZPGm7Z4jurPbn1"
+            git push origin HEAD:${{ github.ref_name }}
+          else
+            echo "No metadata changes to commit."
+          fi
