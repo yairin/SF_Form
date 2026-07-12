@@ -30,6 +30,7 @@
 - **Enterprise PRD:** `docs/PRD.md`
 - **תכנון פתרון מלא (רשות מקומית):** `docs/SOLUTION_ARCHITECTURE.md`
 - מדריך מעשי (יצירה/מילוי/בחינת תוצאות): `docs/QUICKSTART.md`
+- **תוכנית עיצוב UI מלאה (מתועדפת P0–P3):** `docs/UI_DESIGN_PLAN.md`
 - אפיון מחולל הטפסים: `docs/FORM_BUILDER_SPEC.md`
 - אפיון מחולל הדוחות: `docs/REPORT_GENERATOR_SPEC.md`
 - מסלול נייטיבי (LWC + Experience Cloud): `docs/NATIVE.md`
