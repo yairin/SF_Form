@@ -11,9 +11,9 @@ for (PermissionSetLicense psl : [SELECT DeveloperName, MasterLabel, TotalLicense
 }
 
 System.debug('--- PermissionSets (Industries/ActionPlan) ---');
-for (PermissionSet ps : [SELECT Name, Label, LicenseId, License.MasterLabel FROM PermissionSet
+for (PermissionSet ps : [SELECT Name, Label FROM PermissionSet
         WHERE (Name LIKE '%ction%' OR Name LIKE '%ndustr%' OR Name LIKE '%ublicSector%' OR Label LIKE '%Action%') LIMIT 50]) {
-    System.debug('PS|' + ps.Label + '|' + ps.Name + '|license=' + ps.License.MasterLabel);
+    System.debug('PS|' + ps.Label + '|' + ps.Name);
 }
 
 System.debug('--- PSL שכבר מוקצים למשתמש ---');
