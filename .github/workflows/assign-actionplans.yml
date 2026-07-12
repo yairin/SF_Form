@@ -1,0 +1,33 @@
+name: Assign Action Plans perms
+# Assigns the Public Sector Access PSL + the "Action Plans" permission set to the
+# auth user so the Industries Action Plan Type becomes available in Setup.
+# Re-run by bumping ops/assign-actionplans.trigger.
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/**"]
+    paths: [".github/workflows/assign-actionplans.yml","ops/assign-actionplans.trigger"]
+jobs:
+  assign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --global @salesforce/cli@latest
+      - name: Auth
+        run: |
+          echo "${{ secrets.SF_AUTH_URL }}" > ./A.txt
+          sf org login sfdx-url --sfdx-url-file ./A.txt --alias target --set-default
+          rm -f ./A.txt
+      - name: Assign Public Sector Access PSL
+        run: |
+          sf org assign permsetlicense --name PublicSectorAccessPSL --target-org target \
+            || echo "PSL already assigned or not required (ignored)."
+      - name: Assign Action Plans permission set
+        run: |
+          sf org assign permset --name ActionPlans --target-org target \
+            || echo "Permission set already assigned (ignored)."
+      - name: Verify assignment
+        run: sf apex run --file scripts/diag-actionplan-perms.apex --target-org target
