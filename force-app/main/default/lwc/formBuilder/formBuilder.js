@@ -5,8 +5,29 @@ import listServiceTypes from '@salesforce/apex/FormBuilderController.listService
 import getTemplate from '@salesforce/apex/FormBuilderController.getTemplate';
 import getPublicUrl from '@salesforce/apex/FormBuilderController.getPublicUrl';
 import setAIConfig from '@salesforce/apex/FormBuilderController.setAIConfig';
+import setDesignConfig from '@salesforce/apex/FormBuilderController.setDesignConfig';
+import uploadDesignAsset from '@salesforce/apex/FormBuilderController.uploadDesignAsset';
 
 const CHOICE = new Set(['select', 'radio', 'checkboxGroup']);
+const PRIORITY_OPTIONS = [['High', 'גבוהה'], ['Normal', 'רגילה'], ['Low', 'נמוכה']];
+const BG_TYPE_OPTIONS = [
+    ['none', 'ללא (ברירת מחדל)'], ['color', 'צבע אחיד'], ['gradient', 'מעבר צבעים (Gradient)'],
+    ['image', 'תמונת רקע'], ['video', 'סרטון רקע']
+];
+const FONT_OPTIONS = [
+    ['', 'ברירת מחדל (מערכת)'],
+    ['Arial, Helvetica, sans-serif', 'Arial'],
+    ['"Segoe UI", Tahoma, sans-serif', 'Segoe UI'],
+    ['Georgia, "Times New Roman", serif', 'Georgia (Serif)'],
+    ['"Courier New", monospace', 'Courier (Monospace)'],
+    ['"Rubik", "Assistant", sans-serif', 'Rubik / Assistant']
+];
+const defaultAppearance = () => ({
+    bgType: 'none', bgUrl: '', bgColor: '#f3f4f6', bgColor2: '#e0e7ff',
+    overlay: 0, cardColor: '#ffffff', accentColor: '#1b5297', textColor: '#181818',
+    fontFamily: '', maxWidth: 560, logoUrl: '', align: 'center'
+});
+const newTask = () => ({ subject: '', priority: 'Normal', offsetDays: 0, description: '' });
 const TYPE_OPTIONS = [
     ['text', 'טקסט קצר'], ['textarea', 'טקסט ארוך'], ['email', 'אימייל'], ['phone', 'טלפון'],
     ['number', 'מספר'], ['currency', 'סכום (₪)'], ['idNumber', 'תעודת זהות'], ['date', 'תאריך'],
@@ -29,6 +50,10 @@ export default class FormBuilder extends LightningElement {
     aiInstructions = '';
     aiCheckAttachments = false;
     aiContactApplicant = false;
+    tasks = [];
+    appearance = defaultAppearance();
+    uploadingBg = false;
+    uploadingLogo = false;
     steps = [{ title: '', fields: [{ type: 'text', label: '', required: true, options: '', mapTo: 'respondentName' }] }];
 
     savedExternalId;
@@ -61,6 +86,8 @@ export default class FormBuilder extends LightningElement {
         this.aiInstructions = '';
         this.aiCheckAttachments = false;
         this.aiContactApplicant = false;
+        this.tasks = [];
+        this.appearance = defaultAppearance();
         this.steps = [newStep()];
         this._editExternalId = undefined;
         this.savedExternalId = undefined;
@@ -85,6 +112,14 @@ export default class FormBuilder extends LightningElement {
             let parsed = [];
             try { parsed = JSON.parse(t.Schema_JSON__c || '[]'); } catch (e) { parsed = []; }
             this.steps = this.toStepsModel(parsed);
+            try {
+                const tk = JSON.parse(t.Tasks_JSON__c || '[]');
+                this.tasks = Array.isArray(tk) ? tk.map((x) => ({ ...newTask(), ...x })) : [];
+            } catch (e) { this.tasks = []; }
+            try {
+                const ap = JSON.parse(t.Appearance_JSON__c || 'null');
+                this.appearance = ap ? { ...defaultAppearance(), ...ap } : defaultAppearance();
+            } catch (e) { this.appearance = defaultAppearance(); }
         } catch (e) {
             this.error = 'שגיאה בטעינת הטופס.';
         }
@@ -184,6 +219,131 @@ export default class FormBuilder extends LightningElement {
         );
     }
 
+    // ---- Tasks (per-form workflow) ----
+    get taskRows() {
+        return this.tasks.map((t, i) => ({
+            i,
+            subject: t.subject,
+            offsetDays: t.offsetDays,
+            description: t.description,
+            priorityOptions: PRIORITY_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === t.priority }))
+        }));
+    }
+    get hasTasks() { return this.tasks.length > 0; }
+
+    addTask() { this.tasks = [...this.tasks, newTask()]; }
+    removeTask(event) {
+        const i = Number(event.target.dataset.i);
+        this.tasks = this.tasks.filter((_, idx) => idx !== i);
+    }
+    handleTask(event) {
+        const i = Number(event.target.dataset.i);
+        const p = event.target.dataset.p;
+        let val = event.target.value;
+        if (p === 'offsetDays') val = Number(val) || 0;
+        this.tasks = this.tasks.map((t, idx) => (idx === i ? { ...t, [p]: val } : t));
+    }
+
+    // ---- Appearance / design ----
+    get bgTypeOptions() {
+        return BG_TYPE_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === this.appearance.bgType }));
+    }
+    get fontOptions() {
+        return FONT_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === (this.appearance.fontFamily || '') }));
+    }
+    get showBgColor() { return this.appearance.bgType === 'color' || this.appearance.bgType === 'gradient'; }
+    get showBgColor2() { return this.appearance.bgType === 'gradient'; }
+    get showBgMedia() { return this.appearance.bgType === 'image' || this.appearance.bgType === 'video'; }
+    get showOverlay() { return this.appearance.bgType === 'image' || this.appearance.bgType === 'video'; }
+    get isVideoBg() { return this.appearance.bgType === 'video'; }
+    get mediaAccept() { return this.appearance.bgType === 'video' ? 'video/*' : 'image/*'; }
+    get mediaLabel() { return this.appearance.bgType === 'video' ? 'סרטון רקע' : 'תמונת רקע'; }
+    get overlayPct() { return Math.round((Number(this.appearance.overlay) || 0) * 100); }
+    // live preview style for the swatch in the builder
+    get previewStyle() {
+        const a = this.appearance;
+        let bg;
+        if (a.bgType === 'color') bg = a.bgColor;
+        else if (a.bgType === 'gradient') bg = 'linear-gradient(135deg,' + a.bgColor + ',' + a.bgColor2 + ')';
+        else if (a.bgType === 'image' && a.bgUrl) bg = 'center/cover no-repeat url(' + a.bgUrl + ')';
+        else bg = '#f3f4f6';
+        return 'background:' + bg + ';padding:1rem;border-radius:8px;min-height:90px;';
+    }
+    get previewCardStyle() {
+        const a = this.appearance;
+        return 'background:' + a.cardColor + ';color:' + a.textColor + ';border-radius:10px;padding:0.75rem 1rem;'
+            + 'max-width:100%;box-shadow:0 2px 10px rgba(0,0,0,0.15);font-family:' + (a.fontFamily || 'inherit') + ';';
+    }
+    get previewBtnStyle() {
+        return 'background:' + this.appearance.accentColor + ';color:#fff;border:none;border-radius:6px;padding:6px 14px;margin-top:6px;';
+    }
+
+    handleAppearance(event) {
+        const p = event.target.dataset.p;
+        let val = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
+        if (p === 'overlay' || p === 'maxWidth') val = Number(val) || 0;
+        this.appearance = { ...this.appearance, [p]: val };
+    }
+
+    handleBgType(event) {
+        this.appearance = { ...this.appearance, bgType: event.target.value };
+    }
+
+    async handleMediaUpload(event) {
+        const file = (event.target.files || [])[0];
+        if (!file) return;
+        this.error = undefined;
+        this.uploadingBg = true;
+        try {
+            const base64 = await this.readAsBase64(file);
+            const url = await uploadDesignAsset({ fileName: file.name, base64 });
+            this.appearance = { ...this.appearance, bgUrl: url };
+        } catch (e) {
+            this.error = (e && e.body && e.body.message) || 'העלאת המדיה נכשלה. אפשר להדביק כתובת URL במקום.';
+        } finally {
+            this.uploadingBg = false;
+            event.target.value = null;
+        }
+    }
+
+    async handleLogoUpload(event) {
+        const file = (event.target.files || [])[0];
+        if (!file) return;
+        this.error = undefined;
+        this.uploadingLogo = true;
+        try {
+            const base64 = await this.readAsBase64(file);
+            const url = await uploadDesignAsset({ fileName: file.name, base64 });
+            this.appearance = { ...this.appearance, logoUrl: url };
+        } catch (e) {
+            this.error = (e && e.body && e.body.message) || 'העלאת הלוגו נכשלה. אפשר להדביק כתובת URL במקום.';
+        } finally {
+            this.uploadingLogo = false;
+            event.target.value = null;
+        }
+    }
+
+    readAsBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || '').split(',')[1] || '');
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    buildTasksJson() {
+        const clean = this.tasks
+            .filter((t) => t.subject && t.subject.trim())
+            .map((t) => ({
+                subject: t.subject.trim(),
+                priority: t.priority || 'Normal',
+                offsetDays: Number(t.offsetDays) || 0,
+                description: (t.description || '').trim()
+            }));
+        return JSON.stringify(clean);
+    }
+
     handleTitle(e) { this.title = e.target.value; }
     handleDesc(e) { this.description = e.target.value; }
     handleAiEnabled(e) { this.aiEnabled = e.target.checked; }
@@ -261,6 +421,13 @@ export default class FormBuilder extends LightningElement {
                         instructions: this.aiInstructions,
                         checkAttachments: this.aiCheckAttachments,
                         contactApplicant: this.aiContactApplicant
+                    });
+                } catch (e) { /* non-fatal */ }
+                try {
+                    await setDesignConfig({
+                        recordId: saved.Id,
+                        tasksJson: this.buildTasksJson(),
+                        appearanceJson: JSON.stringify(this.appearance)
                     });
                 } catch (e) { /* non-fatal */ }
             }

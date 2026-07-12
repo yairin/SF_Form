@@ -73,12 +73,61 @@ public with sharing class FormBuilderController {
         return [
             SELECT Id, Name, Description__c, Schema_JSON__c, External_Id__c, Active__c, Service_Type__c,
                    AI_Review_Enabled__c, AI_Review_Instructions__c,
-                   AI_Check_Attachments__c, AI_Contact_Applicant__c
+                   AI_Check_Attachments__c, AI_Contact_Applicant__c,
+                   Tasks_JSON__c, Appearance_JSON__c
             FROM Form_Template__c
             WHERE Id = :recordId
             WITH USER_MODE
             LIMIT 1
         ];
+    }
+
+    /** Save the per-form workflow tasks + visual design the form creator defined. */
+    @AuraEnabled
+    public static void setDesignConfig(Id recordId, String tasksJson, String appearanceJson) {
+        Form_Template__c f = [SELECT Id FROM Form_Template__c WHERE Id = :recordId WITH USER_MODE LIMIT 1];
+        f.Tasks_JSON__c = tasksJson;
+        f.Appearance_JSON__c = appearanceJson;
+        update as user f;
+    }
+
+    /**
+     * Upload an image/video chosen in the builder and return a public, direct URL
+     * usable as a background on the guest-facing form. Uses a Content Delivery
+     * (ContentDistribution) so the asset renders without a Salesforce login.
+     * Requires "Content Deliveries" enabled in the org; if disabled, the builder
+     * falls back to letting the user paste a URL.
+     */
+    @AuraEnabled
+    public static String uploadDesignAsset(String fileName, String base64) {
+        if (String.isBlank(base64)) {
+            throw new AuraHandledException('לא התקבל קובץ.');
+        }
+        String safeName = String.isBlank(fileName) ? 'form-asset' : fileName;
+        try {
+            ContentVersion cv = new ContentVersion(
+                Title = safeName,
+                PathOnClient = safeName,
+                VersionData = EncodingUtil.base64Decode(base64)
+            );
+            insert as user cv;
+            Id cvId = [SELECT Id FROM ContentVersion WHERE Id = :cv.Id LIMIT 1].Id;
+            ContentDistribution cd = new ContentDistribution(
+                Name = safeName,
+                ContentVersionId = cvId,
+                PreferencesAllowViewInBrowser = true,
+                PreferencesLinkLatestVersion = true,
+                PreferencesNotifyOnVisit = false,
+                PreferencesPasswordRequired = false,
+                PreferencesAllowOriginalDownload = true
+            );
+            insert cd;
+            ContentDistribution created = [SELECT ContentDownloadUrl FROM ContentDistribution WHERE Id = :cd.Id LIMIT 1];
+            return created.ContentDownloadUrl;
+        } catch (Exception e) {
+            throw new AuraHandledException(
+                'העלאת המדיה נכשלה. ודא ש"Content Deliveries" מופעל בארגון, או הדבק כתובת URL של תמונה/סרטון. (' + e.getMessage() + ')');
+        }
     }
 
     /** Save the AI-review expectations defined by the form creator. */

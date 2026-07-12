@@ -56,6 +56,7 @@ jobs:
             --tests ApprovalDecisionServiceTest \
             --tests FormFileValidationServiceTest \
             --tests AnthropicClientTest \
+            --tests FormTaskServiceTest \
             --target-org target \
             --wait 30
 

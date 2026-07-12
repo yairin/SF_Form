@@ -40,6 +40,142 @@
                     </template>
                 </div>
 
+                <!-- Per-form workflow tasks -->
+                <div class="slds-box slds-box_xx-small slds-m-bottom_small slds-theme_shade">
+                    <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                        <span class="slds-text-title_bold">משימות אוטומטיות לטופס</span>
+                        <button class="slds-button slds-button_neutral" onclick={addTask}>+ הוסף משימה</button>
+                    </div>
+                    <p class="slds-text-body_small slds-text-color_weak slds-p-vertical_xx-small">
+                        לכל פנייה חדשה שתתקבל, המערכת תיצור אוטומטית את המשימות הבאות (משויכות לפנייה, מוקצות לבעל הטופס).
+                    </p>
+                    <template lwc:if={hasTasks}>
+                        <template for:each={taskRows} for:item="t">
+                            <div key={t.i} class="slds-box slds-box_xx-small slds-m-bottom_x-small slds-theme_default">
+                                <div class="slds-grid slds-gutters_xx-small slds-wrap slds-grid_vertical-align-center">
+                                    <div class="slds-col slds-size_6-of-12">
+                                        <input type="text" class="slds-input" data-i={t.i} data-p="subject"
+                                            value={t.subject} onchange={handleTask} placeholder="שם המשימה (למשל: אימות מסמכים)" />
+                                    </div>
+                                    <div class="slds-col slds-size_3-of-12">
+                                        <select class="slds-select" data-i={t.i} data-p="priority" onchange={handleTask}>
+                                            <template for:each={t.priorityOptions} for:item="p">
+                                                <option key={p.value} value={p.value} selected={p.selected}>{p.label}</option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-12">
+                                        <input type="number" min="0" class="slds-input" data-i={t.i} data-p="offsetDays"
+                                            value={t.offsetDays} onchange={handleTask} title="ימים מרגע הקבלה" placeholder="ימים" />
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-12">
+                                        <button class="slds-button slds-button_destructive" data-i={t.i} onclick={removeTask}>×</button>
+                                    </div>
+                                    <div class="slds-col slds-size_12-of-12 slds-p-top_xx-small">
+                                        <input type="text" class="slds-input" data-i={t.i} data-p="description"
+                                            value={t.description} onchange={handleTask} placeholder="תיאור המשימה (אופציונלי)" />
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+
+                <!-- Appearance / visual design -->
+                <div class="slds-box slds-box_xx-small slds-m-bottom_small slds-theme_shade">
+                    <span class="slds-text-title_bold">עיצוב מראה הטופס</span>
+                    <div class="slds-grid slds-gutters_xx-small slds-wrap slds-p-top_x-small">
+                        <div class="slds-col slds-size_6-of-12 slds-form-element">
+                            <label class="slds-form-element__label">רקע סביב הטופס</label>
+                            <div class="slds-select_container">
+                                <select class="slds-select" onchange={handleBgType}>
+                                    <template for:each={bgTypeOptions} for:item="o">
+                                        <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_6-of-12 slds-form-element">
+                            <label class="slds-form-element__label">גופן</label>
+                            <div class="slds-select_container">
+                                <select class="slds-select" data-p="fontFamily" onchange={handleAppearance}>
+                                    <template for:each={fontOptions} for:item="o">
+                                        <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+
+                        <template lwc:if={showBgColor}>
+                            <div class="slds-col slds-size_6-of-12 slds-form-element">
+                                <label class="slds-form-element__label">צבע רקע</label>
+                                <input type="color" class="slds-input" data-p="bgColor" value={appearance.bgColor} onchange={handleAppearance} />
+                            </div>
+                        </template>
+                        <template lwc:if={showBgColor2}>
+                            <div class="slds-col slds-size_6-of-12 slds-form-element">
+                                <label class="slds-form-element__label">צבע רקע שני (מעבר)</label>
+                                <input type="color" class="slds-input" data-p="bgColor2" value={appearance.bgColor2} onchange={handleAppearance} />
+                            </div>
+                        </template>
+
+                        <template lwc:if={showBgMedia}>
+                            <div class="slds-col slds-size_12-of-12 slds-form-element slds-p-top_xx-small">
+                                <label class="slds-form-element__label">{mediaLabel} — העלה קובץ או הדבק כתובת</label>
+                                <input type="file" accept={mediaAccept} class="slds-input" onchange={handleMediaUpload} />
+                                <template lwc:if={uploadingBg}><span class="slds-text-color_weak">מעלה…</span></template>
+                                <input type="text" class="slds-input slds-m-top_xx-small" data-p="bgUrl"
+                                    value={appearance.bgUrl} onchange={handleAppearance} placeholder="https://… (כתובת תמונה/סרטון)" />
+                            </div>
+                        </template>
+                        <template lwc:if={showOverlay}>
+                            <div class="slds-col slds-size_12-of-12 slds-form-element">
+                                <label class="slds-form-element__label">כהות שכבת-על מעל המדיה (לקריאוּת) — {overlayPct}%</label>
+                                <input type="range" min="0" max="0.8" step="0.05" data-p="overlay" value={appearance.overlay} onchange={handleAppearance} class="slds-slider__range" style="width:100%;" />
+                            </div>
+                        </template>
+
+                        <div class="slds-col slds-size_4-of-12 slds-form-element">
+                            <label class="slds-form-element__label">צבע כרטיס</label>
+                            <input type="color" class="slds-input" data-p="cardColor" value={appearance.cardColor} onchange={handleAppearance} />
+                        </div>
+                        <div class="slds-col slds-size_4-of-12 slds-form-element">
+                            <label class="slds-form-element__label">צבע ראשי (כפתורים)</label>
+                            <input type="color" class="slds-input" data-p="accentColor" value={appearance.accentColor} onchange={handleAppearance} />
+                        </div>
+                        <div class="slds-col slds-size_4-of-12 slds-form-element">
+                            <label class="slds-form-element__label">צבע טקסט</label>
+                            <input type="color" class="slds-input" data-p="textColor" value={appearance.textColor} onchange={handleAppearance} />
+                        </div>
+
+                        <div class="slds-col slds-size_6-of-12 slds-form-element slds-p-top_xx-small">
+                            <label class="slds-form-element__label">רוחב מרבי (פיקסלים)</label>
+                            <input type="number" min="360" max="1200" class="slds-input" data-p="maxWidth" value={appearance.maxWidth} onchange={handleAppearance} />
+                        </div>
+                        <div class="slds-col slds-size_6-of-12 slds-form-element slds-p-top_xx-small">
+                            <label class="slds-form-element__label">לוגו (העלה או הדבק כתובת)</label>
+                            <input type="file" accept="image/*" class="slds-input" onchange={handleLogoUpload} />
+                            <template lwc:if={uploadingLogo}><span class="slds-text-color_weak">מעלה…</span></template>
+                            <input type="text" class="slds-input slds-m-top_xx-small" data-p="logoUrl"
+                                value={appearance.logoUrl} onchange={handleAppearance} placeholder="https://… (כתובת לוגו)" />
+                        </div>
+
+                        <div class="slds-col slds-size_12-of-12 slds-p-top_x-small">
+                            <label class="slds-form-element__label">תצוגה מקדימה</label>
+                            <div style={previewStyle}>
+                                <div style={previewCardStyle}>
+                                    <template lwc:if={appearance.logoUrl}>
+                                        <img src={appearance.logoUrl} alt="לוגו" style="max-height:32px;margin-bottom:6px;" />
+                                    </template>
+                                    <div class="slds-text-title_bold">{title}</div>
+                                    <div style="font-size:0.85rem;opacity:0.8;">דוגמת טקסט בטופס</div>
+                                    <button type="button" style={previewBtnStyle}>שליחה</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Steps -->
                 <template for:each={stepRows} for:item="step">
                     <div key={step.index} class="slds-box slds-box_x-small slds-m-bottom_small slds-theme_shade">

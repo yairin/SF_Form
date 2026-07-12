@@ -65,6 +65,7 @@ export default class DynamicForm extends LightningElement {
 
     title = 'טופס';
     description = '';
+    appearance = null;
     fields = [];
     values = {};
     files = {}; // key -> [{name, base64}]
@@ -139,9 +140,19 @@ export default class DynamicForm extends LightningElement {
         this.notFound = false;
         try {
             const t = await getForm({ externalId: this._ext });
+            this.applyAppearance(t.Appearance_JSON__c);
             this.applySchema(t.Name, t.Description__c, t.Schema_JSON__c);
         } catch (e) {
             this.notFound = true;
+        }
+    }
+
+    applyAppearance(json) {
+        try {
+            const a = JSON.parse(json || 'null');
+            this.appearance = a && a.bgType ? a : null;
+        } catch (e) {
+            this.appearance = null;
         }
     }
 
@@ -188,6 +199,56 @@ export default class DynamicForm extends LightningElement {
         });
         this.fields = flat;
     }
+
+    // ---- Appearance-driven styling (all inline so it works on a guest site) ----
+    get styled() { return !!this.appearance; }
+    get isVideoBg() { return this.styled && this.appearance.bgType === 'video' && !!this.appearance.bgUrl; }
+    get bgVideoUrl() { return this.isVideoBg ? this.appearance.bgUrl : null; }
+    get hasOverlay() {
+        return this.styled
+            && (this.appearance.bgType === 'image' || this.appearance.bgType === 'video')
+            && Number(this.appearance.overlay) > 0;
+    }
+
+    get containerStyle() {
+        const a = this.appearance;
+        if (!a) return 'max-width:560px;margin:0 auto;';
+        let s = 'position:relative;padding:2rem 1rem;margin:0 auto;box-sizing:border-box;';
+        if (a.fontFamily) s += 'font-family:' + a.fontFamily + ';';
+        if (a.bgType === 'color') s += 'background:' + a.bgColor + ';';
+        else if (a.bgType === 'gradient') s += 'background:linear-gradient(135deg,' + a.bgColor + ',' + a.bgColor2 + ');';
+        else if (a.bgType === 'image' && a.bgUrl) s += 'background:center/cover no-repeat url(' + a.bgUrl + ');';
+        if (a.bgType !== 'none') s += 'min-height:100%;';
+        return s;
+    }
+
+    get overlayStyle() {
+        const o = Number(this.appearance && this.appearance.overlay) || 0;
+        return 'position:absolute;inset:0;z-index:0;background:rgba(0,0,0,' + o + ');';
+    }
+
+    get videoStyle() {
+        return 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;';
+    }
+
+    get cardStyle() {
+        const a = this.appearance;
+        const max = (a && a.maxWidth) ? a.maxWidth : 560;
+        let s = 'position:relative;z-index:1;max-width:' + max + 'px;margin:0 auto;';
+        if (a) {
+            s += 'background:' + a.cardColor + ';color:' + a.textColor + ';'
+                + 'border-radius:12px;padding:1.25rem 1.5rem;box-shadow:0 6px 24px rgba(0,0,0,0.18);';
+        }
+        return s;
+    }
+
+    get brandBtnStyle() {
+        if (!this.appearance) return '';
+        return 'background:' + this.appearance.accentColor + ';border-color:' + this.appearance.accentColor + ';';
+    }
+
+    get hasLogo() { return this.styled && !!this.appearance.logoUrl; }
+    get logoUrl() { return this.hasLogo ? this.appearance.logoUrl : null; }
 
     handleChange(event) {
         const key = event.target.dataset.key;

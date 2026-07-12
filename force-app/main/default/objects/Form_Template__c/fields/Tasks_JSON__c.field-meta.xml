@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Tasks_JSON__c</fullName>
+    <description>Per-form task/workflow definitions as a JSON array: [{subject,priority,offsetDays,description}]. On each new Form Response, FormTaskService creates matching Task records related to the response.</description>
+    <label>Tasks (JSON)</label>
+    <length>131072</length>
+    <type>LongTextArea</type>
+    <visibleLines>10</visibleLines>
+</CustomField>
