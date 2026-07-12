@@ -62,6 +62,20 @@ export default class FormResults extends LightningElement {
     record;
     recordLoading = false;
 
+    // Accessibility: selector of the element to move focus to after the next render
+    // (keeps keyboard/screen-reader focus in sync when the inline view changes).
+    _focusSelector;
+
+    renderedCallback() {
+        if (this._focusSelector) {
+            const el = this.template.querySelector(this._focusSelector);
+            if (el) {
+                this._focusSelector = undefined;
+                el.focus();
+            }
+        }
+    }
+
     // Distribution of approval routes across the loaded responses (info surfacing).
     get routeSummary() {
         const counts = {};
@@ -180,6 +194,7 @@ export default class FormResults extends LightningElement {
             const list = await listResponses({ externalId });
             this.responses = list.map((r) => ({ ...r, submittedStr: fmt(r.submittedAt), aiStatusClass: statusClass(r.aiStatus) }));
             this.mode = 'detail';
+            this._focusSelector = '.detail-heading';
         } catch (e) {
             this.toast('שגיאה', this.msg(e), 'error');
         } finally {
@@ -215,6 +230,7 @@ export default class FormResults extends LightningElement {
                 }))
             };
             this.mode = 'record';
+            this._focusSelector = '.record-heading';
         } catch (e) {
             this.toast('שגיאה', this.msg(e), 'error');
         } finally {
@@ -229,11 +245,13 @@ export default class FormResults extends LightningElement {
         this.aiText = undefined;
         this.aiGeneratedAt = undefined;
         this.aiCount = undefined;
+        this._focusSelector = '.list-search';
     }
 
     backToDetail() {
         this.mode = 'detail';
         this.record = undefined;
+        this._focusSelector = '.detail-heading';
     }
 
     // button label reflects whether insights already exist

@@ -9,7 +9,10 @@
             <div style={overlayStyle}></div>
         </template>
 
-        <div class="slds-box slds-box_x-small" style={cardStyle}>
+        <div class="slds-box slds-box_x-small" style={cardStyle} aria-busy={ariaBusy}>
+        <template lwc:if={hasBanner}>
+            <img src={bannerUrl} alt="" style={bannerStyle} />
+        </template>
         <template lwc:if={hasLogo}>
             <div class="slds-text-align_center slds-p-bottom_x-small">
                 <img src={logoUrl} alt="לוגו" style="max-height:56px;max-width:100%;" />
@@ -20,15 +23,34 @@
         </template>
 
         <template lwc:elseif={reference}>
-            <div class="slds-text-align_center slds-p-vertical_medium">
-                <h2 class="slds-text-heading_medium">נשלח בהצלחה!</h2>
-                <p class="slds-text-title_bold slds-p-top_x-small">מספר סימוכין: {reference}</p>
+            <div class="slds-text-align_center slds-p-vertical_medium" role="status" aria-live="polite">
+                <h1 class="slds-text-heading_medium form-success-heading" tabindex="-1">נשלח בהצלחה!</h1>
+                <p class="slds-p-top_x-small">
+                    <span>מספר סימוכין:</span>
+                    <span class="slds-text-title_bold">{reference}</span>
+                </p>
             </div>
         </template>
 
         <template lwc:else>
-            <h1 class="slds-text-heading_medium">{title}</h1>
-            <p class="slds-text-body_small slds-p-bottom_small">{description}</p>
+            <div style={headingStyle}>
+                <h1 class="slds-text-heading_medium">{title}</h1>
+                <p class="slds-text-body_small slds-p-bottom_small">{description}</p>
+            </div>
+
+            <template lwc:if={hasErrorSummary}>
+                <div class="form-error-summary slds-box slds-theme_error slds-m-bottom_small" role="alert"
+                    tabindex="-1" aria-labelledby="err-summary-title">
+                    <p id="err-summary-title" class="slds-text-title_bold">נמצאו שגיאות בטופס. נא לתקן:</p>
+                    <ul class="slds-list_dotted">
+                        <template for:each={errorSummaryItems} for:item="e">
+                            <li key={e.key}>
+                                <a href="#" data-key={e.key} onclick={focusField}>{e.label}: {e.message}</a>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+            </template>
 
             <template lwc:if={isWizard}>
                 <div class="slds-p-bottom_small">
@@ -43,9 +65,32 @@
                 <div key={f.key} class="slds-form-element slds-p-vertical_xx-small">
                     <template lwc:if={f.isCheckbox}>
                         <label class="slds-checkbox_standalone" for={f.key}>
-                            <input type="checkbox" id={f.key} data-key={f.key} aria-required={f.ariaRequired} onchange={handleChange} /> {f.label}
+                            <input type="checkbox" id={f.key} data-key={f.key} aria-required={f.ariaRequired}
+                                aria-invalid={f.ariaInvalid} aria-describedby={f.describedBy} onchange={handleChange} /> {f.label}
                             <template lwc:if={f.required}> <abbr class="slds-required" title="חובה">*</abbr></template>
                         </label>
+                    </template>
+                    <template lwc:elseif={f.isGroup}>
+                        <fieldset class="slds-form-element__control form-fieldset"
+                            aria-describedby={f.describedBy} aria-invalid={f.ariaInvalid}>
+                            <legend class="slds-form-element__label">
+                                <template lwc:if={f.required}><abbr class="slds-required" title="חובה">* </abbr></template>{f.label}
+                            </legend>
+                            <template lwc:if={f.isRadio}>
+                                <template for:each={f.options} for:item="o">
+                                    <label key={o.value} class="slds-p-right_medium">
+                                        <input type="radio" data-key={f.key} name={f.key} value={o.value} onchange={handleChange} /> {o.label}
+                                    </label>
+                                </template>
+                            </template>
+                            <template lwc:else>
+                                <template for:each={f.options} for:item="o">
+                                    <label key={o.value} class="slds-p-right_medium">
+                                        <input type="checkbox" data-key={f.key} value={o.value} onchange={handleChange} /> {o.label}
+                                    </label>
+                                </template>
+                            </template>
+                        </fieldset>
                     </template>
                     <template lwc:else>
                         <label class="slds-form-element__label" for={f.key}>
@@ -54,23 +99,28 @@
                         <div class="slds-form-element__control">
                             <template lwc:if={f.isText}>
                                 <input type={f.inputType} id={f.key} data-key={f.key} class="slds-input"
-                                    aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid} onchange={handleChange} />
+                                    aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid}
+                                    aria-describedby={f.describedBy} onchange={handleChange} />
                             </template>
                             <template lwc:elseif={f.isFile}>
                                 <input type="file" multiple id={f.key} data-key={f.key} accept={f.accept} class="slds-input"
-                                    aria-required={f.ariaRequired} onchange={handleFileChange} />
+                                    aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid}
+                                    aria-describedby={f.describedBy} onchange={handleFileChange} />
                                 <template lwc:if={f.status}>
-                                    <div class={f.status.cssClass} style="font-size:0.8rem;margin-top:0.25rem;" role="status">{f.status.message}</div>
+                                    <div class={f.status.cssClass} style="font-size:0.8rem;margin-top:0.25rem;"
+                                        role="status" aria-live="polite">{f.status.message}</div>
                                 </template>
                             </template>
                             <template lwc:elseif={f.isTextarea}>
                                 <textarea id={f.key} data-key={f.key} class="slds-textarea"
-                                    aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid} onchange={handleChange}></textarea>
+                                    aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid}
+                                    aria-describedby={f.describedBy} onchange={handleChange}></textarea>
                             </template>
                             <template lwc:elseif={f.isSelect}>
                                 <div class="slds-select_container">
                                     <select id={f.key} data-key={f.key} class="slds-select"
-                                        aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid} onchange={handleChange}>
+                                        aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid}
+                                        aria-describedby={f.describedBy} onchange={handleChange}>
                                         <option value="">— בחר —</option>
                                         <template for:each={f.options} for:item="o">
                                             <option key={o.value} value={o.value}>{o.label}</option>
@@ -78,27 +128,13 @@
                                     </select>
                                 </div>
                             </template>
-                            <template lwc:elseif={f.isRadio}>
-                                <template for:each={f.options} for:item="o">
-                                    <label key={o.value} class="slds-p-right_medium">
-                                        <input type="radio" data-key={f.key} name={f.key} value={o.value} onchange={handleChange} /> {o.label}
-                                    </label>
-                                </template>
-                            </template>
-                            <template lwc:elseif={f.isCheckboxGroup}>
-                                <template for:each={f.options} for:item="o">
-                                    <label key={o.value} class="slds-p-right_medium">
-                                        <input type="checkbox" data-key={f.key} value={o.value} onchange={handleChange} /> {o.label}
-                                    </label>
-                                </template>
-                            </template>
                         </div>
                     </template>
                     <template lwc:if={f.helpText}>
-                        <div class="slds-form-element__help slds-text-color_weak">{f.helpText}</div>
+                        <div id={f.helpId} class="slds-form-element__help slds-text-color_weak">{f.helpText}</div>
                     </template>
                     <template lwc:if={f.fieldError}>
-                        <div class="slds-form-element__help slds-text-color_error" role="alert">{f.fieldError}</div>
+                        <div id={f.errId} class="slds-form-element__help slds-text-color_error" role="alert">{f.fieldError}</div>
                     </template>
                 </div>
             </template>
@@ -112,16 +148,19 @@
                     <template lwc:if={isWizard}>
                         <template lwc:if={isFirstStep}></template>
                         <template lwc:else>
-                            <button class="slds-button slds-button_neutral" onclick={prevStep} disabled={loading}>הקודם</button>
+                            <button class="slds-button slds-button_neutral" onclick={prevStep}
+                                disabled={loading} aria-busy={ariaBusy}>הקודם</button>
                         </template>
                     </template>
                 </div>
                 <div>
                     <template lwc:if={isLastStep}>
-                        <button class="slds-button slds-button_brand" style={brandBtnStyle} onclick={handleSubmit} disabled={loading}>שליחה</button>
+                        <button class="slds-button slds-button_brand" style={brandBtnStyle} onclick={handleSubmit}
+                            disabled={loading} aria-busy={ariaBusy}>שליחה</button>
                     </template>
                     <template lwc:else>
-                        <button class="slds-button slds-button_brand" style={brandBtnStyle} onclick={nextStep} disabled={loading}>הבא</button>
+                        <button class="slds-button slds-button_brand" style={brandBtnStyle} onclick={nextStep}
+                            disabled={loading} aria-busy={ariaBusy}>הבא</button>
                     </template>
                 </div>
             </div>

@@ -2,25 +2,41 @@
     <div dir="rtl">
         <lightning-card title="בדיקת AI" icon-name="utility:einstein">
             <div class="slds-p-around_medium">
+                <!-- Error live region (ת"י 5568 / WCAG 2.1 AA) -->
+                <template lwc:if={errorMessage}>
+                    <div role="alert" class="slds-text-color_error slds-p-bottom_x-small">
+                        <lightning-icon icon-name="utility:error" size="x-small" alternative-text="שגיאה" class="slds-m-left_xx-small"></lightning-icon>
+                        <span>{errorMessage}</span>
+                    </div>
+                </template>
+
                 <p>
-                    סטטוס: <span class={statusClass}>{statusLabel}</span>
+                    <span>סטטוס: </span>
+                    <lightning-icon icon-name={statusIcon} size="xx-small" alternative-text={statusLabel} class="slds-m-left_xx-small"></lightning-icon>
+                    <span class={statusClass}>{statusLabel}</span>
                     <template lwc:if={reviewedAt}>
                         <span class="slds-text-body_small slds-text-color_weak"> · נבדק: <lightning-formatted-date-time value={reviewedAt}></lightning-formatted-date-time></span>
                     </template>
                 </p>
 
+                <!-- Progress / result announcements for async actions -->
+                <div role="status" aria-live="polite" class="slds-text-body_small slds-text-color_weak">{statusMessage}</div>
+
                 <template lwc:if={findings}>
-                    <div class="slds-box slds-box_xx-small slds-m-top_x-small" style="white-space:pre-wrap;">{findings}</div>
+                    <div class="slds-box slds-box_xx-small slds-m-top_x-small" style="white-space:pre-wrap;" aria-label="ממצאי בדיקת AI" tabindex="0">{findings}</div>
                 </template>
 
                 <template lwc:if={updateRequested}>
-                    <p class="slds-text-body_small slds-text-color_success slds-p-top_xx-small">✓ נשלחה בקשת השלמה לפונה</p>
+                    <p role="status" class="slds-text-body_small slds-text-color_success slds-p-top_xx-small">
+                        <lightning-icon icon-name="utility:check" size="xx-small" alternative-text="בוצע" class="slds-m-left_xx-small"></lightning-icon>
+                        <span>נשלחה בקשת השלמה לפונה</span>
+                    </p>
                 </template>
 
-                <div class="slds-p-top_medium">
-                    <lightning-button label="הרץ בדיקת AI" variant="brand" onclick={runNow} disabled={loading}></lightning-button>
+                <div class="slds-p-top_medium" aria-busy={loading}>
+                    <lightning-button label="הרץ בדיקת AI" title="הרץ בדיקת AI" variant="brand" onclick={runNow} disabled={loading}></lightning-button>
                     <template lwc:if={canRequest}>
-                        <lightning-button label="בקש השלמה מהפונה" variant="neutral" class="slds-m-right_x-small" onclick={ask} disabled={loading}></lightning-button>
+                        <lightning-button label="בקש השלמה מהפונה" title="בקש השלמה מהפונה" variant="neutral" class="slds-m-right_x-small" onclick={ask} disabled={loading}></lightning-button>
                     </template>
                 </div>
                 <template lwc:if={noEmail}>

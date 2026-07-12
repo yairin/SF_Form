@@ -12,6 +12,8 @@ export default class FormAiReview extends LightningElement {
     email;
     updateRequested = false;
     loading = false;
+    statusMessage = '';
+    errorMessage = '';
 
     connectedCallback() {
         this.load();
@@ -26,6 +28,7 @@ export default class FormAiReview extends LightningElement {
             this.email = info.email;
             this.updateRequested = !!info.updateRequested;
         } catch (e) {
+            this.errorMessage = this.msg(e);
             this.toast('שגיאה', this.msg(e), 'error');
         }
     }
@@ -43,16 +46,30 @@ export default class FormAiReview extends LightningElement {
         if (this.status === 'Needs_Info') return 'slds-text-color_error slds-text-title_bold';
         return 'slds-text-title_bold';
     }
+    // Icon reinforces status so meaning is not conveyed by colour alone (WCAG 1.4.1)
+    get statusIcon() {
+        return {
+            Approved: 'utility:success',
+            Needs_Info: 'utility:warning',
+            Error: 'utility:error',
+            Pending: 'utility:clock'
+        }[this.status] || 'utility:info';
+    }
     get canRequest() { return this.status === 'Needs_Info' && this.email; }
     get noEmail() { return !this.email; }
 
     async runNow() {
         this.loading = true;
+        this.errorMessage = '';
+        this.statusMessage = 'מריץ בדיקת AI…';
         try {
             await runReview({ responseId: this.recordId });
             await this.load();
+            this.statusMessage = 'הבדיקה הושלמה. סטטוס: ' + this.statusLabel;
             this.toast('הבדיקה הושלמה', 'סטטוס: ' + this.statusLabel, 'success');
         } catch (e) {
+            this.statusMessage = '';
+            this.errorMessage = this.msg(e);
             this.toast('שגיאה', this.msg(e), 'error');
         } finally {
             this.loading = false;
@@ -61,11 +78,16 @@ export default class FormAiReview extends LightningElement {
 
     async ask() {
         this.loading = true;
+        this.errorMessage = '';
+        this.statusMessage = 'שולח בקשת השלמה לפונה…';
         try {
             await requestCompletion({ responseId: this.recordId });
             await this.load();
+            this.statusMessage = 'בקשת השלמה נשלחה לפונה במייל';
             this.toast('נשלח', 'בקשת השלמה נשלחה לפונה במייל.', 'success');
         } catch (e) {
+            this.statusMessage = '';
+            this.errorMessage = this.msg(e);
             this.toast('שגיאה', this.msg(e), 'error');
         } finally {
             this.loading = false;

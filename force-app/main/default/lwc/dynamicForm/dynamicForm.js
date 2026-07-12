@@ -77,19 +77,43 @@ export default class DynamicForm extends LightningElement {
     notFound = false;
     stepIndex = 0;
     stepTitles = [];
+    showErrorSummary = false;
+    _pendingFocus = null; // 'summary' | 'success' | field key -> handled in renderedCallback
 
     get isWizard() { return this.stepTitles.length > 1; }
     get currentFields() { return this.fields.filter((f) => f.step === this.stepIndex); }
     // fields for the current step decorated with per-file status and inline errors
     get currentFieldsView() {
-        return this.currentFields.map((f) => ({
-            ...f,
-            status: this.fileStatus[f.key],
-            fieldError: this.fieldErrors[f.key],
-            ariaInvalid: this.fieldErrors[f.key] ? 'true' : 'false',
-            ariaRequired: f.required ? 'true' : 'false'
-        }));
+        return this.currentFields.map((f) => {
+            const hasErr = !!this.fieldErrors[f.key];
+            const ids = [];
+            if (f.helpText) ids.push(f.key + '-help');
+            if (hasErr) ids.push(f.key + '-err');
+            return {
+                ...f,
+                status: this.fileStatus[f.key],
+                fieldError: this.fieldErrors[f.key],
+                ariaInvalid: hasErr ? 'true' : 'false',
+                ariaRequired: f.required ? 'true' : 'false',
+                isGroup: f.isRadio || f.isCheckboxGroup,
+                helpId: f.key + '-help',
+                errId: f.key + '-err',
+                describedBy: ids.length ? ids.join(' ') : undefined
+            };
+        });
     }
+
+    // aria-busy state for the card/buttons while submitting.
+    get ariaBusy() { return this.loading ? 'true' : 'false'; }
+
+    // Fields on the current step that currently carry an inline error, for the
+    // accessible error summary box shown at the top of the form.
+    get errorSummaryItems() {
+        return this.currentFields
+            .filter((f) => this.fieldErrors[f.key])
+            .map((f) => ({ key: f.key, label: f.label, message: this.fieldErrors[f.key] }));
+    }
+    get hasErrorSummary() { return this.showErrorSummary && this.errorSummaryItems.length > 0; }
     get isFirstStep() { return this.stepIndex === 0; }
     get isLastStep() { return this.stepIndex >= this.stepTitles.length - 1; }
     get currentStepTitle() { return this.stepTitles[this.stepIndex]; }
@@ -114,6 +138,7 @@ export default class DynamicForm extends LightningElement {
         });
         this.fieldErrors = errs;
         this.error = bad ? 'נא לתקן את השדות המסומנים.' : undefined;
+        this.showErrorSummary = bad;
         return bad;
     }
 
@@ -123,13 +148,38 @@ export default class DynamicForm extends LightningElement {
 
     nextStep() {
         this.error = undefined;
-        if (this.stepHasErrors()) return;
+        if (this.stepHasErrors()) { this._pendingFocus = 'summary'; return; }
         if (!this.isLastStep) this.stepIndex += 1;
     }
 
     prevStep() {
         this.error = undefined;
+        this.showErrorSummary = false;
         if (!this.isFirstStep) this.stepIndex -= 1;
+    }
+
+    // Focus management: after a render triggered by validation failure or a
+    // successful submit, move keyboard focus to the relevant landmark.
+    renderedCallback() {
+        if (!this._pendingFocus) return;
+        const target = this._pendingFocus;
+        this._pendingFocus = null;
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        requestAnimationFrame(() => {
+            let el;
+            if (target === 'summary') el = this.template.querySelector('.form-error-summary');
+            else if (target === 'success') el = this.template.querySelector('.form-success-heading');
+            else el = this.template.querySelector('[data-key="' + target + '"]');
+            if (el && typeof el.focus === 'function') el.focus();
+        });
+    }
+
+    // Error-summary link: move focus to the offending field.
+    focusField(event) {
+        event.preventDefault();
+        const key = event.currentTarget.dataset.key;
+        const el = this.template.querySelector('[data-key="' + key + '"]');
+        if (el && typeof el.focus === 'function') el.focus();
     }
 
     connectedCallback() {
@@ -163,6 +213,7 @@ export default class DynamicForm extends LightningElement {
         this.files = {};
         this.fileStatus = {};
         this.fieldErrors = {};
+        this.showErrorSummary = false;
         this.reference = undefined;
         this.stepIndex = 0;
         let parsed = [];
@@ -231,20 +282,48 @@ export default class DynamicForm extends LightningElement {
         return 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;';
     }
 
+    // Card corner radius: new optional appearance key cornerRadius (px), default 12.
+    get cornerRadius() {
+        const r = Number(this.appearance && this.appearance.cornerRadius);
+        return (r > 0) ? r : 12;
+    }
+
     get cardStyle() {
         const a = this.appearance;
         const max = (a && a.maxWidth) ? a.maxWidth : 560;
         let s = 'position:relative;z-index:1;max-width:' + max + 'px;margin:0 auto;';
         if (a) {
             s += 'background:' + a.cardColor + ';color:' + a.textColor + ';'
-                + 'border-radius:12px;padding:1.25rem 1.5rem;box-shadow:0 6px 24px rgba(0,0,0,0.18);';
+                + 'border-radius:' + this.cornerRadius + 'px;padding:1.25rem 1.5rem;box-shadow:0 6px 24px rgba(0,0,0,0.18);';
         }
         return s;
     }
 
     get brandBtnStyle() {
         if (!this.appearance) return '';
-        return 'background:' + this.appearance.accentColor + ';border-color:' + this.appearance.accentColor + ';';
+        const a = this.appearance;
+        const radiusMap = { rounded: '8px', pill: '999px', square: '2px' };
+        const r = radiusMap[a.buttonStyle] || '8px';
+        return 'background:' + a.accentColor + ';border-color:' + a.accentColor + ';border-radius:' + r + ';';
+    }
+
+    // Title + description alignment: new optional appearance key headingAlign
+    // ('right' | 'center'), default 'right' (RTL Hebrew).
+    get headingStyle() {
+        const align = (this.appearance && this.appearance.headingAlign === 'center') ? 'center' : 'right';
+        return 'text-align:' + align + ';';
+    }
+
+    // Full-width decorative banner at the very top of the card (optional).
+    get hasBanner() { return this.styled && !!this.appearance.bannerUrl; }
+    get bannerUrl() { return this.hasBanner ? this.appearance.bannerUrl : null; }
+    get bannerStyle() {
+        const r = this.cornerRadius;
+        // negative margins cancel the styled card's 1.25rem/1.5rem padding so the
+        // banner spans the full card width and sits flush against the top edge.
+        return 'display:block;width:calc(100% + 3rem);margin:-1.25rem -1.5rem 1rem -1.5rem;'
+            + 'max-height:160px;object-fit:cover;'
+            + 'border-top-left-radius:' + r + 'px;border-top-right-radius:' + r + 'px;';
     }
 
     get hasLogo() { return this.styled && !!this.appearance.logoUrl; }
@@ -325,7 +404,10 @@ export default class DynamicForm extends LightningElement {
         const cssClass = status.checking
             ? 'slds-text-color_weak'
             : (status.ok === false ? 'slds-text-color_error' : 'slds-text-color_success');
-        this.fileStatus = { ...this.fileStatus, [key]: { ...status, cssClass } };
+        // Don't rely on color alone: prefix a text glyph for success/failure (WCAG 1.4.1).
+        const prefix = status.checking ? '' : (status.ok === false ? '✗ ' : '✔ ');
+        const message = prefix + (status.message || '');
+        this.fileStatus = { ...this.fileStatus, [key]: { ...status, cssClass, message } };
     }
 
     readFile(file) {
@@ -360,7 +442,13 @@ export default class DynamicForm extends LightningElement {
         // full-form validation with inline per-field errors; jump to the first step with an error
         if (this.validateFields(this.fields)) {
             const firstBad = this.fields.find((f) => this.fieldErrors[f.key]);
-            if (firstBad && firstBad.step !== this.stepIndex) this.stepIndex = firstBad.step;
+            if (firstBad && firstBad.step !== this.stepIndex) {
+                // jumped to the first step with an error: focus the first invalid field
+                this.stepIndex = firstBad.step;
+                this._pendingFocus = firstBad.key;
+            } else {
+                this._pendingFocus = 'summary';
+            }
             return;
         }
         // block submission on files that failed type/content validation
@@ -399,6 +487,8 @@ export default class DynamicForm extends LightningElement {
                 try { await attachFiles({ responseId: res.id, files: toAttach }); } catch (e) { /* non-fatal */ }
             }
             this.reference = res.name;
+            this.showErrorSummary = false;
+            this._pendingFocus = 'success';
         } catch (e) {
             this.error = (e && e.body && e.body.message) || 'אירעה שגיאה בשליחה.';
         } finally {

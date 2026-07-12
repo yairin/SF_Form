@@ -5,35 +5,49 @@
 
                 <!-- Service types -->
                 <h2 class="slds-text-heading_small slds-p-bottom_x-small">סוגי שירות (ניתוב + SLA)</h2>
+
+                <!-- Error / status live regions (ת"י 5568 / WCAG 2.1 AA) -->
+                <template lwc:if={errorMessage}>
+                    <div role="alert" class="slds-text-color_error slds-p-bottom_x-small">
+                        <lightning-icon icon-name="utility:error" size="x-small" alternative-text="שגיאה" class="slds-m-left_xx-small"></lightning-icon>
+                        <span>{errorMessage}</span>
+                    </div>
+                </template>
+                <div role="status" aria-live="polite" class="slds-text-body_small slds-text-color_success">{statusMessage}</div>
+
                 <div class="slds-box slds-box_x-small slds-m-bottom_small slds-theme_shade">
-                    <div class="slds-text-title_bold slds-p-bottom_xx-small">{formTitle}</div>
-                    <div class="slds-grid slds-gutters_x-small slds-wrap">
-                        <div class="slds-col slds-size_1-of-3">
-                            <lightning-input label="שם" value={name} onchange={handleName}></lightning-input>
+                    <fieldset class="sf-fieldset">
+                        <legend class="slds-text-title_bold slds-p-bottom_xx-small">{formTitle}</legend>
+                        <div class="slds-grid slds-gutters_x-small slds-wrap">
+                            <div class="slds-col slds-size_1-of-3">
+                                <lightning-input label="שם" value={name} onchange={handleName}></lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3">
+                                <lightning-combobox label="מחלקה" value={departmentId} options={deptOptions} onchange={handleDept} placeholder="בחר מחלקה"></lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3">
+                                <lightning-input type="number" label="שעות SLA" value={slaHours} onchange={handleSla}></lightning-input>
+                            </div>
                         </div>
-                        <div class="slds-col slds-size_1-of-3">
-                            <lightning-combobox label="מחלקה" value={departmentId} options={deptOptions} onchange={handleDept} placeholder="בחר מחלקה"></lightning-combobox>
+                        <div class="slds-p-top_x-small">
+                            <lightning-input type="checkbox" label="פעיל" checked={active} onchange={handleActive}></lightning-input>
                         </div>
-                        <div class="slds-col slds-size_1-of-3">
-                            <lightning-input type="number" label="שעות SLA" value={slaHours} onchange={handleSla}></lightning-input>
-                        </div>
-                    </div>
-                    <div class="slds-p-top_x-small">
-                        <lightning-input type="checkbox" label="פעיל" checked={active} onchange={handleActive}></lightning-input>
-                    </div>
-                    <div class="slds-p-top_x-small">
-                        <lightning-button variant="brand" label="שמירה" onclick={save}></lightning-button>
-                        <lightning-button variant="neutral" label="נקה" class="slds-m-right_x-small" onclick={resetForm}></lightning-button>
+                    </fieldset>
+                    <div class="slds-p-top_x-small" aria-busy={saving}>
+                        <lightning-button variant="brand" label="שמירה" title="שמירת סוג שירות" onclick={save} disabled={saving}></lightning-button>
+                        <lightning-button variant="neutral" label="נקה" title="ניקוי הטופס" class="slds-m-right_x-small" onclick={resetForm}></lightning-button>
                     </div>
                 </div>
 
-                <lightning-datatable
-                    key-field="id"
-                    data={rows}
-                    columns={columns}
-                    hide-checkbox-column
-                    onrowaction={handleRowAction}>
-                </lightning-datatable>
+                <div role="region" aria-label="טבלת סוגי שירות">
+                    <lightning-datatable
+                        key-field="id"
+                        data={rows}
+                        columns={columns}
+                        hide-checkbox-column
+                        onrowaction={handleRowAction}>
+                    </lightning-datatable>
+                </div>
 
                 <!-- General AI settings (reused component) -->
                 <h2 class="slds-text-heading_small slds-p-top_large slds-p-bottom_x-small">הגדרות AI כלליות</h2>

@@ -1,0 +1,36 @@
+/* Accessibility: visible focus indicator (ת"י 5568 / WCAG 2.1 AA 2.4.7) */
+lightning-button:focus-within,
+lightning-input:focus-within,
+lightning-combobox:focus-within,
+lightning-datatable:focus-within,
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid #0176d3;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Neutralise default browser fieldset chrome so grouping stays visual-quiet */
+.sf-fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+.sf-fieldset legend {
+    padding: 0;
+}
+
+/* Respect users who prefer reduced motion (WCAG 2.1 AA 2.3.3) */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

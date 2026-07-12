@@ -1,0 +1,67 @@
+/* Accessibility + layout helpers for the citizen-facing dynamic form.
+   Visible focus indicator (Israeli Standard ת"י 5568 / WCAG 2.1 AA 2.4.7). */
+
+:host {
+    display: block;
+}
+
+/* Strong, high-contrast focus ring for every interactive element. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid #0b5cab;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Fallback for browsers without :focus-visible support. */
+input:focus,
+textarea:focus,
+select:focus,
+button:focus,
+a:focus {
+    outline: 2px solid #0b5cab;
+    outline-offset: 2px;
+}
+
+/* Grouped radio / checkbox controls: keep the original visual layout while
+   giving screen readers a real <fieldset>/<legend>. */
+.form-fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+/* Error summary box lives at the top of the form and receives focus on submit. */
+.form-error-summary:focus,
+.form-error-summary:focus-visible {
+    outline: 2px solid #0b5cab;
+    outline-offset: 2px;
+}
+
+.form-error-summary a {
+    text-decoration: underline;
+}
+
+/* Success heading receives focus so SR users hear the confirmation. */
+.form-success-heading:focus,
+.form-success-heading:focus-visible {
+    outline: 2px solid #0b5cab;
+    outline-offset: 2px;
+}
+
+/* Respect users who prefer reduced motion for any transitions/animations. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+    }
+}

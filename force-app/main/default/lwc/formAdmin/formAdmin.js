@@ -31,6 +31,9 @@ export default class FormAdmin extends LightningElement {
     departmentId = '';
     slaHours = 48;
     active = true;
+    saving = false;
+    statusMessage = '';
+    errorMessage = '';
 
     connectedCallback() {
         this.load();
@@ -42,6 +45,7 @@ export default class FormAdmin extends LightningElement {
             const depts = await getDepartments();
             this.deptOptions = depts.map((d) => ({ label: d.Name, value: d.Id }));
         } catch (e) {
+            this.errorMessage = this.msg(e);
             this.toast('שגיאה', this.msg(e), 'error');
         }
     }
@@ -58,7 +62,14 @@ export default class FormAdmin extends LightningElement {
     }
 
     async save() {
-        if (!this.name || !this.name.trim()) { this.toast('חסר שם', 'נא להזין שם סוג שירות.', 'warning'); return; }
+        this.errorMessage = '';
+        if (!this.name || !this.name.trim()) {
+            this.errorMessage = 'נא להזין שם סוג שירות.';
+            this.toast('חסר שם', 'נא להזין שם סוג שירות.', 'warning');
+            return;
+        }
+        this.saving = true;
+        this.statusMessage = 'שומר סוג שירות…';
         try {
             await saveServiceType({
                 recordId: this.editId,
@@ -67,11 +78,16 @@ export default class FormAdmin extends LightningElement {
                 slaHours: this.slaHours ? parseFloat(this.slaHours) : null,
                 active: this.active
             });
+            this.statusMessage = 'סוג השירות נשמר';
             this.toast('נשמר', 'סוג השירות נשמר.', 'success');
             this.resetForm();
             this.load();
         } catch (e) {
+            this.statusMessage = '';
+            this.errorMessage = this.msg(e);
             this.toast('שגיאה', this.msg(e), 'error');
+        } finally {
+            this.saving = false;
         }
     }
 
@@ -85,11 +101,16 @@ export default class FormAdmin extends LightningElement {
             this.slaHours = row.slaHours;
             this.active = row.active;
         } else if (a === 'toggle') {
+            this.errorMessage = '';
+            this.statusMessage = 'מעדכן סטטוס…';
             try {
                 await setServiceTypeActive({ recordId: row.id, active: !row.active });
+                this.statusMessage = row.active ? 'סוג השירות הושבת' : 'סוג השירות הופעל';
                 this.toast('בוצע', row.active ? 'הושבת.' : 'הופעל.', 'success');
                 this.load();
             } catch (e) {
+                this.statusMessage = '';
+                this.errorMessage = this.msg(e);
                 this.toast('שגיאה', this.msg(e), 'error');
             }
         }

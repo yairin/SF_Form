@@ -1,18 +1,21 @@
 <template>
     <div dir="rtl">
         <lightning-card title="ניהול טפסים" icon-name="standard:form">
-            <lightning-button slot="actions" variant="brand" label="+ צור טופס חדש" onclick={newForm}></lightning-button>
+            <lightning-button class="new-form-btn" slot="actions" variant="brand" label="+ צור טופס חדש" title="צור טופס חדש" onclick={newForm}></lightning-button>
 
             <template lwc:if={isList}>
                 <div class="slds-p-around_small">
                     <template lwc:if={hasRows}>
-                        <lightning-datatable
-                            key-field="id"
-                            data={rows}
-                            columns={columns}
-                            hide-checkbox-column
-                            onrowaction={handleRowAction}>
-                        </lightning-datatable>
+                        <div role="region" aria-label="רשימת הטפסים לניהול">
+                            <lightning-datatable
+                                aria-label="רשימת הטפסים לניהול"
+                                key-field="id"
+                                data={rows}
+                                columns={columns}
+                                hide-checkbox-column
+                                onrowaction={handleRowAction}>
+                            </lightning-datatable>
+                        </div>
                     </template>
                     <template lwc:else>
                         <p class="slds-text-color_weak slds-p-around_medium slds-text-align_center">
@@ -23,7 +26,8 @@
             </template>
 
             <template lwc:else>
-                <div class="slds-p-around_small">
+                <div class="slds-p-around_small" role="region" aria-label="עורך הטופס">
+                    <h2 class="builder-heading slds-assistive-text" tabindex="-1">עורך הטופס</h2>
                     <c-form-builder
                         record-id={editId}
                         embedded

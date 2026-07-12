@@ -36,8 +36,22 @@ export default class FormManager extends LightningElement {
     mode = 'list';
     editId = null;
 
+    // Accessibility: element to move focus to after the next render, so keyboard
+    // and screen-reader focus follow the view change (list <-> builder).
+    _focusSelector;
+
     connectedCallback() {
         this.load();
+    }
+
+    renderedCallback() {
+        if (this._focusSelector) {
+            const el = this.template.querySelector(this._focusSelector);
+            if (el) {
+                this._focusSelector = undefined;
+                el.focus();
+            }
+        }
     }
 
     async load() {
@@ -59,16 +73,19 @@ export default class FormManager extends LightningElement {
     newForm() {
         this.editId = null;
         this.mode = 'edit';
+        this._focusSelector = '.builder-heading';
     }
 
     handleSaved() {
         this.mode = 'list';
+        this._focusSelector = '.new-form-btn';
         this.toast('נשמר', 'הטופס נשמר בהצלחה.', 'success');
         this.load();
     }
 
     handleCancel() {
         this.mode = 'list';
+        this._focusSelector = '.new-form-btn';
     }
 
     async handleRowAction(event) {
@@ -77,6 +94,7 @@ export default class FormManager extends LightningElement {
         if (action === 'edit') {
             this.editId = row.id;
             this.mode = 'edit';
+            this._focusSelector = '.builder-heading';
         } else if (action === 'clone') {
             await this.run(() => cloneForm({ recordId: row.id }), 'הטופס שוכפל (העותק לא פעיל).');
         } else if (action === 'toggle') {

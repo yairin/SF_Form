@@ -22,3 +22,32 @@
 .ix-sys { border-inline-start: 4px solid #706e6b; background-color: #f3f3f3; }
 .ix-to { border-inline-start: 4px solid #1b96ff; background-color: #eef4ff; }
 .ix-from { border-inline-start: 4px solid #2e844a; background-color: #eefaf0; }
+
+/* Accessibility (ת"י 5568 / WCAG 2.1 AA) */
+
+/* Keep section titles that were promoted to real headings visually identical
+   to the surrounding text (SLDS classes still control font); just reset the
+   browser default heading margins so layout is unchanged. */
+h2, h3, h4 { margin: 0; }
+
+/* Visible keyboard focus indicator for interactive elements. */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid #0176d3;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Programmatic focus on headings (tabindex="-1") should not paint a ring
+   for pointer/scripted focus — only genuine keyboard focus shows the outline. */
+[tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

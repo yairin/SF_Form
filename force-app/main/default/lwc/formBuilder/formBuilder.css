@@ -1,0 +1,37 @@
+/* Accessibility: visible keyboard focus (ת"י 5568 / WCAG 2.1 AA — 2.4.7) */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible,
+a:focus-visible {
+    outline: 2px solid #1b5297;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Fallback for browsers without :focus-visible support */
+input:focus,
+select:focus,
+textarea:focus,
+button:focus,
+a:focus {
+    outline: 2px solid #1b5297;
+    outline-offset: 2px;
+}
+
+/* Keep box titles rendered as headings visually inline with the SLDS boxes */
+[role="heading"] {
+    display: inline-block;
+}
+
+/* Respect users who prefer reduced motion (WCAG 2.3.3 / 2.2.2) */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+}

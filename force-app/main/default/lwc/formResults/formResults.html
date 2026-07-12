@@ -4,24 +4,30 @@
             <!-- LIST -->
             <template lwc:if={isList}>
                 <div class="slds-p-horizontal_small slds-p-bottom_small">
-                    <lightning-input type="search" label="חיפוש טופס" variant="label-hidden"
+                    <lightning-input class="list-search" type="search" label="חיפוש טופס" variant="label-hidden"
                         placeholder="חפש לפי שם או מזהה..." value={search} onchange={handleSearch}></lightning-input>
                 </div>
                 <div class="slds-p-horizontal_small slds-is-relative">
                     <template lwc:if={loading}>
-                        <lightning-spinner alternative-text="טוען תוצאות..." size="small"></lightning-spinner>
+                        <div role="status" aria-live="polite">
+                            <lightning-spinner alternative-text="טוען תוצאות…" size="small"></lightning-spinner>
+                            <span class="slds-assistive-text">טוען תוצאות…</span>
+                        </div>
                     </template>
                     <template lwc:if={hasRows}>
-                        <lightning-datatable
-                            key-field="id"
-                            data={rows}
-                            columns={columns}
-                            hide-checkbox-column
-                            sorted-by={sortBy}
-                            sorted-direction={sortDirection}
-                            onsort={handleSort}
-                            onrowaction={handleRowAction}>
-                        </lightning-datatable>
+                        <div role="region" aria-label="רשימת טפסים לצפייה בתוצאות">
+                            <lightning-datatable
+                                aria-label="רשימת טפסים לצפייה בתוצאות"
+                                key-field="id"
+                                data={rows}
+                                columns={columns}
+                                hide-checkbox-column
+                                sorted-by={sortBy}
+                                sorted-direction={sortDirection}
+                                onsort={handleSort}
+                                onrowaction={handleRowAction}>
+                            </lightning-datatable>
+                        </div>
                     </template>
                     <template lwc:else>
                         <p class="slds-text-color_weak slds-p-around_medium slds-text-align_center">אין טפסים.</p>
@@ -35,7 +41,7 @@
                     <lightning-button label="← חזרה לרשימה" variant="neutral" onclick={backToList} class="slds-m-bottom_small"></lightning-button>
 
                     <template lwc:if={results}>
-                        <h2 class="slds-text-heading_medium slds-p-bottom_x-small">{results.formName}</h2>
+                        <h2 class="detail-heading slds-text-heading_medium slds-p-bottom_x-small" tabindex="-1">{results.formName}</h2>
 
                         <!-- KPI tiles -->
                         <div class="slds-grid slds-gutters_x-small slds-wrap slds-p-bottom_small">
@@ -51,11 +57,14 @@
 
                         <template lwc:else>
                             <!-- Summary / AI insights -->
-                            <div class="slds-box slds-box_x-small slds-m-vertical_small slds-theme_shade">
-                                <div class="slds-text-title_bold slds-p-bottom_xx-small">תובנות</div>
+                            <div class="slds-box slds-box_x-small slds-m-vertical_small slds-theme_shade" role="region" aria-labelledby="ai-insights-heading">
+                                <h3 id="ai-insights-heading" class="slds-text-title_bold slds-p-bottom_xx-small">תובנות AI</h3>
                                 <div style="white-space:pre-wrap;position:relative;min-height:1.5rem;">
                                     <template lwc:if={aiLoading}>
-                                        <lightning-spinner alternative-text="מפיק תובנות..." size="small"></lightning-spinner>
+                                        <div role="status" aria-live="polite">
+                                            <lightning-spinner alternative-text="מפיק תובנות…" size="small"></lightning-spinner>
+                                            <span class="slds-assistive-text">מפיק תובנות…</span>
+                                        </div>
                                     </template>
                                     <template lwc:if={aiText}>{aiText}</template>
                                     <template lwc:else>{results.summary}</template>
@@ -64,14 +73,14 @@
                                     <div class="slds-text-body_small slds-text-color_weak slds-p-top_xx-small">{aiMeta}</div>
                                 </template>
                                 <div class="slds-p-top_x-small">
-                                    <lightning-button label={aiButtonLabel} variant="brand" onclick={runAi} disabled={aiLoading}></lightning-button>
+                                    <lightning-button label={aiButtonLabel} title={aiButtonLabel} variant="brand" onclick={runAi} disabled={aiLoading}></lightning-button>
                                 </div>
                             </div>
 
                             <!-- Charts per field -->
                             <template for:each={results.fields} for:item="f">
                                 <div key={f.key} class="slds-box slds-box_x-small slds-m-bottom_small">
-                                    <div class="slds-text-title_bold slds-p-bottom_xx-small">{f.label}</div>
+                                    <h3 class="slds-text-title_bold slds-p-bottom_xx-small">{f.label}</h3>
 
                                     <template lwc:if={f.isBar}>
                                         <template for:each={f.buckets} for:item="b">
@@ -105,37 +114,40 @@
                             <!-- Individual submissions (record-level) -->
                             <div class="slds-box slds-box_x-small slds-m-top_small">
                                 <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-p-bottom_xx-small">
-                                    <div class="slds-text-title_bold">רשומות פרטניות</div>
+                                    <h3 class="slds-text-title_bold">רשומות פרטניות</h3>
                                     <template lwc:if={hasResponses}>
-                                        <lightning-button label="ייצוא CSV" icon-name="utility:download"
+                                        <lightning-button label="ייצוא CSV" title="ייצוא הרשומות לקובץ CSV" icon-name="utility:download"
                                             variant="neutral" onclick={exportCsv}></lightning-button>
                                     </template>
                                 </div>
 
                                 <!-- approval-route distribution -->
                                 <template lwc:if={hasResponses}>
-                                    <div class="slds-grid slds-wrap slds-gutters_xx-small slds-p-bottom_xxx-small">
+                                    <div class="slds-grid slds-wrap slds-gutters_xx-small slds-p-bottom_xxx-small" role="group" aria-label="התפלגות מסלולי אישור">
                                         <template for:each={routeSummary} for:item="rs">
                                             <span key={rs.key} class="slds-badge slds-m-right_xx-small">{rs.label}: {rs.count}</span>
                                         </template>
                                     </div>
-                                    <!-- AI status color legend -->
-                                    <div class="slds-text-body_small slds-p-bottom_x-small">
+                                    <!-- AI status color legend (color augmented by text) -->
+                                    <div class="slds-text-body_small slds-p-bottom_x-small" role="group" aria-label="מקרא סטטוס AI">
                                         <span class="slds-text-color_weak">מקרא סטטוס AI: </span>
-                                        <span class="slds-text-color_success slds-m-right_x-small">● אושר</span>
-                                        <span class="slds-text-color_error slds-m-right_x-small">● נדרשת השלמה / שגיאה</span>
-                                        <span class="slds-text-color_weak">● ממתין / לא נבדק</span>
+                                        <span class="slds-text-color_success slds-m-right_x-small"><span aria-hidden="true">●</span> אושר</span>
+                                        <span class="slds-text-color_error slds-m-right_x-small"><span aria-hidden="true">●</span> נדרשת השלמה / שגיאה</span>
+                                        <span class="slds-text-color_weak"><span aria-hidden="true">●</span> ממתין / לא נבדק</span>
                                     </div>
                                 </template>
 
                                 <template lwc:if={hasResponses}>
-                                    <lightning-datatable
-                                        key-field="id"
-                                        data={responses}
-                                        columns={respColumns}
-                                        hide-checkbox-column
-                                        onrowaction={handleResponseRowAction}>
-                                    </lightning-datatable>
+                                    <div role="region" aria-label="רשומות פרטניות של הגשות הטופס">
+                                        <lightning-datatable
+                                            aria-label="רשומות פרטניות של הגשות הטופס"
+                                            key-field="id"
+                                            data={responses}
+                                            columns={respColumns}
+                                            hide-checkbox-column
+                                            onrowaction={handleResponseRowAction}>
+                                        </lightning-datatable>
+                                    </div>
                                 </template>
                                 <template lwc:else>
                                     <p class="slds-text-color_weak slds-p-around_small">אין רשומות להצגה.</p>
@@ -153,17 +165,20 @@
                     <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
                         <lightning-button label="← חזרה לתוצאות" variant="neutral" onclick={backToDetail}></lightning-button>
                         <template lwc:if={record}>
-                            <lightning-button label="ייצוא CSV" icon-name="utility:download" variant="neutral" onclick={exportRecordCsv}></lightning-button>
+                            <lightning-button label="ייצוא CSV" title="ייצוא רשומה זו לקובץ CSV" icon-name="utility:download" variant="neutral" onclick={exportRecordCsv}></lightning-button>
                         </template>
                     </div>
                     <a class="record-csv-download slds-hide" aria-hidden="true"></a>
 
                     <template lwc:if={recordLoading}>
-                        <lightning-spinner alternative-text="טוען רשומה..." size="small"></lightning-spinner>
+                        <div role="status" aria-live="polite">
+                            <lightning-spinner alternative-text="טוען רשומה…" size="small"></lightning-spinner>
+                            <span class="slds-assistive-text">טוען רשומה…</span>
+                        </div>
                     </template>
 
                     <template lwc:if={record}>
-                        <h2 class="slds-text-heading_medium">{record.reference} · {record.respondentName}</h2>
+                        <h2 class="record-heading slds-text-heading_medium" tabindex="-1">{record.reference} · {record.respondentName}</h2>
                         <div class="slds-text-body_small slds-text-color_weak slds-p-bottom_small">
                             <template lwc:if={record.submittedStr}>הוגש: {record.submittedStr}</template>
                             <template lwc:if={record.email}> · {record.email}</template>
@@ -171,9 +186,9 @@
                         </div>
 
                         <!-- AI status + findings -->
-                        <div class="slds-box slds-box_x-small slds-m-bottom_small slds-theme_shade">
+                        <div class="slds-box slds-box_x-small slds-m-bottom_small slds-theme_shade" role="region" aria-label="סטטוס בדיקת AI">
                             <div class="slds-grid slds-grid_vertical-align-center slds-wrap">
-                                <div class="slds-text-title_bold slds-m-left_small">סטטוס AI: <span class={record.aiStatusClass}>{record.aiStatusLabel}</span></div>
+                                <h3 class="slds-text-title_bold slds-m-left_small">סטטוס AI: <span class={record.aiStatusClass}>{record.aiStatusLabel}</span></h3>
                                 <template lwc:if={record.approvalRoute}>
                                     <lightning-badge label={record.approvalRoute} icon-name="utility:routing_offline"></lightning-badge>
                                 </template>
@@ -188,7 +203,7 @@
 
                         <!-- Field values -->
                         <div class="slds-box slds-box_x-small slds-m-bottom_small">
-                            <div class="slds-text-title_bold slds-p-bottom_x-small">פרטי ההגשה</div>
+                            <h3 class="slds-text-title_bold slds-p-bottom_x-small">פרטי ההגשה</h3>
                             <template for:each={record.fields} for:item="fv">
                                 <div key={fv.label} class="slds-grid slds-p-vertical_xxx-small slds-border_bottom">
                                     <div class="slds-col slds-size_5-of-12 slds-text-color_weak slds-truncate" title={fv.label}>{fv.label}</div>
@@ -199,15 +214,17 @@
 
                         <!-- Uploaded files -->
                         <div class="slds-box slds-box_x-small slds-m-bottom_small">
-                            <div class="slds-text-title_bold slds-p-bottom_x-small">קבצים שהועלו</div>
+                            <h3 class="slds-text-title_bold slds-p-bottom_x-small">קבצים שהועלו</h3>
                             <template lwc:if={record.hasFiles}>
-                                <template for:each={record.files} for:item="file">
-                                    <div key={file.contentDocumentId} class="slds-grid slds-grid_vertical-align-center slds-p-vertical_xxx-small">
-                                        <lightning-icon icon-name="doctype:attachment" size="x-small" class="slds-m-left_x-small"></lightning-icon>
-                                        <a href={file.downloadUrl} target="_blank" class="slds-m-right_x-small">{file.title}</a>
-                                        <span class="slds-text-body_small slds-text-color_weak slds-m-right_x-small">({file.fileType})</span>
-                                    </div>
-                                </template>
+                                <ul class="slds-list_vertical">
+                                    <template for:each={record.files} for:item="file">
+                                        <li key={file.contentDocumentId} class="slds-grid slds-grid_vertical-align-center slds-p-vertical_xxx-small">
+                                            <lightning-icon icon-name="doctype:attachment" size="x-small" alternative-text="קובץ מצורף" class="slds-m-left_x-small"></lightning-icon>
+                                            <a href={file.downloadUrl} target="_blank" title="הורדת הקובץ (נפתח בכרטיסייה חדשה)" class="slds-m-right_x-small">{file.title}</a>
+                                            <span class="slds-text-body_small slds-text-color_weak slds-m-right_x-small">({file.fileType})</span>
+                                        </li>
+                                    </template>
+                                </ul>
                             </template>
                             <template lwc:else>
                                 <p class="slds-text-body_small slds-text-color_weak">לא צורפו קבצים להגשה זו.</p>
@@ -216,7 +233,7 @@
 
                         <!-- AI interaction thread with the applicant -->
                         <div class="slds-box slds-box_x-small">
-                            <div class="slds-text-title_bold slds-p-bottom_x-small">התנהלות AI מול הפונה (טיוב נתונים)</div>
+                            <h3 class="slds-text-title_bold slds-p-bottom_x-small">התנהלות AI מול הפונה (טיוב נתונים)</h3>
                             <template lwc:if={record.hasInteractions}>
                                 <template for:each={record.interactions} for:item="ix">
                                     <div key={ix.key} class={ix.itemClass}>

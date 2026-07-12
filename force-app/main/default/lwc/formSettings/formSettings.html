@@ -2,35 +2,55 @@
     <div dir="rtl">
         <lightning-card title="הגדרות SF Forms" icon-name="standard:settings">
             <div class="slds-p-around_medium" style="max-width:640px;">
-                <p class="slds-text-body_small slds-text-color_weak slds-p-bottom_small">
+                <p id="settings-intro" class="slds-text-body_small slds-text-color_weak slds-p-bottom_small">
                     בחר את מנוע ה-AI שיבדוק טפסים שהוגשו. עבור מנוע חיצוני יש להזין endpoint ומפתח API.
                 </p>
 
-                <lightning-radio-group
-                    name="engine"
-                    label="מנוע AI"
-                    options={engineOptions}
-                    value={engine}
-                    onchange={handleEngine}
-                    type="radio">
-                </lightning-radio-group>
-
-                <template lwc:if={isExternal}>
-                    <div class="slds-p-top_medium">
-                        <lightning-input label="Endpoint" value={endpoint} onchange={handleEndpoint}
-                            placeholder="https://api.example.com/v1/messages"></lightning-input>
-                        <lightning-input label="Model" value={model} onchange={handleModel}
-                            placeholder="claude-opus-4-8" class="slds-p-top_x-small"></lightning-input>
-                        <lightning-input label="API Key" type="password" value={apiKey} onchange={handleApiKey}
-                            placeholder={apiKeyPlaceholder} class="slds-p-top_x-small"></lightning-input>
-                        <template lwc:if={hasApiKey}>
-                            <p class="slds-text-body_small slds-text-color_success slds-p-top_xx-small">✓ מפתח שמור במערכת</p>
-                        </template>
+                <!-- Error / success live regions (ת"י 5568 / WCAG 2.1 AA) -->
+                <template lwc:if={errorMessage}>
+                    <div role="alert" class="slds-text-color_error slds-p-bottom_x-small">
+                        <lightning-icon icon-name="utility:error" size="x-small" alternative-text="שגיאה" class="slds-m-left_xx-small"></lightning-icon>
+                        <span>{errorMessage}</span>
                     </div>
                 </template>
+                <div role="status" aria-live="polite" class="slds-text-body_small slds-text-color_success">{statusMessage}</div>
 
-                <div class="slds-p-top_medium">
-                    <lightning-button variant="brand" label="שמור הגדרות" onclick={save}></lightning-button>
+                <!-- Related AI-engine settings grouped as a set -->
+                <fieldset class="sf-fieldset" aria-describedby="settings-intro">
+                    <legend class="slds-text-heading_small slds-p-bottom_x-small">הגדרות מנוע AI</legend>
+
+                    <lightning-radio-group
+                        name="engine"
+                        label="מנוע AI"
+                        options={engineOptions}
+                        value={engine}
+                        onchange={handleEngine}
+                        type="radio">
+                    </lightning-radio-group>
+
+                    <template lwc:if={isExternal}>
+                        <div class="slds-p-top_medium">
+                            <lightning-input label="Endpoint" value={endpoint} onchange={handleEndpoint}
+                                placeholder="https://api.example.com/v1/messages"></lightning-input>
+                            <lightning-input label="Model" value={model} onchange={handleModel}
+                                placeholder="claude-opus-4-8" class="slds-p-top_x-small"></lightning-input>
+                            <lightning-input label="מפתח API" type="password" value={apiKey} onchange={handleApiKey}
+                                autocomplete="off"
+                                field-level-help="המפתח מאוחסן מוצפן בשרת ואינו מוצג שוב לאחר השמירה."
+                                placeholder={apiKeyPlaceholder} class="slds-p-top_x-small"></lightning-input>
+                            <template lwc:if={hasApiKey}>
+                                <p role="status" class="slds-text-body_small slds-text-color_success slds-p-top_xx-small">
+                                    <lightning-icon icon-name="utility:check" size="xx-small" alternative-text="קיים" class="slds-m-left_xx-small"></lightning-icon>
+                                    <span>מפתח שמור במערכת</span>
+                                </p>
+                            </template>
+                        </div>
+                    </template>
+                </fieldset>
+
+                <div class="slds-p-top_medium" aria-busy={saving}>
+                    <lightning-button variant="brand" label="שמור הגדרות" title="שמור הגדרות"
+                        onclick={save} disabled={saving}></lightning-button>
                 </div>
             </div>
         </lightning-card>

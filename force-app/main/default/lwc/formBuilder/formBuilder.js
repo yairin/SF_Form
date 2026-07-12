@@ -22,10 +22,37 @@ const FONT_OPTIONS = [
     ['"Courier New", monospace', 'Courier (Monospace)'],
     ['"Rubik", "Assistant", sans-serif', 'Rubik / Assistant']
 ];
+// Ready-made themes: choosing one fills several appearance values at once.
+const PRESETS = {
+    blue: {
+        bgType: 'gradient', bgColor: '#e6eefa', bgColor2: '#f5f7fa', cardColor: '#ffffff',
+        accentColor: '#1c5aa8', textColor: '#16202e', fontFamily: '"Rubik","Assistant",sans-serif'
+    },
+    green: {
+        bgType: 'gradient', bgColor: '#e5f2ea', bgColor2: '#f6faf7', cardColor: '#ffffff',
+        accentColor: '#2e7d52', textColor: '#16202e'
+    },
+    sand: {
+        bgType: 'color', bgColor: '#f6efe2', cardColor: '#fffdf8', accentColor: '#b06a12', textColor: '#2a2113'
+    },
+    dark: {
+        bgType: 'color', bgColor: '#0e1621', cardColor: '#17202c', accentColor: '#5b9be0', textColor: '#e7edf5'
+    },
+    white: {
+        bgType: 'none', cardColor: '#ffffff', accentColor: '#111827', textColor: '#111111'
+    }
+};
+const PRESET_OPTIONS = [
+    ['', '— מותאם אישית —'], ['blue', 'כחול עירוני'], ['green', 'ירוק רשות'],
+    ['sand', 'חול מדברי'], ['dark', 'כהה אלגנטי'], ['white', 'מינימלי לבן']
+];
+const BUTTON_STYLE_OPTIONS = [['rounded', 'עגול'], ['pill', 'כדורי'], ['square', 'מרובע']];
+const HEADING_ALIGN_OPTIONS = [['right', 'לימין'], ['center', 'למרכז']];
 const defaultAppearance = () => ({
     bgType: 'none', bgUrl: '', bgColor: '#f3f4f6', bgColor2: '#e0e7ff',
     overlay: 0, cardColor: '#ffffff', accentColor: '#1b5297', textColor: '#181818',
-    fontFamily: '', maxWidth: 560, logoUrl: '', align: 'center'
+    fontFamily: '', maxWidth: 560, logoUrl: '', align: 'center',
+    preset: '', bannerUrl: '', buttonStyle: 'rounded', cornerRadius: 12, headingAlign: 'right'
 });
 const newTask = () => ({ subject: '', priority: 'Normal', offsetDays: 0, description: '' });
 const TYPE_OPTIONS = [
@@ -54,6 +81,7 @@ export default class FormBuilder extends LightningElement {
     appearance = defaultAppearance();
     uploadingBg = false;
     uploadingLogo = false;
+    uploadingBanner = false;
     steps = [{ title: '', fields: [{ type: 'text', label: '', required: true, options: '', mapTo: 'respondentName' }] }];
 
     savedExternalId;
@@ -251,6 +279,15 @@ export default class FormBuilder extends LightningElement {
     get fontOptions() {
         return FONT_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === (this.appearance.fontFamily || '') }));
     }
+    get presetOptions() {
+        return PRESET_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === (this.appearance.preset || '') }));
+    }
+    get buttonStyleOptions() {
+        return BUTTON_STYLE_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === (this.appearance.buttonStyle || 'rounded') }));
+    }
+    get headingAlignOptions() {
+        return HEADING_ALIGN_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === (this.appearance.headingAlign || 'right') }));
+    }
     get showBgColor() { return this.appearance.bgType === 'color' || this.appearance.bgType === 'gradient'; }
     get showBgColor2() { return this.appearance.bgType === 'gradient'; }
     get showBgMedia() { return this.appearance.bgType === 'image' || this.appearance.bgType === 'video'; }
@@ -271,22 +308,64 @@ export default class FormBuilder extends LightningElement {
     }
     get previewCardStyle() {
         const a = this.appearance;
-        return 'background:' + a.cardColor + ';color:' + a.textColor + ';border-radius:10px;padding:0.75rem 1rem;'
-            + 'max-width:100%;box-shadow:0 2px 10px rgba(0,0,0,0.15);font-family:' + (a.fontFamily || 'inherit') + ';';
+        const r = Number(a.cornerRadius);
+        const radius = isNaN(r) ? 12 : r;
+        return 'background:' + a.cardColor + ';color:' + a.textColor + ';border-radius:' + radius + 'px;'
+            + 'max-width:100%;box-shadow:0 2px 10px rgba(0,0,0,0.15);font-family:' + (a.fontFamily || 'inherit')
+            + ';overflow:hidden;';
+    }
+    get previewBannerStyle() {
+        return 'display:block;width:100%;height:56px;object-fit:cover;';
+    }
+    get previewBodyStyle() {
+        const a = this.appearance;
+        return 'padding:0.75rem 1rem;text-align:' + (a.headingAlign === 'center' ? 'center' : 'right') + ';';
     }
     get previewBtnStyle() {
-        return 'background:' + this.appearance.accentColor + ';color:#fff;border:none;border-radius:6px;padding:6px 14px;margin-top:6px;';
+        const a = this.appearance;
+        let br = '8px';
+        if (a.buttonStyle === 'pill') br = '999px';
+        else if (a.buttonStyle === 'square') br = '0';
+        return 'background:' + a.accentColor + ';color:#fff;border:none;border-radius:' + br + ';padding:6px 14px;margin-top:6px;';
     }
 
     handleAppearance(event) {
         const p = event.target.dataset.p;
         let val = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
-        if (p === 'overlay' || p === 'maxWidth') val = Number(val) || 0;
+        if (p === 'overlay' || p === 'maxWidth' || p === 'cornerRadius') val = Number(val) || 0;
         this.appearance = { ...this.appearance, [p]: val };
     }
 
     handleBgType(event) {
         this.appearance = { ...this.appearance, bgType: event.target.value };
+    }
+
+    // Choosing a ready-made theme fills several appearance values at once.
+    handlePreset(event) {
+        const id = event.target.value;
+        const preset = PRESETS[id];
+        if (!preset) {
+            this.appearance = { ...this.appearance, preset: '' };
+            return;
+        }
+        this.appearance = { ...this.appearance, ...preset, preset: id };
+    }
+
+    async handleBannerUpload(event) {
+        const file = (event.target.files || [])[0];
+        if (!file) return;
+        this.error = undefined;
+        this.uploadingBanner = true;
+        try {
+            const base64 = await this.readAsBase64(file);
+            const url = await uploadDesignAsset({ fileName: file.name, base64 });
+            this.appearance = { ...this.appearance, bannerUrl: url };
+        } catch (e) {
+            this.error = (e && e.body && e.body.message) || 'העלאת הבאנר נכשלה. אפשר להדביק כתובת URL במקום.';
+        } finally {
+            this.uploadingBanner = false;
+            event.target.value = null;
+        }
     }
 
     async handleMediaUpload(event) {

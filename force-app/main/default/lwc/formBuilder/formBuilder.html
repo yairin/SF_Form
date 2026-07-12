@@ -6,17 +6,17 @@
                 <h1 class="slds-text-heading_medium slds-p-bottom_small">בונה טפסים</h1>
 
                 <div class="slds-form-element slds-p-bottom_x-small">
-                    <label class="slds-form-element__label">כותרת הטופס</label>
-                    <input type="text" class="slds-input" value={title} onchange={handleTitle} placeholder="למשל: רישום לאירוע" />
+                    <label class="slds-form-element__label" for="fb-title">כותרת הטופס</label>
+                    <input id="fb-title" type="text" class="slds-input" value={title} onchange={handleTitle} placeholder="למשל: רישום לאירוע" />
                 </div>
                 <div class="slds-form-element slds-p-bottom_x-small">
-                    <label class="slds-form-element__label">תיאור (אופציונלי)</label>
-                    <input type="text" class="slds-input" value={description} onchange={handleDesc} />
+                    <label class="slds-form-element__label" for="fb-desc">תיאור (אופציונלי)</label>
+                    <input id="fb-desc" type="text" class="slds-input" value={description} onchange={handleDesc} />
                 </div>
                 <div class="slds-form-element slds-p-bottom_small">
-                    <label class="slds-form-element__label">סוג שירות (ניתוב למחלקה + SLA)</label>
+                    <label class="slds-form-element__label" for="fb-service">סוג שירות (ניתוב למחלקה + SLA)</label>
                     <div class="slds-select_container">
-                        <select class="slds-select" onchange={handleServiceType}>
+                        <select id="fb-service" class="slds-select" onchange={handleServiceType}>
                             <template for:each={serviceTypes} for:item="s">
                                 <option key={s.value} value={s.value}>{s.label}</option>
                             </template>
@@ -32,8 +32,8 @@
                             <lightning-input type="checkbox" label="בדוק שהקבצים המצורפים תואמים לנדרש" checked={aiCheckAttachments} onchange={handleAiCheckAttachments}></lightning-input>
                             <lightning-input type="checkbox" label="פנייה יזומה לפונה אם חסר מידע/מסמך" checked={aiContactApplicant} onchange={handleAiContactApplicant}></lightning-input>
                             <div class="slds-form-element slds-p-top_x-small">
-                                <label class="slds-form-element__label">הנחיות נוספות ל-AI (מה לוודא)</label>
-                                <textarea class="slds-textarea" value={aiInstructions} onchange={handleAiInstructions}
+                                <label class="slds-form-element__label" for="fb-ai-instr">הנחיות נוספות ל-AI (מה לוודא)</label>
+                                <textarea id="fb-ai-instr" class="slds-textarea" value={aiInstructions} onchange={handleAiInstructions}
                                     placeholder="למשל: ודא שצורף צילום תעודת זהות קריא ואישור תושב"></textarea>
                             </div>
                         </div>
@@ -43,8 +43,8 @@
                 <!-- Per-form workflow tasks -->
                 <div class="slds-box slds-box_xx-small slds-m-bottom_small slds-theme_shade">
                     <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
-                        <span class="slds-text-title_bold">משימות אוטומטיות לטופס</span>
-                        <button class="slds-button slds-button_neutral" onclick={addTask}>+ הוסף משימה</button>
+                        <span class="slds-text-title_bold" role="heading" aria-level="2">משימות אוטומטיות לטופס</span>
+                        <button type="button" class="slds-button slds-button_neutral" onclick={addTask}>+ הוסף משימה</button>
                     </div>
                     <p class="slds-text-body_small slds-text-color_weak slds-p-vertical_xx-small">
                         לכל פנייה חדשה שתתקבל, המערכת תיצור אוטומטית את המשימות הבאות (משויכות לפנייה, מוקצות לבעל הטופס).
@@ -54,25 +54,25 @@
                             <div key={t.i} class="slds-box slds-box_xx-small slds-m-bottom_x-small slds-theme_default">
                                 <div class="slds-grid slds-gutters_xx-small slds-wrap slds-grid_vertical-align-center">
                                     <div class="slds-col slds-size_6-of-12">
-                                        <input type="text" class="slds-input" data-i={t.i} data-p="subject"
+                                        <input type="text" class="slds-input" data-i={t.i} data-p="subject" aria-label="שם המשימה"
                                             value={t.subject} onchange={handleTask} placeholder="שם המשימה (למשל: אימות מסמכים)" />
                                     </div>
                                     <div class="slds-col slds-size_3-of-12">
-                                        <select class="slds-select" data-i={t.i} data-p="priority" onchange={handleTask}>
+                                        <select class="slds-select" data-i={t.i} data-p="priority" aria-label="עדיפות המשימה" onchange={handleTask}>
                                             <template for:each={t.priorityOptions} for:item="p">
                                                 <option key={p.value} value={p.value} selected={p.selected}>{p.label}</option>
                                             </template>
                                         </select>
                                     </div>
                                     <div class="slds-col slds-size_2-of-12">
-                                        <input type="number" min="0" class="slds-input" data-i={t.i} data-p="offsetDays"
+                                        <input type="number" min="0" class="slds-input" data-i={t.i} data-p="offsetDays" aria-label="ימים מרגע הקבלה"
                                             value={t.offsetDays} onchange={handleTask} title="ימים מרגע הקבלה" placeholder="ימים" />
                                     </div>
                                     <div class="slds-col slds-size_1-of-12">
-                                        <button class="slds-button slds-button_destructive" data-i={t.i} onclick={removeTask}>×</button>
+                                        <button type="button" class="slds-button slds-button_destructive" data-i={t.i} onclick={removeTask} aria-label="הסר משימה" title="הסר משימה">×</button>
                                     </div>
                                     <div class="slds-col slds-size_12-of-12 slds-p-top_xx-small">
-                                        <input type="text" class="slds-input" data-i={t.i} data-p="description"
+                                        <input type="text" class="slds-input" data-i={t.i} data-p="description" aria-label="תיאור המשימה"
                                             value={t.description} onchange={handleTask} placeholder="תיאור המשימה (אופציונלי)" />
                                     </div>
                                 </div>
@@ -83,12 +83,22 @@
 
                 <!-- Appearance / visual design -->
                 <div class="slds-box slds-box_xx-small slds-m-bottom_small slds-theme_shade">
-                    <span class="slds-text-title_bold">עיצוב מראה הטופס</span>
+                    <span class="slds-text-title_bold" role="heading" aria-level="2">עיצוב מראה הטופס</span>
                     <div class="slds-grid slds-gutters_xx-small slds-wrap slds-p-top_x-small">
-                        <div class="slds-col slds-size_6-of-12 slds-form-element">
-                            <label class="slds-form-element__label">רקע סביב הטופס</label>
+                        <div class="slds-col slds-size_12-of-12 slds-form-element">
+                            <label class="slds-form-element__label" for="fb-preset">ערכת עיצוב מוכנה</label>
                             <div class="slds-select_container">
-                                <select class="slds-select" onchange={handleBgType}>
+                                <select id="fb-preset" class="slds-select" onchange={handlePreset}>
+                                    <template for:each={presetOptions} for:item="o">
+                                        <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_6-of-12 slds-form-element">
+                            <label class="slds-form-element__label" for="fb-bgType">רקע סביב הטופס</label>
+                            <div class="slds-select_container">
+                                <select id="fb-bgType" class="slds-select" onchange={handleBgType}>
                                     <template for:each={bgTypeOptions} for:item="o">
                                         <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
                                     </template>
@@ -96,9 +106,9 @@
                             </div>
                         </div>
                         <div class="slds-col slds-size_6-of-12 slds-form-element">
-                            <label class="slds-form-element__label">גופן</label>
+                            <label class="slds-form-element__label" for="fb-font">גופן</label>
                             <div class="slds-select_container">
-                                <select class="slds-select" data-p="fontFamily" onchange={handleAppearance}>
+                                <select id="fb-font" class="slds-select" data-p="fontFamily" onchange={handleAppearance}>
                                     <template for:each={fontOptions} for:item="o">
                                         <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
                                     </template>
@@ -108,68 +118,107 @@
 
                         <template lwc:if={showBgColor}>
                             <div class="slds-col slds-size_6-of-12 slds-form-element">
-                                <label class="slds-form-element__label">צבע רקע</label>
-                                <input type="color" class="slds-input" data-p="bgColor" value={appearance.bgColor} onchange={handleAppearance} />
+                                <label class="slds-form-element__label" for="fb-bgColor">צבע רקע</label>
+                                <input id="fb-bgColor" type="color" class="slds-input" data-p="bgColor" value={appearance.bgColor} onchange={handleAppearance} />
                             </div>
                         </template>
                         <template lwc:if={showBgColor2}>
                             <div class="slds-col slds-size_6-of-12 slds-form-element">
-                                <label class="slds-form-element__label">צבע רקע שני (מעבר)</label>
-                                <input type="color" class="slds-input" data-p="bgColor2" value={appearance.bgColor2} onchange={handleAppearance} />
+                                <label class="slds-form-element__label" for="fb-bgColor2">צבע רקע שני (מעבר)</label>
+                                <input id="fb-bgColor2" type="color" class="slds-input" data-p="bgColor2" value={appearance.bgColor2} onchange={handleAppearance} />
                             </div>
                         </template>
 
                         <template lwc:if={showBgMedia}>
                             <div class="slds-col slds-size_12-of-12 slds-form-element slds-p-top_xx-small">
-                                <label class="slds-form-element__label">{mediaLabel} — העלה קובץ או הדבק כתובת</label>
-                                <input type="file" accept={mediaAccept} class="slds-input" onchange={handleMediaUpload} />
+                                <label class="slds-form-element__label" for="fb-bgFile">{mediaLabel} — העלה קובץ או הדבק כתובת</label>
+                                <input id="fb-bgFile" type="file" accept={mediaAccept} class="slds-input" onchange={handleMediaUpload} />
                                 <template lwc:if={uploadingBg}><span class="slds-text-color_weak">מעלה…</span></template>
-                                <input type="text" class="slds-input slds-m-top_xx-small" data-p="bgUrl"
+                                <input type="text" class="slds-input slds-m-top_xx-small" data-p="bgUrl" aria-label="כתובת מדיית רקע"
                                     value={appearance.bgUrl} onchange={handleAppearance} placeholder="https://… (כתובת תמונה/סרטון)" />
                             </div>
                         </template>
                         <template lwc:if={showOverlay}>
                             <div class="slds-col slds-size_12-of-12 slds-form-element">
-                                <label class="slds-form-element__label">כהות שכבת-על מעל המדיה (לקריאוּת) — {overlayPct}%</label>
-                                <input type="range" min="0" max="0.8" step="0.05" data-p="overlay" value={appearance.overlay} onchange={handleAppearance} class="slds-slider__range" style="width:100%;" />
+                                <label class="slds-form-element__label" for="fb-overlay">כהות שכבת-על מעל המדיה (לקריאוּת) — {overlayPct}%</label>
+                                <input id="fb-overlay" type="range" min="0" max="0.8" step="0.05" data-p="overlay" value={appearance.overlay} onchange={handleAppearance} class="slds-slider__range" style="width:100%;" aria-label="כהות שכבת-על מעל המדיה" aria-valuetext={overlayPct} />
                             </div>
                         </template>
 
                         <div class="slds-col slds-size_4-of-12 slds-form-element">
-                            <label class="slds-form-element__label">צבע כרטיס</label>
-                            <input type="color" class="slds-input" data-p="cardColor" value={appearance.cardColor} onchange={handleAppearance} />
+                            <label class="slds-form-element__label" for="fb-cardColor">צבע כרטיס</label>
+                            <input id="fb-cardColor" type="color" class="slds-input" data-p="cardColor" value={appearance.cardColor} onchange={handleAppearance} />
                         </div>
                         <div class="slds-col slds-size_4-of-12 slds-form-element">
-                            <label class="slds-form-element__label">צבע ראשי (כפתורים)</label>
-                            <input type="color" class="slds-input" data-p="accentColor" value={appearance.accentColor} onchange={handleAppearance} />
+                            <label class="slds-form-element__label" for="fb-accentColor">צבע ראשי (כפתורים)</label>
+                            <input id="fb-accentColor" type="color" class="slds-input" data-p="accentColor" value={appearance.accentColor} onchange={handleAppearance} />
                         </div>
                         <div class="slds-col slds-size_4-of-12 slds-form-element">
-                            <label class="slds-form-element__label">צבע טקסט</label>
-                            <input type="color" class="slds-input" data-p="textColor" value={appearance.textColor} onchange={handleAppearance} />
+                            <label class="slds-form-element__label" for="fb-textColor">צבע טקסט</label>
+                            <input id="fb-textColor" type="color" class="slds-input" data-p="textColor" value={appearance.textColor} onchange={handleAppearance} />
+                        </div>
+
+                        <!-- New design tools -->
+                        <div class="slds-col slds-size_4-of-12 slds-form-element slds-p-top_xx-small">
+                            <label class="slds-form-element__label" for="fb-buttonStyle">סגנון כפתורים</label>
+                            <div class="slds-select_container">
+                                <select id="fb-buttonStyle" class="slds-select" data-p="buttonStyle" onchange={handleAppearance}>
+                                    <template for:each={buttonStyleOptions} for:item="o">
+                                        <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_4-of-12 slds-form-element slds-p-top_xx-small">
+                            <label class="slds-form-element__label" for="fb-cornerRadius">עיגול פינות</label>
+                            <input id="fb-cornerRadius" type="number" min="0" max="28" class="slds-input" data-p="cornerRadius" aria-label="עיגול פינות (פיקסלים)" value={appearance.cornerRadius} onchange={handleAppearance} />
+                        </div>
+                        <div class="slds-col slds-size_4-of-12 slds-form-element slds-p-top_xx-small">
+                            <label class="slds-form-element__label" for="fb-headingAlign">יישור כותרת</label>
+                            <div class="slds-select_container">
+                                <select id="fb-headingAlign" class="slds-select" data-p="headingAlign" onchange={handleAppearance}>
+                                    <template for:each={headingAlignOptions} for:item="o">
+                                        <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                    </template>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="slds-col slds-size_6-of-12 slds-form-element slds-p-top_xx-small">
-                            <label class="slds-form-element__label">רוחב מרבי (פיקסלים)</label>
-                            <input type="number" min="360" max="1200" class="slds-input" data-p="maxWidth" value={appearance.maxWidth} onchange={handleAppearance} />
+                            <label class="slds-form-element__label" for="fb-maxWidth">רוחב מרבי (פיקסלים)</label>
+                            <input id="fb-maxWidth" type="number" min="360" max="1200" class="slds-input" data-p="maxWidth" aria-label="רוחב מרבי בפיקסלים" value={appearance.maxWidth} onchange={handleAppearance} />
                         </div>
                         <div class="slds-col slds-size_6-of-12 slds-form-element slds-p-top_xx-small">
-                            <label class="slds-form-element__label">לוגו (העלה או הדבק כתובת)</label>
-                            <input type="file" accept="image/*" class="slds-input" onchange={handleLogoUpload} />
+                            <label class="slds-form-element__label" for="fb-logoFile">לוגו (העלה או הדבק כתובת)</label>
+                            <input id="fb-logoFile" type="file" accept="image/*" class="slds-input" onchange={handleLogoUpload} />
                             <template lwc:if={uploadingLogo}><span class="slds-text-color_weak">מעלה…</span></template>
-                            <input type="text" class="slds-input slds-m-top_xx-small" data-p="logoUrl"
+                            <input type="text" class="slds-input slds-m-top_xx-small" data-p="logoUrl" aria-label="כתובת לוגו"
                                 value={appearance.logoUrl} onchange={handleAppearance} placeholder="https://… (כתובת לוגו)" />
                         </div>
 
+                        <div class="slds-col slds-size_12-of-12 slds-form-element slds-p-top_xx-small">
+                            <label class="slds-form-element__label" for="fb-bannerFile">תמונת באנר עליון (העלה או הדבק כתובת)</label>
+                            <input id="fb-bannerFile" type="file" accept="image/*" class="slds-input" onchange={handleBannerUpload} />
+                            <template lwc:if={uploadingBanner}><span class="slds-text-color_weak">מעלה…</span></template>
+                            <input type="text" class="slds-input slds-m-top_xx-small" data-p="bannerUrl" aria-label="כתובת תמונת באנר"
+                                value={appearance.bannerUrl} onchange={handleAppearance} placeholder="https://… (כתובת תמונת באנר)" />
+                        </div>
+
                         <div class="slds-col slds-size_12-of-12 slds-p-top_x-small">
-                            <label class="slds-form-element__label">תצוגה מקדימה</label>
-                            <div style={previewStyle}>
+                            <span class="slds-form-element__label" id="fb-preview-label">תצוגה מקדימה</span>
+                            <div style={previewStyle} aria-hidden="true">
                                 <div style={previewCardStyle}>
-                                    <template lwc:if={appearance.logoUrl}>
-                                        <img src={appearance.logoUrl} alt="לוגו" style="max-height:32px;margin-bottom:6px;" />
+                                    <template lwc:if={appearance.bannerUrl}>
+                                        <img src={appearance.bannerUrl} alt="" style={previewBannerStyle} />
                                     </template>
-                                    <div class="slds-text-title_bold">{title}</div>
-                                    <div style="font-size:0.85rem;opacity:0.8;">דוגמת טקסט בטופס</div>
-                                    <button type="button" style={previewBtnStyle}>שליחה</button>
+                                    <div style={previewBodyStyle}>
+                                        <template lwc:if={appearance.logoUrl}>
+                                            <img src={appearance.logoUrl} alt="" style="max-height:32px;margin-bottom:6px;" />
+                                        </template>
+                                        <div class="slds-text-title_bold">{title}</div>
+                                        <div style="font-size:0.85rem;opacity:0.8;">דוגמת טקסט בטופס</div>
+                                        <button type="button" tabindex="-1" style={previewBtnStyle}>שליחה</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -182,12 +231,12 @@
                         <div class="slds-grid slds-gutters_xx-small slds-grid_vertical-align-center slds-p-bottom_x-small">
                             <div class="slds-col slds-size_2-of-12 slds-text-title_bold">{step.label}</div>
                             <div class="slds-col slds-size_8-of-12">
-                                <input type="text" class="slds-input" data-s={step.index} data-p="title"
+                                <input type="text" class="slds-input" data-s={step.index} data-p="title" aria-label="כותרת השלב"
                                     value={step.title} onchange={handleStepTitle} placeholder="כותרת השלב (אופציונלי)" />
                             </div>
                             <div class="slds-col slds-size_2-of-12">
                                 <template lwc:if={step.canRemove}>
-                                    <button class="slds-button slds-button_destructive" data-s={step.index} onclick={removeStep}>מחק שלב</button>
+                                    <button type="button" class="slds-button slds-button_destructive" data-s={step.index} onclick={removeStep}>מחק שלב</button>
                                 </template>
                             </div>
                         </div>
@@ -196,11 +245,11 @@
                             <div key={f.i} class="slds-box slds-box_xx-small slds-m-bottom_x-small slds-theme_default">
                                 <div class="slds-grid slds-gutters_xx-small slds-wrap slds-grid_vertical-align-center">
                                     <div class="slds-col slds-size_5-of-12">
-                                        <input type="text" class="slds-input" data-s={f.s} data-i={f.i} data-p="label"
+                                        <input type="text" class="slds-input" data-s={f.s} data-i={f.i} data-p="label" aria-label="תווית השדה"
                                             value={f.label} onchange={handleField} placeholder="תווית השדה" />
                                     </div>
                                     <div class="slds-col slds-size_4-of-12">
-                                        <select class="slds-select" data-s={f.s} data-i={f.i} data-p="type" onchange={handleField}>
+                                        <select class="slds-select" data-s={f.s} data-i={f.i} data-p="type" aria-label="סוג שדה" onchange={handleField}>
                                             <template for:each={f.typeOptions} for:item="t">
                                                 <option key={t.value} value={t.value} selected={t.selected}>{t.label}</option>
                                             </template>
@@ -210,12 +259,12 @@
                                         <lightning-input type="checkbox" label="חובה" data-s={f.s} data-i={f.i} data-p="required" checked={f.required} onchange={handleField}></lightning-input>
                                     </div>
                                     <div class="slds-col slds-size_1-of-12">
-                                        <button class="slds-button slds-button_destructive" data-s={f.s} data-i={f.i} onclick={removeField}>×</button>
+                                        <button type="button" class="slds-button slds-button_destructive" data-s={f.s} data-i={f.i} onclick={removeField} aria-label="הסר שדה" title="הסר שדה">×</button>
                                     </div>
                                 </div>
                                 <div class="slds-grid slds-gutters_xx-small slds-wrap slds-p-top_xx-small">
                                     <div class="slds-col slds-size_6-of-12">
-                                        <select class="slds-select" data-s={f.s} data-i={f.i} data-p="mapTo" onchange={handleField}>
+                                        <select class="slds-select" data-s={f.s} data-i={f.i} data-p="mapTo" aria-label="מיפוי שדה" onchange={handleField}>
                                             <template for:each={f.mapOptions} for:item="m">
                                                 <option key={m.value} value={m.value} selected={m.selected}>{m.label}</option>
                                             </template>
@@ -223,7 +272,7 @@
                                     </div>
                                     <template lwc:if={f.showOptions}>
                                         <div class="slds-col slds-size_6-of-12">
-                                            <textarea class="slds-textarea" data-s={f.s} data-i={f.i} data-p="options"
+                                            <textarea class="slds-textarea" data-s={f.s} data-i={f.i} data-p="options" aria-label="אפשרויות בחירה"
                                                 onchange={handleField} placeholder="אפשרות בכל שורה">{f.options}</textarea>
                                         </div>
                                     </template>
@@ -231,16 +280,16 @@
                             </div>
                         </template>
 
-                        <button class="slds-button slds-button_neutral" data-s={step.index} onclick={addField}>+ הוסף שדה</button>
+                        <button type="button" class="slds-button slds-button_neutral" data-s={step.index} onclick={addField}>+ הוסף שדה</button>
                     </div>
                 </template>
 
-                <button class="slds-button slds-button_neutral slds-m-top_x-small" onclick={addStep}>+ הוסף שלב</button>
+                <button type="button" class="slds-button slds-button_neutral slds-m-top_x-small" onclick={addStep}>+ הוסף שלב</button>
 
                 <div class="slds-p-top_medium">
-                    <button class="slds-button slds-button_brand" onclick={save}>{saveLabel}</button>
+                    <button type="button" class="slds-button slds-button_brand" onclick={save}>{saveLabel}</button>
                     <template lwc:if={embedded}>
-                        <button class="slds-button slds-button_neutral" onclick={cancel}>חזרה לרשימה</button>
+                        <button type="button" class="slds-button slds-button_neutral" onclick={cancel}>חזרה לרשימה</button>
                     </template>
                 </div>
 
@@ -252,7 +301,7 @@
                             <div class="slds-text-title_bold">קישור ציבורי לטופס:</div>
                             <a href={savedUrl} target="_blank" class="slds-text-link">{savedUrl}</a>
                             <div class="slds-p-top_xx-small">
-                                <button class="slds-button slds-button_neutral" onclick={copyUrl}>העתק קישור</button>
+                                <button type="button" class="slds-button slds-button_neutral" onclick={copyUrl}>העתק קישור</button>
                             </div>
                         </div>
                     </template>
