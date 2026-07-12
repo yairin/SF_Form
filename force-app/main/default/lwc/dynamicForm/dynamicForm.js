@@ -78,7 +78,10 @@ export default class DynamicForm extends LightningElement {
     stepIndex = 0;
     stepTitles = [];
     showErrorSummary = false;
-    _pendingFocus = null; // 'summary' | 'success' | field key -> handled in renderedCallback
+    submittedEmail = null; // shown on the success screen if an email was captured
+    copyMessage = '';      // live feedback for the "copy reference" button
+    _dragKey = null;       // key of the file field currently under a drag operation
+    _pendingFocus = null;  // 'summary' | 'success' | 'review' | field key -> handled in renderedCallback
 
     get isWizard() { return this.stepTitles.length > 1; }
     get currentFields() { return this.fields.filter((f) => f.step === this.stepIndex); }
@@ -89,6 +92,24 @@ export default class DynamicForm extends LightningElement {
             const ids = [];
             if (f.helpText) ids.push(f.key + '-help');
             if (hasErr) ids.push(f.key + '-err');
+            // file fields get chip data + a drag-aware drop-zone class
+            let fileItems = null;
+            let dropzoneClass;
+            let acceptHint;
+            if (f.isFile) {
+                const arr = this.files[f.key] || [];
+                fileItems = arr.length ? arr.map((it, idx) => ({
+                    uid: f.key + '-' + idx,
+                    index: idx,
+                    name: it.name,
+                    sizeLabel: this.formatSize(it.size),
+                    isImage: !!it.isImage,
+                    previewUrl: it.previewUrl || null,
+                    removeLabel: 'הסר את הקובץ ' + it.name
+                })) : null;
+                dropzoneClass = 'form-dropzone' + (this._dragKey === f.key ? ' form-dropzone_active' : '');
+                acceptHint = 'סוגים נתמכים: ' + (f.acceptList || []).join(', ');
+            }
             return {
                 ...f,
                 status: this.fileStatus[f.key],
@@ -98,7 +119,10 @@ export default class DynamicForm extends LightningElement {
                 isGroup: f.isRadio || f.isCheckboxGroup,
                 helpId: f.key + '-help',
                 errId: f.key + '-err',
-                describedBy: ids.length ? ids.join(' ') : undefined
+                describedBy: ids.length ? ids.join(' ') : undefined,
+                fileItems,
+                dropzoneClass,
+                acceptHint
             };
         });
     }
@@ -115,14 +139,52 @@ export default class DynamicForm extends LightningElement {
     }
     get hasErrorSummary() { return this.showErrorSummary && this.errorSummaryItems.length > 0; }
     get isFirstStep() { return this.stepIndex === 0; }
-    get isLastStep() { return this.stepIndex >= this.stepTitles.length - 1; }
-    get currentStepTitle() { return this.stepTitles[this.stepIndex]; }
+
+    // A wizard gets one extra "review & confirm" step appended after the last
+    // content step. Single-step forms get no review step.
+    get hasReviewStep() { return this.isWizard; }
+    get reviewStepIndex() { return this.stepTitles.length; }
+    get isReviewStep() { return this.hasReviewStep && this.stepIndex === this.reviewStepIndex; }
+    get allStepTitles() {
+        return this.hasReviewStep ? [...this.stepTitles, 'סקירה ואישור'] : this.stepTitles;
+    }
+    get totalSteps() { return this.allStepTitles.length; }
+
+    get isLastStep() { return this.stepIndex >= this.totalSteps - 1; }
+    get currentStepTitle() { return this.allStepTitles[this.stepIndex]; }
     get stepProgressLabel() {
-        return 'שלב ' + (this.stepIndex + 1) + ' מתוך ' + this.stepTitles.length + ': ' + this.currentStepTitle;
+        return 'שלב ' + (this.stepIndex + 1) + ' מתוך ' + this.totalSteps + ': ' + this.currentStepTitle;
     }
     get progressStyle() {
-        const pct = this.stepTitles.length ? Math.round(((this.stepIndex + 1) / this.stepTitles.length) * 100) : 100;
+        const pct = this.totalSteps ? Math.round(((this.stepIndex + 1) / this.totalSteps) * 100) : 100;
         return 'width:' + pct + '%';
+    }
+
+    // Read-only recap of all entered values, grouped by content step, for the
+    // review step. Files show their file names; empty optional fields show "—".
+    get reviewGroups() {
+        return this.stepTitles.map((title, si) => {
+            const flds = this.fields.filter((f) => f.step === si).map((f) => {
+                let display;
+                if (f.isFile) {
+                    const items = this.files[f.key] || [];
+                    display = items.length ? items.map((x) => x.name).join(', ') : '—';
+                } else {
+                    const v = this.values[f.key];
+                    if (Array.isArray(v)) display = v.length ? v.join(', ') : '—';
+                    else display = this.isEmpty(v) ? '—' : v;
+                }
+                return { key: f.key, label: f.label, display };
+            });
+            return { id: 'grp-' + si, index: si, title, fields: flds };
+        });
+    }
+
+    formatSize(bytes) {
+        const n = Number(bytes) || 0;
+        if (n < 1024) return n + ' B';
+        if (n < 1024 * 1024) return Math.round(n / 1024) + ' KB';
+        return (n / (1024 * 1024)).toFixed(1) + ' MB';
     }
 
     // Validates a set of fields, writing inline per-field errors. Returns true if any invalid.
@@ -149,13 +211,23 @@ export default class DynamicForm extends LightningElement {
     nextStep() {
         this.error = undefined;
         if (this.stepHasErrors()) { this._pendingFocus = 'summary'; return; }
-        if (!this.isLastStep) this.stepIndex += 1;
+        if (!this.isLastStep) {
+            this.stepIndex += 1;
+            if (this.isReviewStep) this._pendingFocus = 'review';
+        }
     }
 
     prevStep() {
         this.error = undefined;
         this.showErrorSummary = false;
         if (!this.isFirstStep) this.stepIndex -= 1;
+    }
+
+    // "עריכה" link on the review step: jump back to a specific content step.
+    editStep(event) {
+        this.error = undefined;
+        this.showErrorSummary = false;
+        this.stepIndex = Number(event.currentTarget.dataset.step);
     }
 
     // Focus management: after a render triggered by validation failure or a
@@ -169,6 +241,7 @@ export default class DynamicForm extends LightningElement {
             let el;
             if (target === 'summary') el = this.template.querySelector('.form-error-summary');
             else if (target === 'success') el = this.template.querySelector('.form-success-heading');
+            else if (target === 'review') el = this.template.querySelector('.form-review-heading');
             else el = this.template.querySelector('[data-key="' + target + '"]');
             if (el && typeof el.focus === 'function') el.focus();
         });
@@ -215,6 +288,9 @@ export default class DynamicForm extends LightningElement {
         this.fieldErrors = {};
         this.showErrorSummary = false;
         this.reference = undefined;
+        this.submittedEmail = null;
+        this.copyMessage = '';
+        this._dragKey = null;
         this.stepIndex = 0;
         let parsed = [];
         try { parsed = JSON.parse(schemaJson || '[]'); } catch (e) { parsed = []; }
@@ -352,13 +428,47 @@ export default class DynamicForm extends LightningElement {
 
     handleFileChange(event) {
         const key = event.target.dataset.key;
-        const f = this.fields.find((x) => x.key === key);
         const fileList = Array.from(event.target.files || []);
+        this.processFiles(key, fileList, event.target);
+    }
+
+    // Drop counterpart of handleFileChange: shares processFiles() so validation,
+    // reading, and AI verification behave identically to click-to-select.
+    handleFileDrop(event) {
+        event.preventDefault();
+        const key = event.currentTarget.dataset.dropkey;
+        this._dragKey = null;
+        const dt = event.dataTransfer;
+        const fileList = dt ? Array.from(dt.files || []) : [];
+        if (fileList.length) this.processFiles(key, fileList, null);
+    }
+
+    // Alias used by the drop-zone template.
+    handleDrop(event) { this.handleFileDrop(event); }
+
+    handleDragOver(event) {
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    }
+
+    handleDragEnter(event) {
+        event.preventDefault();
+        this._dragKey = event.currentTarget.dataset.dropkey;
+    }
+
+    handleDragLeave(event) {
+        if (event.currentTarget.dataset.dropkey === this._dragKey) this._dragKey = null;
+    }
+
+    // Shared upload pipeline for both click-to-select and drag & drop.
+    processFiles(key, fileList, inputEl) {
+        const f = this.fields.find((x) => x.key === key);
         this.error = undefined;
+        if (!fileList.length) return;
         const tooBig = fileList.find((file) => file.size > MAX_FILE_BYTES);
         if (tooBig) {
             this.setFileStatus(key, { ok: false, message: 'הקובץ "' + tooBig.name + '" גדול מדי (מקסימום 4MB).' });
-            event.target.value = null;
+            if (inputEl) inputEl.value = null;
             return;
         }
         // immediate client-side file-type check (during field fill)
@@ -369,7 +479,7 @@ export default class DynamicForm extends LightningElement {
         });
         if (badType) {
             this.setFileStatus(key, { ok: false, message: 'סוג הקובץ אינו מתאים. נדרש: ' + accept.join(', ') + '.' });
-            event.target.value = null;
+            if (inputEl) inputEl.value = null;
             return;
         }
         this.setFileStatus(key, { checking: true, message: 'בודק את הקובץ…' });
@@ -379,6 +489,30 @@ export default class DynamicForm extends LightningElement {
             // AI content check (correct document type + details match applicant) on upload
             this.verifyFile(f, read[0]);
         });
+    }
+
+    // Remove a single chosen file from a field; re-verify the remaining first
+    // file, or clear status/value entirely when none are left.
+    handleRemoveFile(event) {
+        const key = event.currentTarget.dataset.key;
+        const index = Number(event.currentTarget.dataset.index);
+        const arr = (this.files[key] || []).slice();
+        if (index < 0 || index >= arr.length) return;
+        arr.splice(index, 1);
+        const nextFiles = { ...this.files };
+        if (arr.length) nextFiles[key] = arr; else delete nextFiles[key];
+        this.files = nextFiles;
+        if (arr.length) {
+            this.values[key] = arr.map((r) => r.name).join('; ');
+            const f = this.fields.find((x) => x.key === key);
+            this.setFileStatus(key, { checking: true, message: 'בודק את הקובץ…' });
+            this.verifyFile(f, arr[0]);
+        } else {
+            delete this.values[key];
+            const st = { ...this.fileStatus };
+            delete st[key];
+            this.fileStatus = st;
+        }
     }
 
     async verifyFile(f, fileObj) {
@@ -414,9 +548,16 @@ export default class DynamicForm extends LightningElement {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => {
-                const result = reader.result || '';
-                const base64 = String(result).split(',')[1] || '';
-                resolve({ name: file.name, base64 });
+                const result = String(reader.result || '');
+                const base64 = result.split(',')[1] || '';
+                const isImage = /^image\//.test(file.type || '');
+                resolve({
+                    name: file.name,
+                    base64,
+                    size: file.size,
+                    isImage,
+                    previewUrl: isImage ? result : null
+                });
             };
             reader.onerror = () => reject(reader.error);
             reader.readAsDataURL(file);
@@ -472,6 +613,8 @@ export default class DynamicForm extends LightningElement {
             payload[f.key] = v;
             if (f.mapTo) mapped[f.mapTo] = v;
         }
+        // remember whether the applicant supplied an email (for the success screen)
+        this.submittedEmail = mapped.email || null;
         try {
             const res = await submitResponse({
                 formName: this.title,
@@ -494,5 +637,23 @@ export default class DynamicForm extends LightningElement {
         } finally {
             this.loading = false;
         }
+    }
+
+    // Copy the reference number to the clipboard with accessible live feedback.
+    copyReference() {
+        const ref = this.reference;
+        if (!ref) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(ref)
+                .then(() => { this.copyMessage = 'מספר הסימוכין הועתק ✔'; })
+                .catch(() => { this.copyMessage = 'ההעתקה נכשלה, נא להעתיק ידנית.'; });
+        } else {
+            this.copyMessage = 'ההעתקה אינה נתמכת, נא להעתיק ידנית.';
+        }
+    }
+
+    // Print a confirmation of the submission.
+    printConfirmation() {
+        window.print();
     }
 }

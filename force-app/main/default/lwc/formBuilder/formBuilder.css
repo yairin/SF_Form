@@ -24,6 +24,55 @@ a:focus {
     display: inline-block;
 }
 
+/* ---- Drag & drop reordering (P1) ---- */
+/* Grip handle: the mouse affordance for dragging. Keyboard users use the
+   "הזז למעלה/למטה" buttons instead — see the aria-labelled fb-move buttons. */
+.fb-grip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    line-height: 1;
+    color: #706e6b;
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: grab;
+    cursor: -webkit-grab;
+    user-select: none;
+    touch-action: none;
+}
+.fb-grip:hover {
+    color: #1b5297;
+    background: rgba(27, 82, 151, 0.08);
+}
+.fb-grip:active {
+    cursor: grabbing;
+    cursor: -webkit-grabbing;
+}
+
+/* Subtle transition on the reorderable containers (disabled under
+   prefers-reduced-motion by the global rule below). */
+.fb-step,
+.fb-field {
+    transition: box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+/* Drop indicator: a highlighted top edge on the row under the pointer.
+   Top border is orientation-neutral, so it reads correctly in RTL. */
+.fb-drop-target {
+    border-top: 3px solid #1b5297 !important;
+    box-shadow: 0 -2px 6px -2px rgba(27, 82, 151, 0.4);
+}
+
+/* Compact spacing for the move/remove icon buttons */
+.fb-move {
+    margin-inline-start: 2px;
+}
+.fb-move:focus-visible {
+    outline: 2px solid #1b5297;
+    outline-offset: 2px;
+}
+
 /* Respect users who prefer reduced motion (WCAG 2.3.3 / 2.2.2) */
 @media (prefers-reduced-motion: reduce) {
     *,

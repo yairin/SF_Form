@@ -49,6 +49,10 @@
                             <div class="slds-col"><div class="kpi kpi-ok"><div class="kpi-num">{results.approved}</div><div class="kpi-lbl">אושרו</div></div></div>
                             <div class="slds-col"><div class="kpi kpi-warn"><div class="kpi-num">{results.needsInfo}</div><div class="kpi-lbl">נדרשת השלמה</div></div></div>
                             <div class="slds-col"><div class="kpi kpi-pending"><div class="kpi-num">{results.pending}</div><div class="kpi-lbl">בהמתנה/לא נבדק</div></div></div>
+                            <template lwc:if={hasResponses}>
+                                <div class="slds-col"><div class="kpi kpi-auto"><div class="kpi-num">{autoApproveCount}</div><div class="kpi-lbl">אישור אוטומטי</div></div></div>
+                                <div class="slds-col"><div class="kpi kpi-review"><div class="kpi-num">{reviewedPctLabel}</div><div class="kpi-lbl">נבדקו ע"י AI</div></div></div>
+                            </template>
                         </div>
 
                         <template lwc:if={noData}>
@@ -56,6 +60,67 @@
                         </template>
 
                         <template lwc:else>
+                            <!-- Dashboard charts (inline CSS bars; text alternatives via aria-label) -->
+                            <div class="slds-grid slds-wrap slds-gutters_small slds-p-bottom_small">
+                                <!-- AI-status distribution -->
+                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                    <div class="slds-box slds-box_x-small chart-card">
+                                        <h3 class="slds-text-title_bold slds-p-bottom_x-small">התפלגות סטטוס בדיקת AI</h3>
+                                        <div role="img" aria-label={statusChartAria}>
+                                            <template for:each={statusChart} for:item="s">
+                                                <div key={s.key} class="slds-grid slds-grid_vertical-align-center slds-p-vertical_xxx-small">
+                                                    <div class="slds-col slds-size_4-of-12 slds-truncate" title={s.label}>{s.label}</div>
+                                                    <div class="slds-col slds-size_6-of-12">
+                                                        <div class="hbar-track"><div class={s.cls} style={s.barStyle}></div></div>
+                                                    </div>
+                                                    <div class="slds-col slds-size_2-of-12 slds-text-align_left chart-val">{s.count} ({s.percent}%)</div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Approval-route distribution -->
+                                <template lwc:if={hasResponses}>
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-p-bottom_small">
+                                        <div class="slds-box slds-box_x-small chart-card">
+                                            <h3 class="slds-text-title_bold slds-p-bottom_x-small">התפלגות מסלולי אישור</h3>
+                                            <div role="img" aria-label={routeChartAria}>
+                                                <template for:each={routeChart} for:item="rc">
+                                                    <div key={rc.key} class="slds-grid slds-grid_vertical-align-center slds-p-vertical_xxx-small">
+                                                        <div class="slds-col slds-size_4-of-12 slds-truncate" title={rc.label}>{rc.label}</div>
+                                                        <div class="slds-col slds-size_6-of-12">
+                                                            <div class="hbar-track"><div class={rc.cls} style={rc.barStyle}></div></div>
+                                                        </div>
+                                                        <div class="slds-col slds-size_2-of-12 slds-text-align_left chart-val">{rc.count} ({rc.percent}%)</div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Submissions over time (only when timestamps exist) -->
+                                <template lwc:if={hasTimeChart}>
+                                    <div class="slds-col slds-size_1-of-1 slds-p-bottom_small">
+                                        <div class="slds-box slds-box_x-small chart-card">
+                                            <h3 class="slds-text-title_bold slds-p-bottom_x-small">הגשות לפי יום</h3>
+                                            <div class="col-scroll">
+                                                <div class="col-chart" role="img" aria-label={timeChartAria}>
+                                                    <template for:each={timeChart} for:item="d">
+                                                        <div key={d.key} class="col" title={d.label}>
+                                                            <span class="col-count chart-val">{d.count}</span>
+                                                            <div class="col-bar" style={d.barStyle}></div>
+                                                            <span class="col-label">{d.label}</span>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
                             <!-- Summary / AI insights -->
                             <div class="slds-box slds-box_x-small slds-m-vertical_small slds-theme_shade" role="region" aria-labelledby="ai-insights-heading">
                                 <h3 id="ai-insights-heading" class="slds-text-title_bold slds-p-bottom_xx-small">תובנות AI</h3>
@@ -121,13 +186,7 @@
                                     </template>
                                 </div>
 
-                                <!-- approval-route distribution -->
                                 <template lwc:if={hasResponses}>
-                                    <div class="slds-grid slds-wrap slds-gutters_xx-small slds-p-bottom_xxx-small" role="group" aria-label="התפלגות מסלולי אישור">
-                                        <template for:each={routeSummary} for:item="rs">
-                                            <span key={rs.key} class="slds-badge slds-m-right_xx-small">{rs.label}: {rs.count}</span>
-                                        </template>
-                                    </div>
                                     <!-- AI status color legend (color augmented by text) -->
                                     <div class="slds-text-body_small slds-p-bottom_x-small" role="group" aria-label="מקרא סטטוס AI">
                                         <span class="slds-text-color_weak">מקרא סטטוס AI: </span>
@@ -138,16 +197,42 @@
                                 </template>
 
                                 <template lwc:if={hasResponses}>
-                                    <div role="region" aria-label="רשומות פרטניות של הגשות הטופס">
-                                        <lightning-datatable
-                                            aria-label="רשומות פרטניות של הגשות הטופס"
-                                            key-field="id"
-                                            data={responses}
-                                            columns={respColumns}
-                                            hide-checkbox-column
-                                            onrowaction={handleResponseRowAction}>
-                                        </lightning-datatable>
+                                    <!-- search / status filter / sort over the loaded rows -->
+                                    <div class="slds-grid slds-wrap slds-gutters_x-small slds-p-bottom_xx-small">
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_5-of-12">
+                                            <lightning-input class="resp-search" type="search" label="חיפוש פנייה"
+                                                variant="label-hidden" placeholder="חפש לפי שם פונה או סימוכין..."
+                                                value={respSearch} onchange={handleRespSearch}></lightning-input>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2 slds-medium-size_4-of-12">
+                                            <lightning-combobox label="סינון לפי סטטוס AI" variant="label-hidden"
+                                                value={respStatus} options={statusFilterOptions}
+                                                placeholder="כל הסטטוסים" onchange={handleRespStatus}></lightning-combobox>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12">
+                                            <lightning-combobox label="מיון" variant="label-hidden"
+                                                value={respSort} options={sortOptions}
+                                                onchange={handleRespSort}></lightning-combobox>
+                                        </div>
                                     </div>
+                                    <div class="slds-text-body_small slds-text-color_weak slds-p-bottom_xx-small"
+                                        role="status" aria-live="polite">{resultCountText}</div>
+
+                                    <template lwc:if={hasFilteredResponses}>
+                                        <div role="region" aria-label="רשומות פרטניות של הגשות הטופס">
+                                            <lightning-datatable
+                                                aria-label="רשומות פרטניות של הגשות הטופס"
+                                                key-field="id"
+                                                data={filteredResponses}
+                                                columns={respColumns}
+                                                hide-checkbox-column
+                                                onrowaction={handleResponseRowAction}>
+                                            </lightning-datatable>
+                                        </div>
+                                    </template>
+                                    <template lwc:else>
+                                        <p class="slds-text-color_weak slds-p-around_small">לא נמצאו פניות תואמות את החיפוש/הסינון.</p>
+                                    </template>
                                 </template>
                                 <template lwc:else>
                                     <p class="slds-text-color_weak slds-p-around_small">אין רשומות להצגה.</p>

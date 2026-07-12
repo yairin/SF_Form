@@ -50,6 +50,11 @@ export default class FormResults extends LightningElement {
     sortBy;
     sortDirection = 'asc';
 
+    // Responses list (record-level): client-side search / status filter / sort.
+    respSearch = '';
+    respStatus = '';
+    respSort = 'date_desc';
+
     results;
     selectedId;
     aiText;
@@ -85,6 +90,150 @@ export default class FormResults extends LightningElement {
         });
         return Object.keys(counts).map((k) => ({ key: k, label: k, count: counts[k] }));
     }
+
+    // ---- KPI tiles (derived client-side; no Apex change) ----
+    // Auto-approve count: approvalRoute is already the Hebrew label from Apex.
+    get autoApproveCount() {
+        return this.responses.filter((r) => r.approvalRoute === 'אישור אוטומטי').length;
+    }
+    // AI-reviewed: aiStatus is null when never reviewed (label "לא נבדק").
+    get reviewedCount() {
+        return this.responses.filter((r) => r.aiStatus).length;
+    }
+    get reviewedPct() {
+        const t = this.responses.length;
+        return t ? Math.round((this.reviewedCount / t) * 100) : 0;
+    }
+    get reviewedPctLabel() {
+        return this.reviewedPct + '%';
+    }
+
+    // ---- Charts (inline CSS bars; accessible text alternatives via aria-label) ----
+    // AI-status distribution, from the server aggregates in getResults.
+    get statusChart() {
+        if (!this.results) return [];
+        const items = [
+            { key: 'ok', label: 'אושר', count: this.results.approved || 0, cls: 'hbar-fill bar-ok' },
+            { key: 'warn', label: 'נדרשת השלמה', count: this.results.needsInfo || 0, cls: 'hbar-fill bar-warn' },
+            { key: 'pending', label: 'בהמתנה / לא נבדק', count: this.results.pending || 0, cls: 'hbar-fill bar-pending' }
+        ];
+        return this._scaleBars(items);
+    }
+    get statusChartAria() {
+        return 'התפלגות סטטוס בדיקת AI. ' +
+            this.statusChart.map((i) => `${i.label}: ${i.count} (${i.percent}%)`).join(', ');
+    }
+
+    // Approval-route distribution, from the loaded responses.
+    get routeChart() {
+        return this._scaleBars(this.routeSummary.map((r) => ({ ...r, cls: 'hbar-fill bar-accent' })));
+    }
+    get routeChartAria() {
+        return 'התפלגות מסלולי אישור. ' +
+            this.routeChart.map((r) => `${r.label}: ${r.count} (${r.percent}%)`).join(', ');
+    }
+
+    // Submissions over time — grouped by day from listResponses' submittedAt.
+    get timeChart() {
+        const byDay = {};
+        this.responses.forEach((r) => {
+            if (!r.submittedAt) return;
+            const d = new Date(r.submittedAt);
+            if (Number.isNaN(d.getTime())) return;
+            const key = d.getFullYear() + '-' +
+                String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                String(d.getDate()).padStart(2, '0');
+            byDay[key] = (byDay[key] || 0) + 1;
+        });
+        let days = Object.keys(byDay).sort();
+        if (days.length > 30) days = days.slice(days.length - 30);
+        const max = Math.max(1, ...days.map((k) => byDay[k]));
+        return days.map((k) => {
+            const parts = k.split('-');
+            return {
+                key: k,
+                label: parts[2] + '/' + parts[1],
+                count: byDay[k],
+                barStyle: 'height:' + Math.round((byDay[k] / max) * 100) + '%'
+            };
+        });
+    }
+    get hasTimeChart() {
+        return this.timeChart.length > 0;
+    }
+    get timeChartAria() {
+        return 'הגשות לפי יום. ' + this.timeChart.map((d) => `${d.label}: ${d.count}`).join(', ');
+    }
+
+    // Shared: turn [{count,...}] into scaled horizontal bars (width vs max) with % of total.
+    _scaleBars(items) {
+        const max = Math.max(1, ...items.map((i) => i.count || 0));
+        const total = items.reduce((s, i) => s + (i.count || 0), 0) || 1;
+        return items.map((i) => ({
+            ...i,
+            percent: Math.round(((i.count || 0) / total) * 100),
+            barStyle: 'width:' + Math.round(((i.count || 0) / max) * 100) + '%'
+        }));
+    }
+
+    // ---- Responses list: search / status filter / sort (client-side) ----
+    get sortOptions() {
+        return [
+            { label: 'תאריך (חדש לישן)', value: 'date_desc' },
+            { label: 'תאריך (ישן לחדש)', value: 'date_asc' },
+            { label: 'סטטוס AI', value: 'status' },
+            { label: 'שם הפונה', value: 'name' }
+        ];
+    }
+    get statusFilterOptions() {
+        const counts = new Map();
+        this.responses.forEach((r) => {
+            const lbl = r.aiStatusLabel || 'לא נבדק';
+            counts.set(lbl, (counts.get(lbl) || 0) + 1);
+        });
+        const opts = [{ label: 'כל הסטטוסים', value: '' }];
+        counts.forEach((count, lbl) => opts.push({ label: `${lbl} (${count})`, value: lbl }));
+        return opts;
+    }
+    get filteredResponses() {
+        let r = [...this.responses];
+        const s = (this.respSearch || '').trim().toLowerCase();
+        if (s) {
+            r = r.filter((x) =>
+                (x.respondentName || '').toLowerCase().includes(s) ||
+                (x.reference || '').toLowerCase().includes(s));
+        }
+        if (this.respStatus) {
+            r = r.filter((x) => (x.aiStatusLabel || 'לא נבדק') === this.respStatus);
+        }
+        r.sort((a, b) => this._sortResp(a, b));
+        return r;
+    }
+    get filteredCount() {
+        return this.filteredResponses.length;
+    }
+    get hasFilteredResponses() {
+        return this.filteredCount > 0;
+    }
+    get resultCountText() {
+        return `נמצאו ${this.filteredCount} פניות`;
+    }
+    _sortResp(a, b) {
+        switch (this.respSort) {
+            case 'date_asc': return this._ts(a.submittedAt) - this._ts(b.submittedAt);
+            case 'status': return (a.aiStatusLabel || '').localeCompare(b.aiStatusLabel || '', 'he');
+            case 'name': return (a.respondentName || '').localeCompare(b.respondentName || '', 'he');
+            case 'date_desc':
+            default: return this._ts(b.submittedAt) - this._ts(a.submittedAt);
+        }
+    }
+    _ts(v) {
+        const t = new Date(v).getTime();
+        return Number.isNaN(t) ? 0 : t;
+    }
+    handleRespSearch(e) { this.respSearch = e.target.value; }
+    handleRespStatus(e) { this.respStatus = e.detail.value; }
+    handleRespSort(e) { this.respSort = e.detail.value; }
 
     buildCsv() {
         const header = ['סימוכין', 'שם הפונה', 'הוגש', 'סטטוס AI', 'מסלול אישור'];
@@ -175,6 +324,9 @@ export default class FormResults extends LightningElement {
     async openResults(externalId) {
         this.loading = true;
         this.aiText = undefined;
+        this.respSearch = '';
+        this.respStatus = '';
+        this.respSort = 'date_desc';
         this.selectedId = externalId;
         try {
             const res = await getResults({ externalId });
@@ -245,6 +397,9 @@ export default class FormResults extends LightningElement {
         this.aiText = undefined;
         this.aiGeneratedAt = undefined;
         this.aiCount = undefined;
+        this.respSearch = '';
+        this.respStatus = '';
+        this.respSort = 'date_desc';
         this._focusSelector = '.list-search';
     }
 

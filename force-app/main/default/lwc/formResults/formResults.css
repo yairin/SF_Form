@@ -11,12 +11,34 @@
     color: #fff;
     min-width: 7rem;
 }
-.kpi-num { font-size: 1.9rem; font-weight: 700; line-height: 1.1; }
+.kpi-num { font-size: 1.9rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .kpi-lbl { font-size: 0.8rem; opacity: 0.95; }
 .kpi-total { background-color: #032d60; }
 .kpi-ok { background-color: #2e844a; }
 .kpi-warn { background-color: #ba0517; }
 .kpi-pending { background-color: #706e6b; }
+.kpi-auto { background-color: #0176d3; }
+.kpi-review { background-color: #06a59a; }
+
+/* Dashboard charts (inline CSS bars — no external libraries) */
+.chart-card { height: 100%; }
+.chart-val { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Horizontal bar charts (status / approval-route distribution) */
+.hbar-track { background-color: #eef1f6; border-radius: 4px; overflow: hidden; height: 0.9rem; }
+.hbar-fill { height: 100%; min-width: 2px; border-radius: 4px; transition: width 0.2s ease; }
+.bar-ok { background-color: #2e844a; }
+.bar-warn { background-color: #ba0517; }
+.bar-pending { background-color: #706e6b; }
+.bar-accent { background-color: #1b96ff; }
+
+/* Column chart (submissions over time) */
+.col-scroll { overflow-x: auto; }
+.col-chart { display: flex; align-items: stretch; gap: 4px; height: 140px; min-width: 100%; padding-top: 0.25rem; }
+.col { flex: 1 1 0; min-width: 18px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+.col-bar { width: 70%; min-height: 2px; background-color: #1b96ff; border-radius: 3px 3px 0 0; transition: height 0.2s ease; }
+.col-count { font-size: 0.7rem; line-height: 1.2; }
+.col-label { font-size: 0.65rem; color: #706e6b; white-space: nowrap; margin-top: 0.15rem; }
 
 /* AI interaction thread — color by direction */
 .ix-sys { border-inline-start: 4px solid #706e6b; background-color: #f3f3f3; }

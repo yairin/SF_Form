@@ -84,6 +84,13 @@ export default class FormBuilder extends LightningElement {
     uploadingBanner = false;
     steps = [{ title: '', fields: [{ type: 'text', label: '', required: true, options: '', mapTo: 'respondentName' }] }];
 
+    // ---- Drag & drop reordering state (mouse enhancement; buttons are the a11y path) ----
+    _dragStep = null;      // index of the step currently being dragged
+    _dragOverStep = -1;    // index of the step currently under the pointer (drop indicator)
+    _dragFieldS = null;    // step index of the field being dragged
+    _dragFieldI = null;    // field index of the field being dragged
+    _dragOverField = '';   // "s:i" key of the field currently under the pointer (drop indicator)
+
     savedExternalId;
     savedUrl;
     savedMsg;
@@ -190,22 +197,34 @@ export default class FormBuilder extends LightningElement {
     get notEmbedded() { return !this.embedded; }
 
     get stepRows() {
-        return this.steps.map((st, s) => ({
-            index: s,
-            title: st.title,
-            label: 'שלב ' + (s + 1),
-            canRemove: this.steps.length > 1,
-            fields: st.fields.map((f, i) => ({
-                s: s,
-                i: i,
-                label: f.label,
-                required: f.required,
-                options: f.options,
-                showOptions: CHOICE.has(f.type),
-                typeOptions: TYPE_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === f.type })),
-                mapOptions: MAP_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === (f.mapTo || '') }))
-            }))
-        }));
+        const total = this.steps.length;
+        return this.steps.map((st, s) => {
+            const fieldsLen = st.fields.length;
+            return {
+                index: s,
+                title: st.title,
+                label: 'שלב ' + (s + 1),
+                canRemove: total > 1,
+                isFirst: s === 0,
+                isLast: s === total - 1,
+                stepClass: 'slds-box slds-box_x-small slds-m-bottom_small slds-theme_shade fb-step'
+                    + (this._dragOverStep === s ? ' fb-drop-target' : ''),
+                fields: st.fields.map((f, i) => ({
+                    s: s,
+                    i: i,
+                    label: f.label,
+                    required: f.required,
+                    options: f.options,
+                    firstField: i === 0,
+                    lastField: i === fieldsLen - 1,
+                    fieldClass: 'slds-box slds-box_xx-small slds-m-bottom_x-small slds-theme_default fb-field'
+                        + (this._dragOverField === (s + ':' + i) ? ' fb-drop-target' : ''),
+                    showOptions: CHOICE.has(f.type),
+                    typeOptions: TYPE_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === f.type })),
+                    mapOptions: MAP_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === (f.mapTo || '') }))
+                }))
+            };
+        });
     }
 
     addStep() {
@@ -245,6 +264,115 @@ export default class FormBuilder extends LightningElement {
         this.steps = this.steps.map((st, idx) =>
             idx === s ? { ...st, fields: st.fields.map((f, fi) => (fi === i ? { ...f, [p]: val } : f)) } : st
         );
+    }
+
+    // ---- Reordering (immutable move helper shared by drag & keyboard) ----
+    moveItem(arr, from, to) {
+        if (from === to || from < 0 || to < 0 || from >= arr.length || to >= arr.length) return arr;
+        const copy = [...arr];
+        const [item] = copy.splice(from, 1);
+        copy.splice(to, 0, item);
+        return copy;
+    }
+
+    moveFieldInStep(s, from, to) {
+        this.steps = this.steps.map((st, idx) =>
+            idx === s ? { ...st, fields: this.moveItem(st.fields, from, to) } : st
+        );
+    }
+
+    // ---- Keyboard-accessible reordering (required a11y path) ----
+    moveStepUp(event) {
+        const s = Number(event.currentTarget.dataset.s);
+        this.steps = this.moveItem(this.steps, s, s - 1);
+    }
+    moveStepDown(event) {
+        const s = Number(event.currentTarget.dataset.s);
+        this.steps = this.moveItem(this.steps, s, s + 1);
+    }
+    moveFieldUp(event) {
+        const s = Number(event.currentTarget.dataset.s);
+        const i = Number(event.currentTarget.dataset.i);
+        this.moveFieldInStep(s, i, i - 1);
+    }
+    moveFieldDown(event) {
+        const s = Number(event.currentTarget.dataset.s);
+        const i = Number(event.currentTarget.dataset.i);
+        this.moveFieldInStep(s, i, i + 1);
+    }
+
+    // ---- Drag & drop: steps (dragged by their grip handle) ----
+    handleStepDragStart(event) {
+        this._dragStep = Number(event.currentTarget.dataset.s);
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+            try { event.dataTransfer.setData('text/plain', String(this._dragStep)); } catch (e) { /* ignore */ }
+        }
+    }
+    handleStepDragOver(event) {
+        if (this._dragStep === null) return; // ignore while a field (not a step) is being dragged
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+        const s = Number(event.currentTarget.dataset.s);
+        if (s !== this._dragOverStep) this._dragOverStep = s;
+    }
+    handleStepDragLeave(event) {
+        if (!event.currentTarget.contains(event.relatedTarget)) this._dragOverStep = -1;
+    }
+    handleStepDrop(event) {
+        if (this._dragStep === null) return;
+        event.preventDefault();
+        const from = this._dragStep;
+        const to = Number(event.currentTarget.dataset.s);
+        this._dragOverStep = -1;
+        this._dragStep = null;
+        if (!isNaN(to) && from !== to) this.steps = this.moveItem(this.steps, from, to);
+    }
+
+    // ---- Drag & drop: fields (within a step; dragged by their grip handle) ----
+    handleFieldDragStart(event) {
+        event.stopPropagation();
+        this._dragFieldS = Number(event.currentTarget.dataset.s);
+        this._dragFieldI = Number(event.currentTarget.dataset.i);
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+            try { event.dataTransfer.setData('text/plain', this._dragFieldS + ':' + this._dragFieldI); } catch (e) { /* ignore */ }
+        }
+    }
+    handleFieldDragOver(event) {
+        if (this._dragFieldS === null) return;
+        const s = Number(event.currentTarget.dataset.s);
+        if (s !== this._dragFieldS) return; // within-step reorder only
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+        const key = s + ':' + Number(event.currentTarget.dataset.i);
+        if (key !== this._dragOverField) this._dragOverField = key;
+    }
+    handleFieldDragLeave(event) {
+        if (!event.currentTarget.contains(event.relatedTarget)) this._dragOverField = '';
+    }
+    handleFieldDrop(event) {
+        if (this._dragFieldS === null) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const fromS = this._dragFieldS;
+        const from = this._dragFieldI;
+        const s = Number(event.currentTarget.dataset.s);
+        const to = Number(event.currentTarget.dataset.i);
+        this._dragOverField = '';
+        this._dragFieldS = null;
+        this._dragFieldI = null;
+        if (s === fromS && !isNaN(to) && from !== to) this.moveFieldInStep(s, from, to);
+    }
+
+    // Shared cleanup when any drag operation ends (drop or cancel)
+    handleDragEnd() {
+        this._dragStep = null;
+        this._dragOverStep = -1;
+        this._dragFieldS = null;
+        this._dragFieldI = null;
+        this._dragOverField = '';
     }
 
     // ---- Tasks (per-form workflow) ----

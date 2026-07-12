@@ -227,14 +227,23 @@
 
                 <!-- Steps -->
                 <template for:each={stepRows} for:item="step">
-                    <div key={step.index} class="slds-box slds-box_x-small slds-m-bottom_small slds-theme_shade">
-                        <div class="slds-grid slds-gutters_xx-small slds-grid_vertical-align-center slds-p-bottom_x-small">
+                    <div key={step.index} class={step.stepClass} data-s={step.index}
+                        ondragover={handleStepDragOver} ondragleave={handleStepDragLeave} ondrop={handleStepDrop}>
+                        <div class="slds-grid slds-gutters_xx-small slds-wrap slds-grid_vertical-align-center slds-p-bottom_x-small">
+                            <div class="slds-col slds-size_1-of-12">
+                                <span class="fb-grip" draggable="true" data-s={step.index} ondragstart={handleStepDragStart} ondragend={handleDragEnd}
+                                    role="img" aria-label="גרירה לשינוי סדר השלב" title="גרירה לשינוי סדר השלב">&#x283F;</span>
+                            </div>
                             <div class="slds-col slds-size_2-of-12 slds-text-title_bold">{step.label}</div>
-                            <div class="slds-col slds-size_8-of-12">
+                            <div class="slds-col slds-size_6-of-12">
                                 <input type="text" class="slds-input" data-s={step.index} data-p="title" aria-label="כותרת השלב"
                                     value={step.title} onchange={handleStepTitle} placeholder="כותרת השלב (אופציונלי)" />
                             </div>
-                            <div class="slds-col slds-size_2-of-12">
+                            <div class="slds-col slds-size_3-of-12 slds-text-align_left">
+                                <button type="button" class="slds-button slds-button_icon slds-button_icon-border fb-move" data-s={step.index}
+                                    onclick={moveStepUp} disabled={step.isFirst} aria-label="הזז שלב למעלה" title="הזז שלב למעלה">&#x25B2;</button>
+                                <button type="button" class="slds-button slds-button_icon slds-button_icon-border fb-move" data-s={step.index}
+                                    onclick={moveStepDown} disabled={step.isLast} aria-label="הזז שלב למטה" title="הזז שלב למטה">&#x25BC;</button>
                                 <template lwc:if={step.canRemove}>
                                     <button type="button" class="slds-button slds-button_destructive" data-s={step.index} onclick={removeStep}>מחק שלב</button>
                                 </template>
@@ -242,13 +251,18 @@
                         </div>
 
                         <template for:each={step.fields} for:item="f">
-                            <div key={f.i} class="slds-box slds-box_xx-small slds-m-bottom_x-small slds-theme_default">
+                            <div key={f.i} class={f.fieldClass} data-s={f.s} data-i={f.i}
+                                ondragover={handleFieldDragOver} ondragleave={handleFieldDragLeave} ondrop={handleFieldDrop}>
                                 <div class="slds-grid slds-gutters_xx-small slds-wrap slds-grid_vertical-align-center">
-                                    <div class="slds-col slds-size_5-of-12">
+                                    <div class="slds-col slds-size_1-of-12">
+                                        <span class="fb-grip" draggable="true" data-s={f.s} data-i={f.i} ondragstart={handleFieldDragStart} ondragend={handleDragEnd}
+                                            role="img" aria-label="גרירה לשינוי סדר השדה" title="גרירה לשינוי סדר השדה">&#x283F;</span>
+                                    </div>
+                                    <div class="slds-col slds-size_4-of-12">
                                         <input type="text" class="slds-input" data-s={f.s} data-i={f.i} data-p="label" aria-label="תווית השדה"
                                             value={f.label} onchange={handleField} placeholder="תווית השדה" />
                                     </div>
-                                    <div class="slds-col slds-size_4-of-12">
+                                    <div class="slds-col slds-size_3-of-12">
                                         <select class="slds-select" data-s={f.s} data-i={f.i} data-p="type" aria-label="סוג שדה" onchange={handleField}>
                                             <template for:each={f.typeOptions} for:item="t">
                                                 <option key={t.value} value={t.value} selected={t.selected}>{t.label}</option>
@@ -258,7 +272,11 @@
                                     <div class="slds-col slds-size_2-of-12">
                                         <lightning-input type="checkbox" label="חובה" data-s={f.s} data-i={f.i} data-p="required" checked={f.required} onchange={handleField}></lightning-input>
                                     </div>
-                                    <div class="slds-col slds-size_1-of-12">
+                                    <div class="slds-col slds-size_2-of-12 slds-text-align_left">
+                                        <button type="button" class="slds-button slds-button_icon slds-button_icon-border fb-move" data-s={f.s} data-i={f.i}
+                                            onclick={moveFieldUp} disabled={f.firstField} aria-label="הזז שדה למעלה" title="הזז שדה למעלה">&#x25B2;</button>
+                                        <button type="button" class="slds-button slds-button_icon slds-button_icon-border fb-move" data-s={f.s} data-i={f.i}
+                                            onclick={moveFieldDown} disabled={f.lastField} aria-label="הזז שדה למטה" title="הזז שדה למטה">&#x25BC;</button>
                                         <button type="button" class="slds-button slds-button_destructive" data-s={f.s} data-i={f.i} onclick={removeField} aria-label="הסר שדה" title="הסר שדה">×</button>
                                     </div>
                                 </div>
