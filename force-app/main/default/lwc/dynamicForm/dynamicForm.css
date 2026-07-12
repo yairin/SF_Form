@@ -12,7 +12,7 @@ select:focus-visible,
 button:focus-visible,
 a:focus-visible,
 [tabindex]:focus-visible {
-    outline: 2px solid #0b5cab;
+    outline: 2px solid var(--sf-focus, #1c5aa8);
     outline-offset: 2px;
     border-radius: 2px;
 }
@@ -23,7 +23,7 @@ textarea:focus,
 select:focus,
 button:focus,
 a:focus {
-    outline: 2px solid #0b5cab;
+    outline: 2px solid var(--sf-focus, #1c5aa8);
     outline-offset: 2px;
 }
 
@@ -39,7 +39,7 @@ a:focus {
 /* Error summary box lives at the top of the form and receives focus on submit. */
 .form-error-summary:focus,
 .form-error-summary:focus-visible {
-    outline: 2px solid #0b5cab;
+    outline: 2px solid var(--sf-focus, #1c5aa8);
     outline-offset: 2px;
 }
 
@@ -50,14 +50,14 @@ a:focus {
 /* Success heading receives focus so SR users hear the confirmation. */
 .form-success-heading:focus,
 .form-success-heading:focus-visible {
-    outline: 2px solid #0b5cab;
+    outline: 2px solid var(--sf-focus, #1c5aa8);
     outline-offset: 2px;
 }
 
 /* Review-step heading receives focus so SR users hear the recap. */
 .form-review-heading:focus,
 .form-review-heading:focus-visible {
-    outline: 2px solid #0b5cab;
+    outline: 2px solid var(--sf-focus, #1c5aa8);
     outline-offset: 2px;
 }
 
@@ -86,7 +86,7 @@ a:focus {
 
 /* Show the focus ring on the zone when the hidden input inside it is focused. */
 .form-dropzone:focus-within {
-    outline: 2px solid #0b5cab;
+    outline: 2px solid var(--sf-focus, #1c5aa8);
     outline-offset: 2px;
     border-color: #0b5cab;
 }
@@ -278,4 +278,13 @@ a:focus {
         animation-iteration-count: 1 !important;
         scroll-behavior: auto !important;
     }
+}
+/* --- SF Forms design tokens (unified palette + Hebrew-first typography) --- */
+:host {
+  --sf-brand: #1c5aa8;
+  --sf-brand-deep: #123f78;
+  --sf-focus: #1c5aa8;
+  --sf-radius: 12px;
+  --sf-font: "Rubik", "Segoe UI", "Assistant", "Heebo", Arial, sans-serif;
+  font-family: var(--sf-font);
 }

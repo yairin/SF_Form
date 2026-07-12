@@ -1,0 +1,9 @@
+/* Rubik — Hebrew subset, variable weight (OFL). Bundled so the public form
+   renders in a consistent, high-quality Hebrew face without an external CDN. */
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('./rubik.woff2') format('woff2');
+}

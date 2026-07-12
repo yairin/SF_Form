@@ -1,5 +1,7 @@
 import { LightningElement, api, wire } from 'lwc';
 import { CurrentPageReference } from 'lightning/navigation';
+import { loadStyle } from 'lightning/platformResourceLoader';
+import FORM_FONTS from '@salesforce/resourceUrl/sfFormsFonts';
 import getForm from '@salesforce/apex/FormRenderController.getForm';
 import submitResponse from '@salesforce/apex/FormResponseController.submitResponse';
 import attachFiles from '@salesforce/apex/FormFileService.attachFiles';
@@ -256,6 +258,8 @@ export default class DynamicForm extends LightningElement {
     }
 
     connectedCallback() {
+        // Bundled Hebrew webfont (Rubik); non-fatal if it can't load.
+        loadStyle(this, FORM_FONTS + '/fonts.css').catch(() => {});
         if (this._ext && this.fields.length === 0) this.load();
     }
 

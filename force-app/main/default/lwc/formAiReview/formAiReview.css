@@ -3,7 +3,7 @@ lightning-button:focus-within,
 a:focus-visible,
 button:focus-visible,
 [tabindex]:focus-visible {
-    outline: 2px solid #0176d3;
+    outline: 2px solid var(--sf-focus, #1c5aa8);
     outline-offset: 2px;
     border-radius: 2px;
 }
@@ -18,4 +18,13 @@ button:focus-visible,
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
+}
+/* --- SF Forms design tokens (unified palette + Hebrew-first typography) --- */
+:host {
+  --sf-brand: #1c5aa8;
+  --sf-brand-deep: #123f78;
+  --sf-focus: #1c5aa8;
+  --sf-radius: 12px;
+  --sf-font: "Rubik", "Segoe UI", "Assistant", "Heebo", Arial, sans-serif;
+  font-family: var(--sf-font);
 }

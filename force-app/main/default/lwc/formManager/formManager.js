@@ -1,6 +1,8 @@
 import { LightningElement } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import LightningConfirm from 'lightning/confirm';
+import { loadStyle } from 'lightning/platformResourceLoader';
+import FORM_FONTS from '@salesforce/resourceUrl/sfFormsFonts';
 import listFormsDetailed from '@salesforce/apex/FormBuilderController.listFormsDetailed';
 import deleteForm from '@salesforce/apex/FormBuilderController.deleteForm';
 import cloneForm from '@salesforce/apex/FormBuilderController.cloneForm';
@@ -41,6 +43,7 @@ export default class FormManager extends LightningElement {
     _focusSelector;
 
     connectedCallback() {
+        loadStyle(this, FORM_FONTS + '/fonts.css').catch(() => {});
         this.load();
     }
 
