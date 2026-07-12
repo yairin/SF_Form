@@ -342,7 +342,9 @@
         <div class="slds-col slds-size_1-of-1 slds-large-size_5-of-12">
             <template lwc:if={savedExternalId}>
                 <div class="slds-text-title_bold slds-p-bottom_x-small">תצוגה חיה (מילוי אמיתי)</div>
-                <c-dynamic-form external-id={savedExternalId}></c-dynamic-form>
+                <template lwc:if={showLivePreview}>
+                    <c-dynamic-form external-id={savedExternalId}></c-dynamic-form>
+                </template>
             </template>
             <template lwc:else>
                 <div class="slds-box slds-text-color_weak">שמור טופס כדי לראות אותו כאן ולבדוק מילוי.</div>

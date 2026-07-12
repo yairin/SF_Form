@@ -1,1 +1,1 @@
-design tokens + hebrew font 20260712T080031Z
+bugfix: design not applied (cacheable getForm + preview remount) 20260712T151305Z

@@ -96,6 +96,7 @@ export default class FormBuilder extends LightningElement {
     savedMsg;
     error;
     existing = [];
+    showLivePreview = true; // toggled off/on to remount the live preview after a save
 
     @api embedded = false;
 
@@ -640,6 +641,7 @@ export default class FormBuilder extends LightningElement {
             }
             try { this.savedUrl = await getPublicUrl({ externalId: this.savedExternalId }); } catch (e) { /* ignore */ }
             this.savedMsg = this.isEdit ? 'השינויים נשמרו!' : 'הטופס נשמר ופורסם!';
+            this.remountPreview();
             this.refresh();
             this.dispatchEvent(new CustomEvent('saved', {
                 detail: { externalId: this.savedExternalId, url: this.savedUrl }
@@ -647,6 +649,14 @@ export default class FormBuilder extends LightningElement {
         } catch (e) {
             this.error = (e && e.body && e.body.message) || 'שגיאה בשמירה.';
         }
+    }
+
+    // Destroy + recreate the live preview so it re-fetches the just-saved template
+    // (the external id is unchanged when editing, so the child won't reload on its own).
+    remountPreview() {
+        this.showLivePreview = false;
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        Promise.resolve().then(() => { this.showLivePreview = true; });
     }
 
     copyUrl() {

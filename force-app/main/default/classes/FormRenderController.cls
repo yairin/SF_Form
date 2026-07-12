@@ -5,7 +5,11 @@
  */
 public without sharing class FormRenderController {
 
-    @AuraEnabled(cacheable=true)
+    // Not cacheable: the form definition (schema + appearance/design) must reflect
+    // the latest save immediately — a cached copy made "choosing a design" appear
+    // to have no effect on the rendered form. A public form is fetched once per
+    // visit, so skipping the client cache is a fair trade for correctness.
+    @AuraEnabled
     public static Form_Template__c getForm(String externalId) {
         List<Form_Template__c> templates = [
             SELECT Id, Name, Description__c, Schema_JSON__c, External_Id__c, Appearance_JSON__c
