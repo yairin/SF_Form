@@ -1,0 +1,22 @@
+name: Diag AP perms
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/**"]
+    paths: [".github/workflows/diag-ap-perms.yml","ops/diag-ap-perms.trigger"]
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --global @salesforce/cli@latest
+      - name: Auth
+        run: |
+          echo "${{ secrets.SF_AUTH_URL }}" > ./A.txt
+          sf org login sfdx-url --sfdx-url-file ./A.txt --alias target --set-default
+          rm -f ./A.txt
+      - name: Run
+        run: sf apex run --file scripts/diag-actionplan-perms.apex --target-org target
