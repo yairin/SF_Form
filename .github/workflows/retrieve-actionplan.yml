@@ -38,10 +38,9 @@ jobs:
           git config user.email "noreply@anthropic.com"
           if [ -n "$(git status --porcelain)" ]; then
             git add -A force-app
-            git commit -m "Retrieve native Action Plan Template (טיפול בבקשה לתו חניה לנכה) into source
-
-Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01JzE1Q86iZPGm7Z4jurPbn1"
+            git commit -m "Retrieve native Action Plan Template into source" \
+              -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>" \
+              -m "Claude-Session: https://claude.ai/code/session_01JzE1Q86iZPGm7Z4jurPbn1"
             git push origin HEAD:${{ github.ref_name }}
           else
             echo "No metadata changes to commit."
