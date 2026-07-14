@@ -6,16 +6,41 @@
             <template lwc:if={isList}>
                 <div class="slds-p-around_small">
                     <template lwc:if={hasRows}>
-                        <div role="region" aria-label="רשימת הטפסים לניהול">
-                            <lightning-datatable
-                                aria-label="רשימת הטפסים לניהול"
-                                key-field="id"
-                                data={rows}
-                                columns={columns}
-                                hide-checkbox-column
-                                onrowaction={handleRowAction}>
-                            </lightning-datatable>
+                        <!-- search + filters toolbar -->
+                        <div class="slds-grid slds-gutters_x-small slds-wrap slds-p-bottom_small">
+                            <div class="slds-col slds-size_1-of-1 slds-medium-size_5-of-12">
+                                <lightning-input type="search" label="חיפוש טופס" variant="label-hidden"
+                                    placeholder="חיפוש לפי שם, מזהה או סוג שירות" value={search} onchange={handleSearch}>
+                                </lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-medium-size_4-of-12">
+                                <lightning-combobox label="סטטוס" variant="label-hidden" value={statusFilter}
+                                    options={statusFilterOptions} onchange={handleStatusFilter}></lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-12">
+                                <lightning-combobox label="סוג שירות" variant="label-hidden" value={serviceFilter}
+                                    options={serviceFilterOptions} onchange={handleServiceFilter}></lightning-combobox>
+                            </div>
                         </div>
+                        <p class="slds-text-body_small slds-text-color_weak slds-p-bottom_xx-small" role="status" aria-live="polite">{resultCountText}</p>
+
+                        <template lwc:if={hasFilteredRows}>
+                            <div role="region" aria-label="רשימת הטפסים לניהול">
+                                <lightning-datatable
+                                    aria-label="רשימת הטפסים לניהול"
+                                    key-field="id"
+                                    data={filteredRows}
+                                    columns={columns}
+                                    hide-checkbox-column
+                                    onrowaction={handleRowAction}>
+                                </lightning-datatable>
+                            </div>
+                        </template>
+                        <template lwc:if={noMatch}>
+                            <p class="slds-text-color_weak slds-p-around_medium slds-text-align_center">
+                                לא נמצאו טפסים התואמים לחיפוש/סינון.
+                            </p>
+                        </template>
                     </template>
                     <template lwc:else>
                         <p class="slds-text-color_weak slds-p-around_medium slds-text-align_center">
@@ -27,6 +52,8 @@
 
             <template lwc:else>
                 <div class="slds-p-around_small" role="region" aria-label="עורך הטופס">
+                    <button type="button" class="slds-button slds-button_neutral slds-m-bottom_x-small"
+                        onclick={backToList} aria-label="חזרה לרשימת הטפסים">← חזרה לרשימת הטפסים</button>
                     <h2 class="builder-heading slds-assistive-text" tabindex="-1">עורך הטופס</h2>
                     <c-form-builder
                         record-id={editId}

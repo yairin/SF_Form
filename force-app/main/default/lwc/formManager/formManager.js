@@ -37,6 +37,9 @@ export default class FormManager extends LightningElement {
     rows = [];
     mode = 'list';
     editId = null;
+    search = '';
+    statusFilter = 'all';
+    serviceFilter = 'all';
 
     // Accessibility: element to move focus to after the next render, so keyboard
     // and screen-reader focus follow the view change (list <-> builder).
@@ -72,6 +75,47 @@ export default class FormManager extends LightningElement {
 
     get isList() { return this.mode === 'list'; }
     get hasRows() { return this.rows.length > 0; }
+
+    // ---- Search / filter over the loaded forms ----
+    get statusFilterOptions() {
+        return [
+            { label: 'כל הסטטוסים', value: 'all' },
+            { label: 'פעילים', value: 'active' },
+            { label: 'לא פעילים', value: 'inactive' }
+        ];
+    }
+    get serviceFilterOptions() {
+        const seen = new Set();
+        const opts = [{ label: 'כל סוגי השירות', value: 'all' }];
+        this.rows.forEach((r) => {
+            const s = r.serviceType;
+            if (s && !seen.has(s)) { seen.add(s); opts.push({ label: s, value: s }); }
+        });
+        return opts;
+    }
+    get filteredRows() {
+        const q = (this.search || '').trim().toLowerCase();
+        return this.rows.filter((r) => {
+            if (this.statusFilter === 'active' && !r.active) return false;
+            if (this.statusFilter === 'inactive' && r.active) return false;
+            if (this.serviceFilter !== 'all' && (r.serviceType || '') !== this.serviceFilter) return false;
+            if (q) {
+                const hay = ((r.name || '') + ' ' + (r.externalId || '') + ' ' + (r.serviceType || '')).toLowerCase();
+                if (hay.indexOf(q) === -1) return false;
+            }
+            return true;
+        });
+    }
+    get hasFilteredRows() { return this.filteredRows.length > 0; }
+    get noMatch() { return this.hasRows && !this.hasFilteredRows; }
+    get resultCountText() {
+        return 'מוצגים ' + this.filteredRows.length + ' מתוך ' + this.rows.length + ' טפסים';
+    }
+
+    handleSearch(e) { this.search = e.target.value; }
+    handleStatusFilter(e) { this.statusFilter = e.detail.value; }
+    handleServiceFilter(e) { this.serviceFilter = e.detail.value; }
+    backToList() { this.mode = 'list'; this._focusSelector = '.new-form-btn'; }
 
     newForm() {
         this.editId = null;
