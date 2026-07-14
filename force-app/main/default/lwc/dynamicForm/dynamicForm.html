@@ -67,6 +67,14 @@
                 <p class="slds-text-body_small slds-p-bottom_small">{description}</p>
             </div>
 
+            <template lwc:if={draftFound}>
+                <div class="slds-box slds-box_x-small slds-theme_shade slds-m-bottom_small" role="status" aria-live="polite">
+                    <p class="slds-p-bottom_xx-small">נמצאה טיוטה שמורה מתאריך {draftDate}. להמשיך מהמקום שבו הפסקת?</p>
+                    <button type="button" class="slds-button slds-button_brand" style={brandBtnStyle} onclick={restoreDraft}>המשך מהטיוטה</button>
+                    <button type="button" class="slds-button slds-button_neutral" onclick={discardDraft}>התחל מחדש</button>
+                </div>
+            </template>
+
             <template lwc:if={hasErrorSummary}>
                 <div class="form-error-summary slds-box slds-theme_error slds-m-bottom_small" role="alert"
                     tabindex="-1" aria-labelledby="err-summary-title">

@@ -295,6 +295,39 @@
                                         </div>
                                     </template>
                                 </div>
+                                <!-- conditional visibility rule -->
+                                <div class="slds-grid slds-wrap slds-gutters_xx-small slds-p-top_xx-small">
+                                    <div class="slds-col slds-size_12-of-12">
+                                        <label>
+                                            <input type="checkbox" data-s={f.s} data-i={f.i} checked={f.condEnabled}
+                                                onchange={toggleCond} aria-label="הצג שדה זה רק בתנאי" />
+                                            <span class="slds-text-body_small"> הצג שדה זה רק בתנאי</span>
+                                        </label>
+                                    </div>
+                                    <template lwc:if={f.condEnabled}>
+                                        <div class="slds-col slds-size_5-of-12">
+                                            <select class="slds-select" data-s={f.s} data-i={f.i} data-p="ctrlId" aria-label="שדה קובע" onchange={handleCond}>
+                                                <option value="">— בחר שדה קובע —</option>
+                                                <template for:each={f.ctrlOptions} for:item="c">
+                                                    <option key={c.value} value={c.value} selected={c.selected}>{c.label}</option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                        <div class="slds-col slds-size_3-of-12">
+                                            <select class="slds-select" data-s={f.s} data-i={f.i} data-p="op" aria-label="תנאי הצגה" onchange={handleCond}>
+                                                <template for:each={f.opOptions} for:item="o">
+                                                    <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                        <template lwc:if={f.showCondValue}>
+                                            <div class="slds-col slds-size_4-of-12">
+                                                <input type="text" class="slds-input" data-s={f.s} data-i={f.i} data-p="value"
+                                                    value={f.condValue} onchange={handleCond} aria-label="ערך להשוואה" placeholder="ערך" />
+                                            </div>
+                                        </template>
+                                    </template>
+                                </div>
                             </div>
                         </template>
 

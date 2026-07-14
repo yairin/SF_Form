@@ -84,9 +84,50 @@ export default class DynamicForm extends LightningElement {
     copyMessage = '';      // live feedback for the "copy reference" button
     _dragKey = null;       // key of the file field currently under a drag operation
     _pendingFocus = null;  // 'summary' | 'success' | 'review' | field key -> handled in renderedCallback
+    draftFound = false;    // a saved draft exists for this form
+    draftDate = '';        // human-readable date of the saved draft
+    _draftTimer;           // debounce handle for autosave
 
     get isWizard() { return this.stepTitles.length > 1; }
-    get currentFields() { return this.fields.filter((f) => f.step === this.stepIndex); }
+
+    // ---- Conditional field visibility (schema key: visibleWhen {field,op,value}) ----
+    // Evaluate one field's rule against the current values.
+    _evalCond(f, values) {
+        const c = f.visibleWhen;
+        if (!c || !c.field) return true;
+        const raw = values[c.field];
+        const val = Array.isArray(raw) ? raw.join(',') : (raw == null ? '' : String(raw));
+        const target = c.value == null ? '' : String(c.value);
+        switch (c.op) {
+            case 'notEmpty': return !this.isEmpty(raw);
+            case 'empty': return this.isEmpty(raw);
+            case 'notEquals': return val !== target;
+            case 'contains':
+                return Array.isArray(raw) ? raw.map(String).includes(target) : val.indexOf(target) !== -1;
+            case 'equals':
+            default: return val === target;
+        }
+    }
+    // Map of key -> visible(boolean). Two passes so a field whose controlling
+    // field is itself hidden also hides (one level of chaining).
+    get visibleKeySet() {
+        const base = {};
+        this.fields.forEach((f) => { base[f.key] = this._evalCond(f, this.values); });
+        const out = {};
+        this.fields.forEach((f) => {
+            let vis = base[f.key];
+            const c = f.visibleWhen;
+            if (vis && c && c.field && base[c.field] === false) vis = false;
+            out[f.key] = vis;
+        });
+        return out;
+    }
+    isFieldVisible(f) { return this.visibleKeySet[f.key] !== false; }
+
+    get currentFields() {
+        const vis = this.visibleKeySet;
+        return this.fields.filter((f) => f.step === this.stepIndex && vis[f.key] !== false);
+    }
     // fields for the current step decorated with per-file status and inline errors
     get currentFieldsView() {
         return this.currentFields.map((f) => {
@@ -165,8 +206,9 @@ export default class DynamicForm extends LightningElement {
     // Read-only recap of all entered values, grouped by content step, for the
     // review step. Files show their file names; empty optional fields show "—".
     get reviewGroups() {
+        const vis = this.visibleKeySet;
         return this.stepTitles.map((title, si) => {
-            const flds = this.fields.filter((f) => f.step === si).map((f) => {
+            const flds = this.fields.filter((f) => f.step === si && vis[f.key] !== false).map((f) => {
                 let display;
                 if (f.isFile) {
                     const items = this.files[f.key] || [];
@@ -192,9 +234,11 @@ export default class DynamicForm extends LightningElement {
     // Validates a set of fields, writing inline per-field errors. Returns true if any invalid.
     validateFields(fieldsToCheck) {
         const errs = { ...this.fieldErrors };
+        const vis = this.visibleKeySet;
         let bad = false;
         fieldsToCheck.forEach((f) => {
             delete errs[f.key];
+            if (vis[f.key] === false) return; // hidden fields never block submission
             let m;
             if (f.required && this.isEmpty(this.values[f.key])) m = 'שדה חובה';
             else if (f.type === 'idNumber' && !this.isEmpty(this.values[f.key]) && !isValidIsraeliId(this.values[f.key])) m = 'תעודת זהות לא תקינה';
@@ -324,11 +368,70 @@ export default class DynamicForm extends LightningElement {
                     acceptList: Array.isArray(f.accept) && f.accept.length ? f.accept.map((x) => String(x).toLowerCase()) : DEFAULT_ACCEPT,
                     accept: '.' + (Array.isArray(f.accept) && f.accept.length ? f.accept : DEFAULT_ACCEPT).join(',.'),
                     docLabel: f.docLabel || f.label,
-                    verifyKeys: Array.isArray(f.verify) && f.verify.length ? f.verify : null
+                    verifyKeys: Array.isArray(f.verify) && f.verify.length ? f.verify : null,
+                    // conditional visibility rule (optional in schema)
+                    visibleWhen: (f.visibleWhen && f.visibleWhen.field) ? f.visibleWhen : null
                 });
             });
         });
         this.fields = flat;
+        this.detectDraft();
+    }
+
+    // ---- Draft autosave / resume (localStorage, best-effort) ----
+    get draftKey() { return 'sfform_draft_' + (this._ext || 'preview'); }
+
+    scheduleDraftSave() {
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        clearTimeout(this._draftTimer);
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        this._draftTimer = setTimeout(() => this.saveDraft(), 500);
+    }
+
+    saveDraft() {
+        try {
+            if (this.reference) return; // already submitted — nothing to resume
+            const vals = {};
+            this.fields.forEach((f) => {
+                if (f.isFile) return; // file contents can't be restored from storage
+                const v = this.values[f.key];
+                if (!this.isEmpty(v)) vals[f.key] = v;
+            });
+            if (!Object.keys(vals).length) return;
+            window.localStorage.setItem(this.draftKey, JSON.stringify({ ts: new Date().toISOString(), values: vals }));
+        } catch (e) { /* storage blocked (incognito / disabled) — ignore */ }
+    }
+
+    detectDraft() {
+        this.draftFound = false;
+        this.draftDate = '';
+        try {
+            const raw = window.localStorage.getItem(this.draftKey);
+            if (!raw) return;
+            const d = JSON.parse(raw);
+            if (d && d.values && Object.keys(d.values).length) {
+                this.draftFound = true;
+                try { this.draftDate = new Date(d.ts).toLocaleString('he-IL'); } catch (e) { this.draftDate = ''; }
+            }
+        } catch (e) { /* ignore */ }
+    }
+
+    restoreDraft() {
+        try {
+            const raw = window.localStorage.getItem(this.draftKey);
+            const d = raw ? JSON.parse(raw) : null;
+            if (d && d.values) this.values = { ...this.values, ...d.values };
+        } catch (e) { /* ignore */ }
+        this.draftFound = false;
+    }
+
+    discardDraft() {
+        this.clearDraft();
+        this.draftFound = false;
+    }
+
+    clearDraft() {
+        try { window.localStorage.removeItem(this.draftKey); } catch (e) { /* ignore */ }
     }
 
     // ---- Appearance-driven styling (all inline so it works on a guest site) ----
@@ -428,6 +531,9 @@ export default class DynamicForm extends LightningElement {
         } else {
             this.values[key] = event.target.value;
         }
+        // reassign so conditional-visibility getters recompute
+        this.values = { ...this.values };
+        this.scheduleDraftSave();
     }
 
     handleFileChange(event) {
@@ -610,7 +716,9 @@ export default class DynamicForm extends LightningElement {
         this.loading = true;
         const payload = {};
         const mapped = {};
+        const vis = this.visibleKeySet;
         for (const f of this.fields) {
+            if (vis[f.key] === false) continue; // never submit values for hidden fields
             let v = this.values[f.key];
             if (this.isEmpty(v)) continue;
             if (Array.isArray(v)) v = v.join('; ');
@@ -636,6 +744,7 @@ export default class DynamicForm extends LightningElement {
             this.reference = res.name;
             this.showErrorSummary = false;
             this._pendingFocus = 'success';
+            this.clearDraft(); // a submitted form has no draft to resume
         } catch (e) {
             this.error = (e && e.body && e.body.message) || 'אירעה שגיאה בשליחה.';
         } finally {

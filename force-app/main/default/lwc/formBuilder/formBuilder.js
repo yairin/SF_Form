@@ -65,8 +65,12 @@ const TYPE_OPTIONS = [
 const MAP_OPTIONS = [
     ['', '— ללא מיפוי —'], ['respondentName', 'שם'], ['email', 'אימייל'], ['phone', 'טלפון'], ['subject', 'נושא']
 ];
-const newField = () => ({ type: 'text', label: '', required: false, options: '', mapTo: '' });
+const newField = () => ({ type: 'text', label: '', required: false, options: '', mapTo: '', cond: null });
 const newStep = () => ({ title: '', fields: [newField()] });
+const COND_OPS = [
+    ['equals', 'שווה ל'], ['notEquals', 'שונה מ'], ['contains', 'מכיל'],
+    ['notEmpty', 'אינו ריק'], ['empty', 'ריק']
+];
 
 export default class FormBuilder extends LightningElement {
     title = '';
@@ -90,6 +94,7 @@ export default class FormBuilder extends LightningElement {
     _dragFieldS = null;    // step index of the field being dragged
     _dragFieldI = null;    // field index of the field being dragged
     _dragOverField = '';   // "s:i" key of the field currently under the pointer (drop indicator)
+    _fieldSeq = 0;         // monotonic id source for stable per-field references (conditions)
 
     savedExternalId;
     savedUrl;
@@ -111,7 +116,18 @@ export default class FormBuilder extends LightningElement {
     }
 
     connectedCallback() {
+        this.ensureIds();
         this.refresh();
+    }
+
+    // Assign a stable _id to any field missing one (conditions reference these).
+    ensureIds() {
+        let changed = false;
+        (this.steps || []).forEach((st) => (st.fields || []).forEach((f) => {
+            if (f._id == null) { f._id = ++this._fieldSeq; changed = true; }
+            if (f.cond === undefined) { f.cond = null; changed = true; }
+        }));
+        if (changed) this.steps = [...this.steps];
     }
 
     resetForm() {
@@ -125,6 +141,7 @@ export default class FormBuilder extends LightningElement {
         this.tasks = [];
         this.appearance = defaultAppearance();
         this.steps = [newStep()];
+        this.ensureIds();
         this._editExternalId = undefined;
         this.savedExternalId = undefined;
         this.savedUrl = undefined;
@@ -162,21 +179,37 @@ export default class FormBuilder extends LightningElement {
     }
 
     toStepsModel(parsed) {
-        const rev = (f) => ({
-            type: f.type || 'text',
-            label: f.label || '',
-            required: !!f.required,
-            options: (f.options || []).join('\n'),
-            mapTo: f.mapTo || ''
-        });
         let rawSteps;
         if (Array.isArray(parsed)) rawSteps = [{ title: '', fields: parsed }];
         else if (parsed && Array.isArray(parsed.steps)) rawSteps = parsed.steps;
         else if (parsed && Array.isArray(parsed.fields)) rawSteps = [{ title: '', fields: parsed.fields }];
         else rawSteps = [];
+        // Assign a fresh _id per field and remember each saved key -> _id so we can
+        // restore conditional rules (which reference the controlling field's key).
+        const keyToId = {};
         const model = rawSteps.map((s) => ({
             title: s.title || '',
-            fields: (s.fields || []).map(rev)
+            fields: (s.fields || []).map((f) => {
+                const id = ++this._fieldSeq;
+                if (f.key) keyToId[f.key] = id;
+                return {
+                    _id: id,
+                    type: f.type || 'text',
+                    label: f.label || '',
+                    required: !!f.required,
+                    options: (f.options || []).join('\n'),
+                    mapTo: f.mapTo || '',
+                    _vw: (f.visibleWhen && f.visibleWhen.field) ? f.visibleWhen : null,
+                    cond: null
+                };
+            })
+        }));
+        // Resolve conditions now that every key is mapped to an _id.
+        model.forEach((st) => st.fields.forEach((fl) => {
+            if (fl._vw && keyToId[fl._vw.field]) {
+                fl.cond = { ctrlId: keyToId[fl._vw.field], op: fl._vw.op || 'equals', value: fl._vw.value || '' };
+            }
+            delete fl._vw;
         }));
         return model.length ? model : [newStep()];
     }
@@ -199,6 +232,11 @@ export default class FormBuilder extends LightningElement {
 
     get stepRows() {
         const total = this.steps.length;
+        // all labelled fields across the whole form — candidates to control a condition
+        const allFields = [];
+        this.steps.forEach((st) => st.fields.forEach((f) => {
+            if (f.label && f.label.trim()) allFields.push({ id: f._id, label: f.label.trim() });
+        }));
         return this.steps.map((st, s) => {
             const fieldsLen = st.fields.length;
             return {
@@ -222,7 +260,16 @@ export default class FormBuilder extends LightningElement {
                         + (this._dragOverField === (s + ':' + i) ? ' fb-drop-target' : ''),
                     showOptions: CHOICE.has(f.type),
                     typeOptions: TYPE_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === f.type })),
-                    mapOptions: MAP_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === (f.mapTo || '') }))
+                    mapOptions: MAP_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === (f.mapTo || '') })),
+                    // conditional-visibility rule editor
+                    condEnabled: !!f.cond,
+                    condCtrl: f.cond ? f.cond.ctrlId : '',
+                    condValue: f.cond ? (f.cond.value || '') : '',
+                    showCondValue: !!f.cond && f.cond.op !== 'notEmpty' && f.cond.op !== 'empty',
+                    ctrlOptions: allFields
+                        .filter((c) => c.id !== f._id)
+                        .map((c) => ({ value: c.id, label: c.label, selected: !!f.cond && f.cond.ctrlId === c.id })),
+                    opOptions: COND_OPS.map(([v, l]) => ({ value: v, label: l, selected: !!f.cond && f.cond.op === v }))
                 }))
             };
         });
@@ -230,6 +277,7 @@ export default class FormBuilder extends LightningElement {
 
     addStep() {
         this.steps = [...this.steps, newStep()];
+        this.ensureIds();
     }
 
     removeStep(event) {
@@ -247,6 +295,30 @@ export default class FormBuilder extends LightningElement {
     addField(event) {
         const s = Number(event.target.dataset.s);
         this.steps = this.steps.map((st, idx) => (idx === s ? { ...st, fields: [...st.fields, newField()] } : st));
+        this.ensureIds();
+    }
+
+    // ---- Conditional-visibility rule editor ----
+    toggleCond(event) {
+        const s = Number(event.target.dataset.s);
+        const i = Number(event.target.dataset.i);
+        const on = event.target.checked;
+        this.steps = this.steps.map((st, idx) => idx === s
+            ? { ...st, fields: st.fields.map((f, fi) => (fi === i
+                ? { ...f, cond: on ? { ctrlId: '', op: 'equals', value: '' } : null } : f)) }
+            : st);
+    }
+
+    handleCond(event) {
+        const s = Number(event.target.dataset.s);
+        const i = Number(event.target.dataset.i);
+        const p = event.target.dataset.p;
+        let val = event.target.value;
+        if (p === 'ctrlId') val = val === '' ? '' : Number(val);
+        this.steps = this.steps.map((st, idx) => idx === s
+            ? { ...st, fields: st.fields.map((f, fi) => (fi === i && f.cond
+                ? { ...f, cond: { ...f.cond, [p]: val } } : f)) }
+            : st);
     }
 
     removeField(event) {
@@ -560,20 +632,31 @@ export default class FormBuilder extends LightningElement {
     handleAiContactApplicant(e) { this.aiContactApplicant = e.target.checked; }
 
     buildSchema() {
+        this.ensureIds();
         const seen = {};
         let n = 0;
+        // Pass A: compute a stable key for every surviving (labelled) field, and
+        // record _id -> key so conditions can reference the controlling field.
+        const idToKey = {};
+        this.steps.forEach((st) => st.fields
+            .filter((f) => f.label && f.label.trim())
+            .forEach((f) => {
+                n += 1;
+                let key = f.label.trim().toLowerCase().replace(/[^a-z0-9֐-׿]+/g, '_').replace(/^_+|_+$/g, '');
+                if (!key) key = 'field_' + n;
+                while (seen[key]) key = key + '_' + n;
+                seen[key] = 1;
+                idToKey[f._id] = key;
+                f.__key = key;
+            }));
+        // Pass B: emit the schema, attaching visibleWhen where a valid rule exists.
         const steps = this.steps.map((st) => ({
             title: (st.title || '').trim() || null,
             fields: st.fields
                 .filter((f) => f.label && f.label.trim())
                 .map((f) => {
-                    n += 1;
-                    let key = f.label.trim().toLowerCase().replace(/[^a-z0-9֐-׿]+/g, '_').replace(/^_+|_+$/g, '');
-                    if (!key) key = 'field_' + n;
-                    while (seen[key]) key = key + '_' + n;
-                    seen[key] = 1;
-                    return {
-                        key,
+                    const out = {
+                        key: f.__key,
                         label: f.label.trim(),
                         type: f.type,
                         required: !!f.required,
@@ -582,8 +665,13 @@ export default class FormBuilder extends LightningElement {
                             ? String(f.options || '').split('\n').map((x) => x.trim()).filter(Boolean)
                             : undefined
                     };
+                    if (f.cond && f.cond.ctrlId && idToKey[f.cond.ctrlId] && idToKey[f.cond.ctrlId] !== f.__key) {
+                        out.visibleWhen = { field: idToKey[f.cond.ctrlId], op: f.cond.op || 'equals', value: f.cond.value || '' };
+                    }
+                    return out;
                 })
         }));
+        this.steps.forEach((st) => st.fields.forEach((f) => { delete f.__key; }));
         return steps;
     }
 
