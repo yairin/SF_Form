@@ -163,8 +163,8 @@ Next step: <deploy, register, test, or implement>
 - `assets/endpoint-security/` — Remote Site Setting and CSP Trusted Site XML templates
 
 ### Automation hooks
-- `hooks/scripts/suggest_credential_setup.py` — auto-suggests credential configuration steps when integration files are detected
-- `hooks/scripts/validate_integration.py` — validates integration patterns before agent responses
+- `scripts/suggest_credential_setup.py` — auto-suggests credential configuration steps when integration files are detected
+- `scripts/validate_integration.py` — validates integration patterns before agent responses
 
 ---
 
@@ -189,3 +189,9 @@ When this skill completes an integration task, it produces:
 | 90–107 | good design with some hardening left |
 | 72–89 | workable but needs architectural review |
 | < 72 | unsafe / incomplete for deployment |
+
+---
+
+## Pre-Delivery Checklist
+
+- [ ] Never hardcode credentials — all secrets stored in Named Credentials or External Credentials

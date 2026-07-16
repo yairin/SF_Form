@@ -7,7 +7,7 @@ This guide covers best practices for writing effective, maintainable Apex tests 
 
 ## The Testing Pyramid
 
-```
+```text
                     ╱╲
                    ╱  ╲
                   ╱ E2E╲        Few end-to-end tests
@@ -324,7 +324,7 @@ static void testBulkOperation_StaysWithinLimits() {
 
 ## Common Anti-Patterns to Avoid
 
-### ❌ SeeAllData=true
+### SeeAllData=true
 
 ```apex
 // ❌ BAD: Depends on org data
@@ -342,7 +342,7 @@ static void testGoodPattern() {
 }
 ```
 
-### ❌ No Assertions
+### No Assertions
 
 ```apex
 // ❌ BAD: No assertions - test passes even if code is broken
@@ -364,7 +364,7 @@ static void testWithAssertions() {
 }
 ```
 
-### ❌ Hardcoded IDs
+### Hardcoded IDs
 
 ```apex
 // ❌ BAD: Hardcoded IDs fail across orgs
@@ -423,7 +423,7 @@ Fast tests enable continuous integration. Slow tests become barriers to frequent
 
 ### Speed Strategy
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │  INTEGRATION TESTS (Few)                                    │
 │  - Real DML, real triggers                                  │
@@ -499,7 +499,7 @@ sf apex get test --test-run-id [id] --code-coverage --result-format json | jq '.
 
 ### Fast Test Checklist
 
-```
+```text
 □ Is there a pure logic portion that can be unit tested?
 □ Can database operations be mocked for edge cases?
 □ Is @TestSetup reused across multiple test methods?

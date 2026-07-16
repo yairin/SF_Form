@@ -7,7 +7,7 @@ This guide covers real-time notification patterns for Lightning Web Components u
 
 ## Overview
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                    ASYNC NOTIFICATION ARCHITECTURE                       │
 ├─────────────────────────────────────────────────────────────────────────┤
@@ -617,7 +617,7 @@ connectedCallback() {
 
 ## Best Practices
 
-### DO ✅
+### DO
 
 | Practice | Reason |
 |----------|--------|
@@ -627,7 +627,7 @@ connectedCallback() {
 | Use `refreshApex` after events | Keeps wire data in sync |
 | Set reasonable replay ID | `-1` for real-time, `-2` for recovery |
 
-### DON'T ❌
+### DON'T
 
 | Anti-Pattern | Problem |
 |--------------|---------|

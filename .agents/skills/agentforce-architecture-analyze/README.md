@@ -44,7 +44,7 @@ See `SKILL.md` for the full flag table and sample prompts.
 
 ## Directory layout
 
-```
+```text
 agentforce-architecture-analyze/
 ├── SKILL.md                       Skill contract (inputs, outputs, pipeline, invariants)
 ├── README.md                      This file
@@ -73,12 +73,11 @@ agentforce-architecture-analyze/
 │   ├── finalize.py                Merge waves → metadata_tree.json
 │   ├── render_architecture.py     architecture.md + Mermaid graph
 │   ├── resolve_invocation_target.py  ID-prefix router for NGA InvocationTargets
+│   ├── emit_env.py                Env-var emit helper (Phase 0.5)
+│   ├── emit_result.py             Final RESULT block renderer
+│   ├── sanitize.py                Stdin → safe-string filter
+│   ├── write_emit_ctx.py          Per-phase ctx writer
 │   └── tests/                     Unit + integration tests (unittest)
-└── tools/
-    ├── emit_env.py                Env-var emit helper (Phase 0.5)
-    ├── emit_result.py             Final RESULT block renderer
-    ├── sanitize.py                Stdin → safe-string filter
-    └── write_emit_ctx.py          Per-phase ctx writer
 ```
 
 ---
@@ -87,7 +86,7 @@ agentforce-architecture-analyze/
 
 ### Channel strategy — SOQL-first
 
-```
+```text
 Seed query: planner_definition_by_agent_chain (chain-LIKE lookup → planner id)
 
 6 parallel Tooling SOQL channels (keyed on the resolved planner id):
@@ -148,9 +147,3 @@ Per-branch ancestor-path cycle detection is the primary termination primitive: t
 | `INVALID_FIELD` from a SOQL asset | Salesforce renamed / removed the field in a quarterly release. Run with `--reprobe` to refresh the 7-day channel cache and pick up the new schema |
 | `STATUS=PROBE_FAILED` on first run | Channel probe saw a mandatory field missing. Check `channels.json` under the probe cache dir for which sObject / field — may require org-side feature enablement |
 | Tree for classic ReAct agent shows `_unresolved` entries for NGA plugins | Expected — the NGA external-plugin retrieve is skipped when the planner shape is classic. Those entries can be ignored |
-
----
-
-## Author
-
-Raghul Jayagopal (RJ), Salesforce ANZ FDE.

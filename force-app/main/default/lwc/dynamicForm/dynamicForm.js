@@ -12,7 +12,10 @@ const DEFAULT_ACCEPT = ['pdf', 'png', 'jpg', 'jpeg'];
 
 const TEXT_TYPES = {
     text: 'text', email: 'email', phone: 'tel', number: 'number',
-    currency: 'number', idNumber: 'text', date: 'date'
+    currency: 'number', idNumber: 'text', date: 'date',
+    // personal-details types (city/street get autocomplete behaviour on top of the text input)
+    firstName: 'text', lastName: 'text', city: 'text', street: 'text',
+    houseNumber: 'text', apartment: 'text', age: 'number'
 };
 
 // Accepts a plain array (legacy single-step) or { steps:[{title,fields}] } / { fields:[...] }.

@@ -60,7 +60,23 @@ const TYPE_OPTIONS = [
     ['number', 'מספר'], ['currency', 'סכום (₪)'], ['idNumber', 'תעודת זהות'], ['date', 'תאריך'],
     ['file', 'העלאת קובץ'],
     ['select', 'בחירה מרשימה'], ['radio', 'בחירה יחידה'],
-    ['checkbox', 'תיבת סימון'], ['checkboxGroup', 'בחירה מרובה']
+    ['checkbox', 'תיבת סימון'], ['checkboxGroup', 'בחירה מרובה'],
+    // personal-details field types
+    ['firstName', 'שם פרטי'], ['lastName', 'שם משפחה'], ['city', 'עיר (השלמה אוטומטית)'],
+    ['street', 'רחוב (השלמה אוטומטית)'], ['houseNumber', 'מספר בית'], ['apartment', 'דירה'], ['age', 'גיל']
+];
+// One-click "personal details" group inserted into a step.
+const PERSONAL_DETAILS_FIELDS = [
+    { type: 'firstName', label: 'שם פרטי', required: true, mapTo: '' },
+    { type: 'lastName', label: 'שם משפחה', required: true, mapTo: '' },
+    { type: 'idNumber', label: 'תעודת זהות', required: true, mapTo: '' },
+    { type: 'age', label: 'גיל', required: false, mapTo: '' },
+    { type: 'phone', label: 'טלפון', required: true, mapTo: 'phone' },
+    { type: 'email', label: 'דוא"ל', required: false, mapTo: 'email' },
+    { type: 'city', label: 'עיר', required: true, mapTo: '' },
+    { type: 'street', label: 'רחוב', required: true, mapTo: '' },
+    { type: 'houseNumber', label: 'מספר בית', required: true, mapTo: '' },
+    { type: 'apartment', label: 'דירה', required: false, mapTo: '' }
 ];
 const MAP_OPTIONS = [
     ['', '— ללא מיפוי —'], ['respondentName', 'שם'], ['email', 'אימייל'], ['phone', 'טלפון'], ['subject', 'נושא']
@@ -295,6 +311,16 @@ export default class FormBuilder extends LightningElement {
     addField(event) {
         const s = Number(event.target.dataset.s);
         this.steps = this.steps.map((st, idx) => (idx === s ? { ...st, fields: [...st.fields, newField()] } : st));
+        this.ensureIds();
+    }
+
+    // One-click insert of the standard personal-details field group into a step.
+    addPersonalDetails(event) {
+        const s = Number(event.target.dataset.s);
+        const group = PERSONAL_DETAILS_FIELDS.map((f) => ({
+            type: f.type, label: f.label, required: !!f.required, options: '', mapTo: f.mapTo || '', cond: null
+        }));
+        this.steps = this.steps.map((st, idx) => (idx === s ? { ...st, fields: [...st.fields, ...group] } : st));
         this.ensureIds();
     }
 
