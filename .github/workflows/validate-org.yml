@@ -61,5 +61,6 @@ jobs:
             --tests AnthropicClientTest \
             --tests FormTaskServiceTest \
             --tests AddressLookupControllerTest \
+            --tests CaseHandoffServiceTest \
             --target-org target \
             --wait 30

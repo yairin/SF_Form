@@ -270,6 +270,26 @@
                             <template lwc:if={record.phone}> · {record.phone}</template>
                         </div>
 
+                        <!-- Service-desk handoff (open a Case once internal prep is done) -->
+                        <div class="slds-box slds-box_x-small slds-m-bottom_small" role="region" aria-label="העברה לטיפול מוקד">
+                            <template lwc:if={record.hasCase}>
+                                <span class="slds-text-body_regular">
+                                    ✓ הפנייה הועברה לטיפול המוקד — פנייה מס׳
+                                    <span class="slds-text-title_bold">{record.caseNumber}</span>
+                                </span>
+                            </template>
+                            <template lwc:else>
+                                <div class="slds-grid slds-grid_vertical-align-center slds-wrap">
+                                    <span class="slds-text-body_small slds-text-color_weak slds-m-left_small">
+                                        לאחר סיום הכנת המידע, ניתן לפתוח פנייה במוקד העירוני (Case) להמשך טיפול.
+                                    </span>
+                                    <lightning-button variant="brand" label="פתח פנייה במוקד (Case)"
+                                        icon-name="utility:priority" onclick={handoffToCase}
+                                        disabled={handoffBusy}></lightning-button>
+                                </div>
+                            </template>
+                        </div>
+
                         <!-- AI status + findings -->
                         <div class="slds-box slds-box_x-small slds-m-bottom_small slds-theme_shade" role="region" aria-label="סטטוס בדיקת AI">
                             <div class="slds-grid slds-grid_vertical-align-center slds-wrap">

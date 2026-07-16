@@ -5,6 +5,7 @@ import getResults from '@salesforce/apex/FormResultsController.getResults';
 import generateAiInsights from '@salesforce/apex/FormResultsController.generateAiInsights';
 import listResponses from '@salesforce/apex/FormResultsController.listResponses';
 import getResponseDetail from '@salesforce/apex/FormResultsController.getResponseDetail';
+import createCaseFromResponse from '@salesforce/apex/CaseHandoffService.createCaseFromResponse';
 
 const COLUMNS = [
     { label: 'שם הטופס', fieldName: 'name', sortable: true, wrapText: true },
@@ -66,6 +67,7 @@ export default class FormResults extends LightningElement {
     responses = [];
     record;
     recordLoading = false;
+    handoffBusy = false;
 
     // Accessibility: selector of the element to move focus to after the next render
     // (keeps keyboard/screen-reader focus in sync when the inline view changes).
@@ -369,6 +371,7 @@ export default class FormResults extends LightningElement {
                 submittedStr: fmt(d.submittedAt),
                 aiReviewedStr: fmt(d.aiReviewedAt),
                 aiStatusClass: statusClass(d.aiStatus),
+                hasCase: !!d.caseId,
                 hasFiles: (d.files || []).length > 0,
                 hasInteractions: (d.interactions || []).length > 0,
                 interactions: (d.interactions || []).map((i, idx) => ({
@@ -407,6 +410,25 @@ export default class FormResults extends LightningElement {
         this.mode = 'detail';
         this.record = undefined;
         this._focusSelector = '.detail-heading';
+    }
+
+    // Hand the prepared response off to the municipal service desk (open a Case).
+    async handoffToCase() {
+        if (!this.record || this.handoffBusy) return;
+        this.handoffBusy = true;
+        try {
+            const res = await createCaseFromResponse({ responseId: this.record.id });
+            this.record = { ...this.record, hasCase: true, caseId: res.caseId, caseNumber: res.caseNumber };
+            this.toast(
+                res.created ? 'נפתחה פנייה במוקד' : 'הפנייה כבר קיימת',
+                'מספר פנייה: ' + (res.caseNumber || res.caseId),
+                'success'
+            );
+        } catch (e) {
+            this.toast('שגיאה', this.msg(e), 'error');
+        } finally {
+            this.handoffBusy = false;
+        }
     }
 
     // button label reflects whether insights already exist

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Case__c</fullName>
+    <label>Case</label>
+    <description>The Case opened for this response when it was handed off to the municipal service desk. Empty until handoff; used to prevent double-handoff.</description>
+    <referenceTo>Case</referenceTo>
+    <relationshipLabel>Form Responses</relationshipLabel>
+    <relationshipName>Form_Responses</relationshipName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <type>Lookup</type>
+    <required>false</required>
+</CustomField>

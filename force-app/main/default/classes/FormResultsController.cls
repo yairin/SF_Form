@@ -83,6 +83,8 @@ public with sharing class FormResultsController {
         @AuraEnabled public Datetime aiReviewedAt;
         @AuraEnabled public Boolean updateRequested;
         @AuraEnabled public String approvalRoute;
+        @AuraEnabled public Id caseId;
+        @AuraEnabled public String caseNumber;
         @AuraEnabled public List<FieldValue> fields;
         @AuraEnabled public List<FileRef> files;
         @AuraEnabled public List<InteractionRow> interactions;
@@ -138,7 +140,8 @@ public with sharing class FormResultsController {
         Form_Response__c r = [
             SELECT Id, Name, Form_External_Id__c, Respondent_Name__c, Email__c, Phone__c,
                    Submitted_At__c, Response_Data__c, AI_Status__c, AI_Findings__c,
-                   AI_Reviewed_At__c, Update_Requested__c, Approval_Route__c
+                   AI_Reviewed_At__c, Update_Requested__c, Approval_Route__c,
+                   Case__c, Case__r.CaseNumber
             FROM Form_Response__c WHERE Id = :responseId WITH USER_MODE LIMIT 1
         ];
         ResponseDetail d = new ResponseDetail();
@@ -154,6 +157,8 @@ public with sharing class FormResultsController {
         d.aiReviewedAt = r.AI_Reviewed_At__c;
         d.updateRequested = r.Update_Requested__c == true;
         d.approvalRoute = r.Approval_Route__c == null ? '' : lbl(ROUTE_LABELS, r.Approval_Route__c);
+        d.caseId = r.Case__c;
+        d.caseNumber = r.Case__r == null ? null : r.Case__r.CaseNumber;
         d.fields = new List<FieldValue>();
         d.files = new List<FileRef>();
         d.interactions = new List<InteractionRow>();
