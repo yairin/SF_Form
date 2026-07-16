@@ -21,7 +21,8 @@ public without sharing class AddressLookupController {
                 Streets_Resource_Id__c = '1b14e41c-85b3-4c21-bdce-9fe48185ffca',
                 City_Field__c = 'שם_ישוב',
                 Street_Field__c = 'שם_רחוב',
-                Base_Path__c = '/api/3/action/datastore_search'
+                Base_Path__c = '/api/3/action/datastore_search',
+                Base_Url__c = 'https://data.gov.il'
             );
         }
         return c;
@@ -46,7 +47,8 @@ public without sharing class AddressLookupController {
     }
 
     private static String base(Gov_Data_Config__mdt c) {
-        return 'callout:Data_Gov_IL' + c.Base_Path__c
+        String host = String.isBlank(c.Base_Url__c) ? 'https://data.gov.il' : c.Base_Url__c.removeEnd('/');
+        return host + c.Base_Path__c
             + '?resource_id=' + enc(c.Streets_Resource_Id__c) + '&limit=100&distinct=true';
     }
 

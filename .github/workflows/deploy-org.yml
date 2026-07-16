@@ -59,7 +59,8 @@ jobs:
             --tests FormTaskServiceTest \
             --tests AddressLookupControllerTest \
             --target-org target \
-            --wait 30
+            --wait 30 \
+            --verbose
 
       - name: Assign manager permission set
         run: |

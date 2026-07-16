@@ -18,4 +18,8 @@
         <field>Base_Path__c</field>
         <value xsi:type="xsd:string">/api/3/action/datastore_search</value>
     </values>
+    <values>
+        <field>Base_Url__c</field>
+        <value xsi:type="xsd:string">https://data.gov.il</value>
+    </values>
 </CustomMetadata>
