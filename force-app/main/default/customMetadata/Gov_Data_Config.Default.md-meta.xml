@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <label>Default</label>
+    <protected>false</protected>
+    <values>
+        <field>Streets_Resource_Id__c</field>
+        <value xsi:type="xsd:string">1b14e41c-85b3-4c21-bdce-9fe48185ffca</value>
+    </values>
+    <values>
+        <field>City_Field__c</field>
+        <value xsi:type="xsd:string">שם_ישוב</value>
+    </values>
+    <values>
+        <field>Street_Field__c</field>
+        <value xsi:type="xsd:string">שם_רחוב</value>
+    </values>
+    <values>
+        <field>Base_Path__c</field>
+        <value xsi:type="xsd:string">/api/3/action/datastore_search</value>
+    </values>
+    <values>
+        <field>Base_Url__c</field>
+        <value xsi:type="xsd:string">https://data.gov.il</value>
+    </values>
+</CustomMetadata>

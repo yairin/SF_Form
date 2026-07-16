@@ -1,1 +1,1 @@
-diagnose+drop CMT record 20260716T211210Z
+re-add CMT default record (type now exists) 20260716T211419Z
