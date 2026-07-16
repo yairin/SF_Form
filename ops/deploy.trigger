@@ -1,1 +1,1 @@
-re-add CMT default record (type now exists) 20260716T211419Z
+back to green: drop optional CMT record + harden parser 20260716T211614Z

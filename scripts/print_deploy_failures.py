@@ -44,5 +44,17 @@ success = result.get("success")
 if success is True and status == 0:
     print("Deploy succeeded.")
     sys.exit(0)
+
+# surface any top-level / result-level error text the CLI provided
+for k in ("message", "name"):
+    if data.get(k):
+        print(f"{k}: {data.get(k)}")
+for k in ("errorMessage", "errorStatusCode"):
+    if result.get(k):
+        print(f"result.{k}: {result.get(k)}")
+if not comp_failures and not test_failures:
+    # nothing structured — dump a trimmed raw payload so the cause is visible
+    print("--- raw deploy json (trimmed) ---")
+    print(json.dumps(data, ensure_ascii=False)[:3000])
 print(f"Deploy failed (status={status}, success={success}).")
 sys.exit(1)
