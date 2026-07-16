@@ -60,5 +60,6 @@ jobs:
             --tests FormFileValidationServiceTest \
             --tests AnthropicClientTest \
             --tests FormTaskServiceTest \
+            --tests AddressLookupControllerTest \
             --target-org target \
             --wait 30

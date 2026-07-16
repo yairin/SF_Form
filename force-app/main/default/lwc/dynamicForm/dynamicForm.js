@@ -6,6 +6,8 @@ import getForm from '@salesforce/apex/FormRenderController.getForm';
 import submitResponse from '@salesforce/apex/FormResponseController.submitResponse';
 import attachFiles from '@salesforce/apex/FormFileService.attachFiles';
 import validateFile from '@salesforce/apex/FormFileValidationService.validateFile';
+import searchCities from '@salesforce/apex/AddressLookupController.searchCities';
+import searchStreets from '@salesforce/apex/AddressLookupController.searchStreets';
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024; // ~4MB per file (Apex heap/base64 guard)
 const DEFAULT_ACCEPT = ['pdf', 'png', 'jpg', 'jpeg'];
@@ -90,6 +92,9 @@ export default class DynamicForm extends LightningElement {
     draftFound = false;    // a saved draft exists for this form
     draftDate = '';        // human-readable date of the saved draft
     _draftTimer;           // debounce handle for autosave
+    addrSuggest = {};      // key -> [suggestion strings]
+    addrLoading = {};      // key -> bool (lookup in flight)
+    _addrTimer = {};       // key -> debounce handle
 
     get isWizard() { return this.stepTitles.length > 1; }
 
@@ -156,6 +161,10 @@ export default class DynamicForm extends LightningElement {
                 dropzoneClass = 'form-dropzone' + (this._dragKey === f.key ? ' form-dropzone_active' : '');
                 acceptHint = 'סוגים נתמכים: ' + (f.acceptList || []).join(', ');
             }
+            const isCity = f.type === 'city';
+            const isStreet = f.type === 'street';
+            const isAutocomplete = isCity || isStreet;
+            const sugg = this.addrSuggest[f.key] || [];
             return {
                 ...f,
                 status: this.fileStatus[f.key],
@@ -168,7 +177,15 @@ export default class DynamicForm extends LightningElement {
                 describedBy: ids.length ? ids.join(' ') : undefined,
                 fileItems,
                 dropzoneClass,
-                acceptHint
+                acceptHint,
+                isCity,
+                isStreet,
+                isAutocomplete,
+                currentValue: this.values[f.key] || '',
+                suggestionItems: sugg,
+                showSuggest: sugg.length > 0,
+                suggestExpanded: sugg.length > 0 ? 'true' : 'false',
+                suggestLoading: !!this.addrLoading[f.key]
             };
         });
     }
@@ -537,6 +554,66 @@ export default class DynamicForm extends LightningElement {
         // reassign so conditional-visibility getters recompute
         this.values = { ...this.values };
         this.scheduleDraftSave();
+    }
+
+    // ---- City / street autocomplete (server-side gov-data lookup) ----
+    get selectedCity() {
+        const cityField = this.fields.find((x) => x.type === 'city');
+        return cityField ? (this.values[cityField.key] || '') : '';
+    }
+
+    handleAddressInput(event) {
+        const key = event.target.dataset.key;
+        const f = this.fields.find((x) => x.key === key);
+        const val = event.target.value;
+        this.values = { ...this.values, [key]: val };
+        if (this.fieldErrors[key]) { const e = { ...this.fieldErrors }; delete e[key]; this.fieldErrors = e; }
+        // choosing a new city invalidates a previously picked street
+        if (f && f.type === 'city') {
+            const street = this.fields.find((x) => x.type === 'street');
+            if (street) this.addrSuggest = { ...this.addrSuggest, [street.key]: [] };
+        }
+        this.scheduleDraftSave();
+        // debounce the lookup per field
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        clearTimeout(this._addrTimer[key]);
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        this._addrTimer[key] = setTimeout(() => this.runAddressLookup(f, val), 300);
+    }
+
+    runAddressLookup(f, val) {
+        if (!f || !val || val.trim().length < 2) {
+            this.addrSuggest = { ...this.addrSuggest, [f.key]: [] };
+            return;
+        }
+        this.addrLoading = { ...this.addrLoading, [f.key]: true };
+        const done = (list) => {
+            this.addrSuggest = { ...this.addrSuggest, [f.key]: (list || []).slice(0, 15) };
+            this.addrLoading = { ...this.addrLoading, [f.key]: false };
+        };
+        const fail = () => { this.addrLoading = { ...this.addrLoading, [f.key]: false }; };
+        if (f.type === 'city') {
+            searchCities({ prefix: val.trim() }).then(done).catch(fail);
+        } else {
+            const city = this.selectedCity;
+            if (!city) { done([]); return; } // need a city first
+            searchStreets({ city, prefix: val.trim() }).then(done).catch(fail);
+        }
+    }
+
+    pickSuggestion(event) {
+        const key = event.currentTarget.dataset.key;
+        const val = event.currentTarget.dataset.val;
+        this.values = { ...this.values, [key]: val };
+        this.addrSuggest = { ...this.addrSuggest, [key]: [] };
+        this.scheduleDraftSave();
+    }
+
+    pickSuggestionKey(event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            this.pickSuggestion(event);
+        }
     }
 
     handleFileChange(event) {

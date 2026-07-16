@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Base_Path__c</fullName>
+    <label>Base Path</label>
+    <description>CKAN datastore_search path appended to the Data_Gov_IL named credential, e.g. /api/3/action/datastore_search.</description>
+    <type>Text</type>
+    <length>255</length>
+    <required>false</required>
+</CustomField>

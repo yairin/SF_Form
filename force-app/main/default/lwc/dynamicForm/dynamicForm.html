@@ -134,7 +134,28 @@
                             <template lwc:if={f.required}><abbr class="slds-required" title="חובה">* </abbr></template>{f.label}
                         </label>
                         <div class="slds-form-element__control">
-                            <template lwc:if={f.isText}>
+                            <template lwc:if={f.isAutocomplete}>
+                                <div class="form-autocomplete" role="combobox" aria-expanded={f.suggestExpanded} aria-haspopup="listbox">
+                                    <input type="text" id={f.key} data-key={f.key} class="slds-input" autocomplete="off"
+                                        role="textbox" aria-autocomplete="list"
+                                        aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid}
+                                        aria-describedby={f.describedBy} value={f.currentValue}
+                                        oninput={handleAddressInput} onchange={handleChange} />
+                                    <template lwc:if={f.showSuggest}>
+                                        <ul class="form-suggest-list" role="listbox" aria-label={f.label}>
+                                            <template for:each={f.suggestionItems} for:item="sug">
+                                                <li key={sug} role="option" class="form-suggest-item"
+                                                    data-key={f.key} data-val={sug} onclick={pickSuggestion}
+                                                    onkeydown={pickSuggestionKey} tabindex="0">{sug}</li>
+                                            </template>
+                                        </ul>
+                                    </template>
+                                    <template lwc:if={f.suggestLoading}>
+                                        <div class="slds-text-body_small slds-text-color_weak" role="status">מחפש…</div>
+                                    </template>
+                                </div>
+                            </template>
+                            <template lwc:elseif={f.isText}>
                                 <input type={f.inputType} id={f.key} data-key={f.key} class="slds-input"
                                     aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid}
                                     aria-describedby={f.describedBy} onchange={handleChange} />

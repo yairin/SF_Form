@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Streets_Resource_Id__c</fullName>
+    <label>Streets Resource Id</label>
+    <description>CKAN datastore resource id of the data.gov.il streets dataset (population authority, dataset 321). Verify/update from data.gov.il if the lookup returns nothing.</description>
+    <type>Text</type>
+    <length>100</length>
+    <required>false</required>
+</CustomField>

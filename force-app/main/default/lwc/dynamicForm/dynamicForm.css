@@ -288,3 +288,16 @@ a:focus {
   --sf-font: "Rubik", "Segoe UI", "Assistant", "Heebo", Arial, sans-serif;
   font-family: var(--sf-font);
 }
+/* City/street autocomplete dropdown */
+.form-autocomplete { position: relative; }
+.form-suggest-list {
+  position: absolute; z-index: 10; inset-inline: 0; top: 100%;
+  margin: 2px 0 0; padding: 4px 0; list-style: none;
+  background: var(--sf-panel, #fff); color: inherit;
+  border: 1px solid var(--sf-line, #dce3ec); border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.15); max-height: 220px; overflow-y: auto;
+}
+.form-suggest-item { padding: 7px 12px; cursor: pointer; font-size: .92rem; }
+.form-suggest-item:hover, .form-suggest-item:focus-visible {
+  background: var(--sf-brand, #1c5aa8); color: #fff; outline: none;
+}
