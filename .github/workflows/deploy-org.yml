@@ -46,6 +46,7 @@ jobs:
         # those and fail the deploy. Keep this list in sync with validate-org.yml when
         # adding an Apex class + test.
         run: |
+          set +e
           sf project deploy start \
             --source-dir force-app \
             --test-level RunSpecifiedTests \
@@ -60,7 +61,11 @@ jobs:
             --tests AddressLookupControllerTest \
             --target-org target \
             --wait 30 \
-            --verbose
+            --json > deploy.json 2>&1
+          code=$?
+          set -e
+          python3 scripts/print_deploy_failures.py deploy.json
+          exit $code
 
       - name: Assign manager permission set
         run: |

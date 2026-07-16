@@ -1,1 +1,1 @@
-fix remote site file suffix 20260716T210929Z
+diagnose+drop CMT record 20260716T211210Z
