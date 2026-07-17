@@ -15,7 +15,7 @@ public without sharing class FormRoutingService {
 
         Map<String, Form_Template__c> byExt = new Map<String, Form_Template__c>();
         for (Form_Template__c t : [
-            SELECT External_Id__c, Authority__c, Authority__r.Code__c, Service_Type__c,
+            SELECT External_Id__c, Authority__c, Authority__r.Code__c, Authority_Code__c, Service_Type__c,
                    Service_Type__r.Department__c, Service_Type__r.Default_SLA_Hours__c
             FROM Form_Template__c
             WHERE External_Id__c IN :extIds
@@ -33,6 +33,12 @@ public without sharing class FormRoutingService {
             if (t.Authority__c != null) {
                 u.Authority__c = t.Authority__c;
                 u.Tenant_Code__c = t.Authority__r.Code__c;
+                changed = true;
+            }
+            // Authority_Code__c is the isolation key the Restriction Rule matches; copy it
+            // from the template so responses land in the same authority as their form.
+            if (String.isNotBlank(t.Authority_Code__c)) {
+                u.Authority_Code__c = t.Authority_Code__c;
                 changed = true;
             }
             if (t.Service_Type__c != null) {

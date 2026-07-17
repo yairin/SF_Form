@@ -23,6 +23,22 @@ private class FormRoutingServiceTest {
     }
 
     @isTest
+    static void stampsAuthorityCodeFromTemplate() {
+        insert new Form_Template__c(Name = 'עם רשות', External_Id__c = 'auth-1',
+            Schema_JSON__c = '[]', Active__c = true, Authority_Code__c = '0000');
+
+        Test.startTest();
+        Form_Response__c r = new Form_Response__c(
+            Form_External_Id__c = 'auth-1', Response_Data__c = '{"a":"b"}');
+        insert r;
+        Test.stopTest();
+
+        Form_Response__c saved = [SELECT Authority_Code__c FROM Form_Response__c WHERE Id = :r.Id];
+        System.assertEquals('0000', saved.Authority_Code__c,
+            'response inherits the template authority code for isolation');
+    }
+
+    @isTest
     static void noServiceTypeLeavesRoutingEmpty() {
         insert new Form_Template__c(Name = 'x', External_Id__c = 'x-1', Schema_JSON__c = '[]', Active__c = true);
         Test.startTest();

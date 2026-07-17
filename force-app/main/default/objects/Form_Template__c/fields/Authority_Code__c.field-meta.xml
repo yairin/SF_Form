@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Authority_Code__c</fullName>
+    <label>Authority Code</label>
+    <description>Local-authority code that owns this template (LAMAS municipality code; demo=0000). Stamped from the creating user; the isolation key matched by the Restriction Rule against User.Authority_Code__c. Gallery-shared templates are visible cross-authority.</description>
+    <type>Text</type>
+    <length>20</length>
+    <required>false</required>
+</CustomField>

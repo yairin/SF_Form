@@ -74,6 +74,9 @@ jobs:
           sf org assign permset --name SF_Forms_Manager --target-org target \
             || echo "Permission set already assigned (ignored)."
 
+      - name: Provision demo authority + backfill authority codes
+        run: sf apex run --file scripts/backfill-authority.apex --target-org target
+
       - name: Seed reference data (departments + service types)
         run: sf apex run --file scripts/seed.apex --target-org target
 

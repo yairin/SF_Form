@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>External_Case_Ref__c</fullName>
+    <label>External Case Ref</label>
+    <description>Reference id of the case in the external municipal service-desk Salesforce org (the call-center module handles the case there). Populated by the outbound handoff integration.</description>
+    <type>Text</type>
+    <length>80</length>
+    <required>false</required>
+</CustomField>

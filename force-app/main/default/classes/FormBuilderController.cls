@@ -197,8 +197,19 @@ public with sharing class FormBuilderController {
         f.Schema_JSON__c = schemaJson;
         f.Active__c = true;
         f.Service_Type__c = String.isBlank(serviceTypeId) ? null : (Id) serviceTypeId;
+        // Stamp the authority isolation key from the creating user (new templates only;
+        // don't overwrite an existing template's authority on edit).
+        if (String.isBlank(recordId) && String.isBlank(f.Authority_Code__c)) {
+            f.Authority_Code__c = currentUserAuthority();
+        }
         upsert as user f;
         return f;
+    }
+
+    /** The authority code of the running user (isolation key), or null. */
+    private static String currentUserAuthority() {
+        List<User> us = [SELECT Authority_Code__c FROM User WHERE Id = :UserInfo.getUserId() LIMIT 1];
+        return us.isEmpty() ? null : us[0].Authority_Code__c;
     }
 
     /** Activate / deactivate a form (deactivated forms stop rendering for the public). */
@@ -226,7 +237,11 @@ public with sharing class FormBuilderController {
             Schema_JSON__c  = src.Schema_JSON__c,
             Service_Type__c = src.Service_Type__c,
             External_Id__c  = base + '-copy-' + String.valueOf(Datetime.now().getTime()),
-            Active__c       = false
+            Active__c       = false,
+            // "Clone to my authority": the copy belongs to the cloning user's authority
+            // and is NOT itself gallery-shared.
+            Authority_Code__c   = currentUserAuthority(),
+            Shared_To_Gallery__c = false
         );
         insert as user copy;
         return copy;

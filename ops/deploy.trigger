@@ -1,1 +1,1 @@
-QA: per-field-type validation + validation test suite 20260717T054816Z
+Phase A: multi-authority isolation groundwork (backfill + inactive restriction rules) 20260717T101500Z
