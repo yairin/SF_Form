@@ -113,14 +113,14 @@ public with sharing class FormResultsController {
     @AuraEnabled
     public static List<ResponseRow> listResponses(String externalId) {
         List<ResponseRow> out = new List<ResponseRow>();
-        for (Form_Response__c r : [
-            SELECT Id, Name, Respondent_Name__c, Submitted_At__c, AI_Status__c, Approval_Route__c
-            FROM Form_Response__c
-            WHERE Form_External_Id__c = :externalId
-            WITH USER_MODE
-            ORDER BY Submitted_At__c DESC NULLS LAST, CreatedDate DESC
-            LIMIT 2000
-        ]) {
+        String authorityScopeCode = AuthorityScope.currentCode();
+        String q = 'SELECT Id, Name, Respondent_Name__c, Submitted_At__c, AI_Status__c, Approval_Route__c'
+            + ' FROM Form_Response__c WHERE Form_External_Id__c = :externalId'
+            + AuthorityScope.clause('Tenant_Code__c')
+            + ' ORDER BY Submitted_At__c DESC NULLS LAST, CreatedDate DESC LIMIT 2000';
+        Map<String, Object> binds = new Map<String, Object>{
+            'externalId' => externalId, 'authorityScopeCode' => authorityScopeCode };
+        for (Form_Response__c r : (List<Form_Response__c>) Database.queryWithBinds(q, binds, AccessLevel.USER_MODE)) {
             ResponseRow row = new ResponseRow();
             row.id = r.Id;
             row.reference = r.Name;
@@ -141,9 +141,11 @@ public with sharing class FormResultsController {
             SELECT Id, Name, Form_External_Id__c, Respondent_Name__c, Email__c, Phone__c,
                    Submitted_At__c, Response_Data__c, AI_Status__c, AI_Findings__c,
                    AI_Reviewed_At__c, Update_Requested__c, Approval_Route__c,
-                   Case__c, Case__r.CaseNumber
+                   Case__c, Case__r.CaseNumber, Tenant_Code__c
             FROM Form_Response__c WHERE Id = :responseId WITH USER_MODE LIMIT 1
         ];
+        // Block a scoped user from opening a response outside their authority via a known id.
+        AuthorityScope.assertOwn(r.Tenant_Code__c);
         ResponseDetail d = new ResponseDetail();
         d.id = r.Id;
         d.reference = r.Name;
@@ -258,9 +260,12 @@ public with sharing class FormResultsController {
 
         List<Map<String, Object>> payloads = new List<Map<String, Object>>();
         Integer approved = 0, needsInfo = 0, pending = 0;
-        for (Form_Response__c r : [
-            SELECT Response_Data__c, AI_Status__c FROM Form_Response__c WHERE Form_External_Id__c = :externalId WITH USER_MODE
-        ]) {
+        String authorityScopeCode = AuthorityScope.currentCode();
+        String rq = 'SELECT Response_Data__c, AI_Status__c FROM Form_Response__c'
+            + ' WHERE Form_External_Id__c = :externalId' + AuthorityScope.clause('Tenant_Code__c');
+        Map<String, Object> rbinds = new Map<String, Object>{
+            'externalId' => externalId, 'authorityScopeCode' => authorityScopeCode };
+        for (Form_Response__c r : (List<Form_Response__c>) Database.queryWithBinds(rq, rbinds, AccessLevel.USER_MODE)) {
             try { payloads.add((Map<String, Object>) JSON.deserializeUntyped(r.Response_Data__c)); }
             catch (Exception e) { /* skip malformed */ }
             if (r.AI_Status__c == 'Approved') approved++;

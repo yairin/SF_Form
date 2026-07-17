@@ -19,12 +19,12 @@ public with sharing class FormBuilderController {
 
     @AuraEnabled(cacheable=true)
     public static List<Form_Template__c> listForms() {
-        return [
-            SELECT Id, Name, External_Id__c, Active__c, Description__c
-            FROM Form_Template__c
-            WITH USER_MODE
-            ORDER BY CreatedDate DESC
-        ];
+        String authorityScopeCode = AuthorityScope.currentCode();
+        String q = 'SELECT Id, Name, External_Id__c, Active__c, Description__c FROM Form_Template__c';
+        if (AuthorityScope.isScoped()) q += ' WHERE Authority_Code__c = :authorityScopeCode';
+        q += ' ORDER BY CreatedDate DESC';
+        return (List<Form_Template__c>) Database.queryWithBinds(
+            q, new Map<String, Object>{ 'authorityScopeCode' => authorityScopeCode }, AccessLevel.USER_MODE);
     }
 
     /** Richer list for the "Forms" management tab: adds service type, submission count, public URL. */
@@ -32,23 +32,22 @@ public with sharing class FormBuilderController {
     // responses show up without a hard refresh.
     @AuraEnabled
     public static List<TemplateInfo> listFormsDetailed() {
+        String authorityScopeCode = AuthorityScope.currentCode();
+        Map<String, Object> binds = new Map<String, Object>{ 'authorityScopeCode' => authorityScopeCode };
+
         Map<String, Integer> counts = new Map<String, Integer>();
-        for (AggregateResult ar : [
-            SELECT Form_External_Id__c ext, COUNT(Id) c
-            FROM Form_Response__c
-            WHERE Form_External_Id__c != null
-            WITH USER_MODE
-            GROUP BY Form_External_Id__c
-        ]) {
+        String aggQ = 'SELECT Form_External_Id__c ext, COUNT(Id) c FROM Form_Response__c'
+            + ' WHERE Form_External_Id__c != null' + AuthorityScope.clause('Tenant_Code__c')
+            + ' GROUP BY Form_External_Id__c';
+        for (AggregateResult ar : (List<AggregateResult>) Database.queryWithBinds(aggQ, binds, AccessLevel.USER_MODE)) {
             counts.put((String) ar.get('ext'), (Integer) ar.get('c'));
         }
         List<TemplateInfo> out = new List<TemplateInfo>();
-        for (Form_Template__c t : [
-            SELECT Id, Name, External_Id__c, Active__c, Description__c, Service_Type__r.Name, Shared_To_Gallery__c
-            FROM Form_Template__c
-            WITH USER_MODE
-            ORDER BY CreatedDate DESC
-        ]) {
+        String q = 'SELECT Id, Name, External_Id__c, Active__c, Description__c, Service_Type__r.Name, Shared_To_Gallery__c'
+            + ' FROM Form_Template__c';
+        if (AuthorityScope.isScoped()) q += ' WHERE Authority_Code__c = :authorityScopeCode';
+        q += ' ORDER BY CreatedDate DESC';
+        for (Form_Template__c t : (List<Form_Template__c>) Database.queryWithBinds(q, binds, AccessLevel.USER_MODE)) {
             TemplateInfo ti = new TemplateInfo();
             ti.id = t.Id;
             ti.name = t.Name;
@@ -103,16 +102,21 @@ public with sharing class FormBuilderController {
     /** Full template for editing in the builder. */
     @AuraEnabled(cacheable=true)
     public static Form_Template__c getTemplate(Id recordId) {
-        return [
+        Form_Template__c t = [
             SELECT Id, Name, Description__c, Schema_JSON__c, External_Id__c, Active__c, Service_Type__c,
                    AI_Review_Enabled__c, AI_Review_Instructions__c,
                    AI_Check_Attachments__c, AI_Contact_Applicant__c,
-                   Tasks_JSON__c, Appearance_JSON__c, Identity_Mode__c, Shared_To_Gallery__c
+                   Tasks_JSON__c, Appearance_JSON__c, Identity_Mode__c, Shared_To_Gallery__c,
+                   Authority_Code__c
             FROM Form_Template__c
             WHERE Id = :recordId
             WITH USER_MODE
             LIMIT 1
         ];
+        // A scoped user may open a gallery-shared template from another authority, but not
+        // a non-shared one. Gallery templates are meant to be cross-authority visible.
+        if (t.Shared_To_Gallery__c != true) AuthorityScope.assertOwn(t.Authority_Code__c);
+        return t;
     }
 
     /** Save the identity mode (anonymous / identified / applicant-choice) for a form. */

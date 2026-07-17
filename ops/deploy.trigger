@@ -1,1 +1,1 @@
-Isolation: exclude undeployable restriction rules; keep Phase A groundwork live 20260717T112000Z
+Isolation: Apex query-layer per-authority scoping (AuthorityScope) 20260717T120000Z
