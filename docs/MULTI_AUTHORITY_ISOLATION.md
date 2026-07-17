@@ -3,6 +3,41 @@
 מסמך זה מתאר את הפעלת **בידוד הגישה** כך שכל משתמש רואה רק את נתוני הרשות שלו.
 ⚠️ יש לבצע **בסדר הזה בדיוק** — הפעלת הבידוד לפני שיוך המשתמשים תנעל את האפליקציה.
 
+---
+
+## ✅ מצב עדכני (מה שמיושם בפועל)
+
+**Phase A — תשתית בידוד (פרוס וירוק ב-CI):**
+- שדה טקסט `Form_Template__c.Authority_Code__c` (מפתח הבידוד לתבניות) + `Form_Response__c.External_Case_Ref__c`.
+- החתמת קוד-הרשות בשמירה/שכפול טופס (`FormBuilderController`) ובניתוב תגובות (`FormRoutingService`),
+  דרך ה-lookup `Authority__c`; `Form_Response__c.Authority_Code__c` הוא שדה **נוסחה** ולכן
+  הקוד לבידוד תגובות נשמר בשדה הכתיב `Tenant_Code__c`.
+- סקריפט `scripts/backfill-authority.apex` (מחובר ל-`deploy-org.yml`): מקים רשות דמה
+  `0000 / MuniForceCity`, מחתים משתמשים (best-effort — מדלג על משתמשים שחוסמים בגלל
+  ולידציית `Municipal__c`), תבניות ותגובות קיימות.
+
+**אכיפה — שכבת Apex (פרוס וירוק), לא Restriction Rules:**
+> **מגבלת פלטפורמה:** האורגן הזה דוחה קריטריון של שדה-משתמש מותאם
+> (`$User.Authority_Code__c`) בתוך `recordFilter` של Restriction Rule
+> ("cannot create restriction rules with this user criterion"), וה-recordFilter
+> מאומת גם כשהכלל כבוי. בנוסף כללי הגבלה תומכים רק ב-`Equals` (בלי `OR`, בלי שדות נוסחה),
+> ולכן גם חריג הגלריה (`שלי OR משותף`) לא ניתן לביטוי. לכן קבצי ה-`restrictionRules/`
+> נשמרים בקוד אך **מוחרגים מהפריסה** (`.forceignore`).
+
+הבידוד נאכף במחלקה `AuthorityScope`:
+- משתמש **עם** קוד-רשות ו**בלי** "View All Data" → מוגבל לרשות שלו; כל השאר (אדמין/אינטגרציה/
+  ללא קוד) → ללא הגבלה (רואה הכל) — תואם ל-bypass של Restriction Rules.
+- שאילתות דפדוף מסוננות: `FormBuilderController.listForms/listFormsDetailed` לפי
+  `Authority_Code__c`, ספירת התגובות + `FormResultsController.listResponses/getResults`
+  לפי `Tenant_Code__c`. `getTemplate` / `getResponseDetail` חוסמים גישה חוצת-רשות לרשומה בודדת.
+- **הגלריה** (`listGallery`) והגשת אורחים (`FormResponseController`) נשארות ללא הגבלה בכוונה.
+
+**אופציונלי — הפעלת Restriction Rules ידנית ב-Setup (שכבת הגנה שנייה):** ניתן ליצור את
+הכללים במסך ה-Setup (ה-UI מאפשר בחירת שדה-משתמש שהמטא-דאטה דוחה). הקבצים ב-`restrictionRules/`
+משמשים כתיעוד למפתח (`Tenant_Code__c = $User.Authority_Code__c` לתגובות).
+
+---
+
 ## מה כבר פרוס (בטוח, ללא השפעת גישה)
 - אובייקט `Authority__c` + שדות config פר-רשות.
 - Lookup `Authority__c` על טפסים/פניות/מחלקות/סוגי-שירות + חותמת אוטומטית בפנייה.
