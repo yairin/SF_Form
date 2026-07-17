@@ -1,1 +1,1 @@
-Phase A: exclude Phase-B restriction rules from deploy (registry suffix inference) 20260717T103000Z
+Phase A: route via Authority lookup (Authority_Code__c on Form_Response is a formula) 20260717T104500Z
