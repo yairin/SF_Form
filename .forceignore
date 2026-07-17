@@ -12,12 +12,6 @@ skills-lock.json
 .env
 .env.example
 
-# Phase B only — Restriction Rules stay in source control but are NOT deployed
-# during Phase A (groundwork/backfill). The current CLI registry fails suffix
-# inference for restrictionRule during a --source-dir glob; Phase B removes this
-# ignore and deploys them (via explicit manifest if needed) once codes are backfilled.
-force-app/main/default/restrictionRules/**
-
 # Salesforce housekeeping
 **/*.eslintrc.json
 **/jsconfig.json

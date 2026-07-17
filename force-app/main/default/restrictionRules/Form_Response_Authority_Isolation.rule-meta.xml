@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RestrictionRule xmlns="http://soap.sforce.com/2006/04/metadata">
-    <active>false</active>
-    <description>Each user sees only the form responses (applicant PII) of their own authority. Hard isolation, no gallery exception. Activated in phase B after authority codes are backfilled.</description>
+    <active>true</active>
+    <description>Each user sees only the form responses (applicant PII) of their own authority. Hard isolation, no gallery exception. Sysadmins (View All Data) bypass. Activated in phase B after authority codes were backfilled.</description>
     <masterLabel>Form Response Authority Isolation</masterLabel>
     <recordFilter>Authority_Code__c = '$User.Authority_Code__c'</recordFilter>
     <targetEntity>Form_Response__c</targetEntity>
