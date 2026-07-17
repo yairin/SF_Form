@@ -60,6 +60,7 @@ jobs:
             --tests FormTaskServiceTest \
             --tests AddressLookupControllerTest \
             --tests CaseHandoffServiceTest \
+            --tests FormValidationServiceTest \
             --target-org target \
             --wait 30 \
             --json > deploy.json 2>&1

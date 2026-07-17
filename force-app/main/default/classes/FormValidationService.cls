@@ -77,6 +77,10 @@ public without sharing class FormValidationService {
             if (!NUMBER_RE.matcher(s).matches()) return 'ערך מספרי לא תקין: ' + label;
         } else if (type == 'idNumber') {
             if (!isValidIsraeliId(s)) return 'תעודת זהות לא תקינה: ' + label;
+        } else if (type == 'age') {
+            if (!s.isNumeric()) return 'גיל לא תקין: ' + label;
+            Integer a = Integer.valueOf(s);
+            if (a < 0 || a > 120) return 'גיל לא תקין: ' + label;
         } else if (type == 'date') {
             try { Date.valueOf(s); } catch (Exception e) { return 'תאריך לא תקין: ' + label; }
         }

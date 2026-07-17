@@ -43,6 +43,37 @@ function isValidIsraeliId(id) {
     return sum % 10 === 0;
 }
 
+// Per-field-type format validation (mirrors the authoritative FormValidationService).
+// Returns a Hebrew error string, or null when the value is acceptable / not constrained.
+function typeError(type, value) {
+    const s = String(value == null ? '' : value).trim();
+    if (!s) return null;
+    switch (type) {
+        case 'email':
+            return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s) ? null : 'כתובת אימייל לא תקינה';
+        case 'phone': {
+            const d = s.replace(/\D/g, '');
+            return (d.length >= 9 && d.length <= 15) ? null : 'מספר טלפון לא תקין';
+        }
+        case 'number':
+        case 'currency':
+            return /^-?\d+(\.\d+)?$/.test(s) ? null : 'ערך מספרי לא תקין';
+        case 'age': {
+            if (!/^\d+$/.test(s)) return 'גיל לא תקין';
+            const n = Number(s);
+            return (n >= 0 && n <= 120) ? null : 'גיל לא תקין';
+        }
+        case 'idNumber':
+            return isValidIsraeliId(s) ? null : 'תעודת זהות לא תקינה';
+        case 'date':
+            return isNaN(Date.parse(s)) ? 'תאריך לא תקין' : null;
+        default:
+            // text, textarea, firstName, lastName, city, street, houseNumber (IL allows letters),
+            // apartment, select, radio, checkbox, checkboxGroup, file — no format constraint here
+            return null;
+    }
+}
+
 export default class DynamicForm extends LightningElement {
     _ext;
     _urlExt;
@@ -260,9 +291,10 @@ export default class DynamicForm extends LightningElement {
         fieldsToCheck.forEach((f) => {
             delete errs[f.key];
             if (vis[f.key] === false) return; // hidden fields never block submission
+            const val = this.values[f.key];
             let m;
-            if (f.required && this.isEmpty(this.values[f.key])) m = 'שדה חובה';
-            else if (f.type === 'idNumber' && !this.isEmpty(this.values[f.key]) && !isValidIsraeliId(this.values[f.key])) m = 'תעודת זהות לא תקינה';
+            if (f.required && this.isEmpty(val)) m = 'שדה חובה';
+            else if (!this.isEmpty(val)) m = typeError(f.type, Array.isArray(val) ? val.join(' ') : val);
             if (m) { errs[f.key] = m; bad = true; }
         });
         this.fieldErrors = errs;
