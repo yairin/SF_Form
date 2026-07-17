@@ -17,14 +17,21 @@ if (existing.isEmpty()) {
     System.debug('BACKFILL|demo authority already exists');
 }
 
-// 2. Assign internal users without an authority code to the demo authority
+// 2. Assign internal users without an authority code to the demo authority.
+// Best-effort: some User records carry org validation rules (e.g. a required
+// Municipal__c) that we can't satisfy here — those users are skipped, not fatal.
 List<User> users = [
     SELECT Id FROM User
     WHERE IsActive = true AND UserType = 'Standard' AND Authority_Code__c = null
 ];
 for (User u : users) u.Authority_Code__c = DEMO_CODE;
-if (!users.isEmpty()) { update users; }
-System.debug('BACKFILL|users stamped=' + users.size());
+Integer userOk = 0, userSkip = 0;
+if (!users.isEmpty()) {
+    for (Database.SaveResult sr : Database.update(users, false)) {
+        if (sr.isSuccess()) { userOk++; } else { userSkip++; }
+    }
+}
+System.debug('BACKFILL|users stamped=' + userOk + ' skipped=' + userSkip);
 
 // 3. Backfill templates — flat Authority_Code__c is the writeable isolation key the
 // template restriction rule matches; also link the Authority__c lookup for consistency.
