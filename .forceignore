@@ -12,6 +12,14 @@ skills-lock.json
 .env
 .env.example
 
+# Restriction Rules kept in source but NOT deployed: this org rejects a
+# $User.<custom field> criterion in a restriction rule recordFilter ("cannot
+# create restriction rules with this user criterion"), even when active=false.
+# Per-authority isolation keys (Authority_Code__c / Tenant_Code__c) and the
+# backfill ARE deployed (Phase A); enforcement mechanism is pending a decision
+# (Setup-UI restriction rule vs Apex query-layer scoping).
+force-app/main/default/restrictionRules/**
+
 # Salesforce housekeeping
 **/*.eslintrc.json
 **/jsconfig.json

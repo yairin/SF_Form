@@ -1,1 +1,1 @@
-Phase B: response rule active (hard PII isolation); template rule inactive (gallery preserved) 20260717T111500Z
+Isolation: exclude undeployable restriction rules; keep Phase A groundwork live 20260717T112000Z
