@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RestrictionRule xmlns="http://soap.sforce.com/2006/04/metadata">
-    <active>true</active>
-    <description>Each user sees only their own authority's form templates; gallery-published templates are visible to all authorities. Sysadmins (View All Data) bypass. Activated in phase B after authority codes were backfilled.</description>
+    <active>false</active>
+    <description>Per-authority template isolation. INACTIVE by design: restriction rules can't OR a $User criterion with the gallery exception, so the cross-authority gallery is preserved via query-level scoping instead. Sysadmins bypass.</description>
     <enforcementType>Restrict</enforcementType>
     <masterLabel>Form Template Authority Isolation</masterLabel>
-    <recordFilter>OR(Authority_Code__c = $User.Authority_Code__c, Shared_To_Gallery__c = true)</recordFilter>
+    <recordFilter>Authority_Code__c = $User.Authority_Code__c</recordFilter>
     <targetEntity>Form_Template__c</targetEntity>
 </RestrictionRule>

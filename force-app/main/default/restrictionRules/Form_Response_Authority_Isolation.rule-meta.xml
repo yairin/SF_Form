@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RestrictionRule xmlns="http://soap.sforce.com/2006/04/metadata">
     <active>true</active>
-    <description>Each user sees only the form responses (applicant PII) of their own authority. Matches the stamped Tenant_Code__c (Authority_Code__c is a formula, unsupported by restriction rules). Hard isolation, no gallery exception. Sysadmins (View All Data) bypass. Activated in phase B after authority codes were backfilled.</description>
+    <description>Users see only their own authority's form responses (applicant PII). Matches the stamped Tenant_Code__c; Authority_Code__c is a formula, unsupported by restriction rules. Sysadmins bypass. Activated in phase B.</description>
     <enforcementType>Restrict</enforcementType>
     <masterLabel>Form Response Authority Isolation</masterLabel>
     <recordFilter>Tenant_Code__c = $User.Authority_Code__c</recordFilter>

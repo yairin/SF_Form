@@ -1,1 +1,1 @@
-Phase B: response rule matches Tenant_Code (real field), function-form OR 20260717T111000Z
+Phase B: response rule active (hard PII isolation); template rule inactive (gallery preserved) 20260717T111500Z
