@@ -1,1 +1,1 @@
-Phase A: multi-authority isolation groundwork (backfill + inactive restriction rules) 20260717T101500Z
+Phase A: exclude Phase-B restriction rules from deploy (registry suffix inference) 20260717T103000Z
