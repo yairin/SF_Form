@@ -1,1 +1,1 @@
-Phase B: add required enforcementType=Restrict to restriction rules 20260717T110500Z
+Phase B: response rule matches Tenant_Code (real field), function-form OR 20260717T111000Z

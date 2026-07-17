@@ -4,6 +4,6 @@
     <description>Each user sees only their own authority's form templates; gallery-published templates are visible to all authorities. Sysadmins (View All Data) bypass. Activated in phase B after authority codes were backfilled.</description>
     <enforcementType>Restrict</enforcementType>
     <masterLabel>Form Template Authority Isolation</masterLabel>
-    <recordFilter>Authority_Code__c = '$User.Authority_Code__c' OR Shared_To_Gallery__c = true</recordFilter>
+    <recordFilter>OR(Authority_Code__c = $User.Authority_Code__c, Shared_To_Gallery__c = true)</recordFilter>
     <targetEntity>Form_Template__c</targetEntity>
 </RestrictionRule>

@@ -43,10 +43,17 @@ for (Form_Template__c t : tpls) {
 if (!tpls.isEmpty()) { update tpls; }
 System.debug('BACKFILL|templates stamped=' + tpls.size());
 
-// 4. Backfill responses — Form_Response__c.Authority_Code__c is a formula off Authority__r.Code__c,
-// so we set the writeable Authority__c lookup and let the formula derive the code.
-List<Form_Response__c> resp = [SELECT Id FROM Form_Response__c WHERE Authority__c = null];
-for (Form_Response__c r : resp) r.Authority__c = demoAuthId;
+// 4. Backfill responses — set the Authority__c lookup (Authority_Code__c is a read-only
+// formula) and the stamped Tenant_Code__c, which is the field the response restriction
+// rule matches (restriction rules can't filter on formula fields).
+List<Form_Response__c> resp = [
+    SELECT Id, Authority__c, Tenant_Code__c FROM Form_Response__c
+    WHERE Authority__c = null OR Tenant_Code__c = null
+];
+for (Form_Response__c r : resp) {
+    if (r.Authority__c == null) r.Authority__c = demoAuthId;
+    if (String.isBlank(r.Tenant_Code__c)) r.Tenant_Code__c = DEMO_CODE;
+}
 if (!resp.isEmpty()) { update resp; }
 System.debug('BACKFILL|responses stamped=' + resp.size());
 

@@ -39,10 +39,12 @@ private class FormRoutingServiceTest {
         Test.stopTest();
 
         Form_Response__c saved = [
-            SELECT Authority__c, Authority_Code__c FROM Form_Response__c WHERE Id = :r.Id];
+            SELECT Authority__c, Authority_Code__c, Tenant_Code__c FROM Form_Response__c WHERE Id = :r.Id];
         System.assertEquals(a.Id, saved.Authority__c, 'response linked to the resolved authority');
         System.assertEquals('0000', saved.Authority_Code__c,
-            'formula derives the authority code for isolation');
+            'formula derives the authority code');
+        System.assertEquals('0000', saved.Tenant_Code__c,
+            'stamped tenant code (the restriction-rule isolation key) is set');
     }
 
     @isTest
