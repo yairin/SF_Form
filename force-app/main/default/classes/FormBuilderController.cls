@@ -14,6 +14,7 @@ public with sharing class FormBuilderController {
         @AuraEnabled public String serviceType;
         @AuraEnabled public Integer responseCount;
         @AuraEnabled public String url;
+        @AuraEnabled public Boolean sharedToGallery;
     }
 
     @AuraEnabled(cacheable=true)
@@ -43,7 +44,7 @@ public with sharing class FormBuilderController {
         }
         List<TemplateInfo> out = new List<TemplateInfo>();
         for (Form_Template__c t : [
-            SELECT Id, Name, External_Id__c, Active__c, Description__c, Service_Type__r.Name
+            SELECT Id, Name, External_Id__c, Active__c, Description__c, Service_Type__r.Name, Shared_To_Gallery__c
             FROM Form_Template__c
             WITH USER_MODE
             ORDER BY CreatedDate DESC
@@ -57,9 +58,41 @@ public with sharing class FormBuilderController {
             ti.serviceType = t.Service_Type__r.Name;
             ti.responseCount = counts.containsKey(t.External_Id__c) ? counts.get(t.External_Id__c) : 0;
             ti.url = buildUrl(t.External_Id__c);
+            ti.sharedToGallery = t.Shared_To_Gallery__c;
             out.add(ti);
         }
         return out;
+    }
+
+    /** Templates published to the shared cross-authority gallery (for browsing + cloning). */
+    @AuraEnabled
+    public static List<TemplateInfo> listGallery() {
+        List<TemplateInfo> out = new List<TemplateInfo>();
+        for (Form_Template__c t : [
+            SELECT Id, Name, External_Id__c, Description__c, Service_Type__r.Name
+            FROM Form_Template__c
+            WHERE Shared_To_Gallery__c = true
+            WITH USER_MODE
+            ORDER BY Name
+        ]) {
+            TemplateInfo ti = new TemplateInfo();
+            ti.id = t.Id;
+            ti.name = t.Name;
+            ti.externalId = t.External_Id__c;
+            ti.description = t.Description__c;
+            ti.serviceType = t.Service_Type__r.Name;
+            ti.sharedToGallery = true;
+            out.add(ti);
+        }
+        return out;
+    }
+
+    /** Publish/unpublish a template to the shared gallery. */
+    @AuraEnabled
+    public static void setGalleryShared(Id recordId, Boolean shared) {
+        Form_Template__c f = [SELECT Id FROM Form_Template__c WHERE Id = :recordId WITH USER_MODE LIMIT 1];
+        f.Shared_To_Gallery__c = shared == true;
+        update as user f;
     }
 
     @AuraEnabled(cacheable=true)
@@ -74,7 +107,7 @@ public with sharing class FormBuilderController {
             SELECT Id, Name, Description__c, Schema_JSON__c, External_Id__c, Active__c, Service_Type__c,
                    AI_Review_Enabled__c, AI_Review_Instructions__c,
                    AI_Check_Attachments__c, AI_Contact_Applicant__c,
-                   Tasks_JSON__c, Appearance_JSON__c, Identity_Mode__c
+                   Tasks_JSON__c, Appearance_JSON__c, Identity_Mode__c, Shared_To_Gallery__c
             FROM Form_Template__c
             WHERE Id = :recordId
             WITH USER_MODE

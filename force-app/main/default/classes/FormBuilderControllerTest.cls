@@ -229,6 +229,23 @@ private class FormBuilderControllerTest {
     }
 
     @isTest
+    static void galleryPublishListAndClone() {
+        Form_Template__c t = FormBuilderController.saveForm(
+            null, 'תבנית לשיתוף', 'תיאור', '[{"key":"a","label":"שדה","type":"text"}]', 'gallery-x', null);
+        Test.startTest();
+        FormBuilderController.setGalleryShared(t.Id, true);
+        List<FormBuilderController.TemplateInfo> gallery = FormBuilderController.listGallery();
+        Form_Template__c copy = FormBuilderController.cloneForm(t.Id);
+        Test.stopTest();
+        System.assert(!gallery.isEmpty(), 'published template appears in the gallery');
+        System.assertEquals(true, gallery[0].sharedToGallery, 'gallery row flagged as shared');
+        System.assertEquals(false, copy.Active__c, 'gallery clone starts inactive');
+        // unpublish removes it from the gallery
+        FormBuilderController.setGalleryShared(t.Id, false);
+        System.assertEquals(0, FormBuilderController.listGallery().size(), 'unpublished template leaves the gallery');
+    }
+
+    @isTest
     static void identityModePersists() {
         Form_Template__c t = FormBuilderController.saveForm(
             null, 'טופס מזוהה', '', '[{"key":"a","label":"שדה","type":"text"}]', 'identity-x', null);

@@ -7,6 +7,7 @@ import getPublicUrl from '@salesforce/apex/FormBuilderController.getPublicUrl';
 import setAIConfig from '@salesforce/apex/FormBuilderController.setAIConfig';
 import setDesignConfig from '@salesforce/apex/FormBuilderController.setDesignConfig';
 import setIdentityMode from '@salesforce/apex/FormBuilderController.setIdentityMode';
+import setGalleryShared from '@salesforce/apex/FormBuilderController.setGalleryShared';
 import uploadDesignAsset from '@salesforce/apex/FormBuilderController.uploadDesignAsset';
 
 const CHOICE = new Set(['select', 'radio', 'checkboxGroup']);
@@ -100,6 +101,7 @@ export default class FormBuilder extends LightningElement {
     aiContactApplicant = false;
     tasks = [];
     identityMode = 'Anonymous';
+    sharedToGallery = false;
     appearance = defaultAppearance();
     uploadingBg = false;
     uploadingLogo = false;
@@ -158,6 +160,7 @@ export default class FormBuilder extends LightningElement {
         this.aiContactApplicant = false;
         this.tasks = [];
         this.identityMode = 'Anonymous';
+        this.sharedToGallery = false;
         this.appearance = defaultAppearance();
         this.steps = [newStep()];
         this.ensureIds();
@@ -181,6 +184,7 @@ export default class FormBuilder extends LightningElement {
             this.aiCheckAttachments = t.AI_Check_Attachments__c === true;
             this.aiContactApplicant = t.AI_Contact_Applicant__c === true;
             this.identityMode = t.Identity_Mode__c || 'Anonymous';
+            this.sharedToGallery = t.Shared_To_Gallery__c === true;
             this._editExternalId = t.External_Id__c;
             let parsed = [];
             try { parsed = JSON.parse(t.Schema_JSON__c || '[]'); } catch (e) { parsed = []; }
@@ -661,6 +665,7 @@ export default class FormBuilder extends LightningElement {
     handleAiCheckAttachments(e) { this.aiCheckAttachments = e.target.checked; }
     handleAiContactApplicant(e) { this.aiContactApplicant = e.target.checked; }
     handleIdentityMode(e) { this.identityMode = e.target.value; }
+    handleGalleryShared(e) { this.sharedToGallery = e.target.checked; }
     get identityModeOptions() {
         return [
             ['Anonymous', 'אנונימי (ללא הזדהות)'],
@@ -766,6 +771,9 @@ export default class FormBuilder extends LightningElement {
                 } catch (e) { /* non-fatal */ }
                 try {
                     await setIdentityMode({ recordId: saved.Id, mode: this.identityMode });
+                } catch (e) { /* non-fatal */ }
+                try {
+                    await setGalleryShared({ recordId: saved.Id, shared: this.sharedToGallery });
                 } catch (e) { /* non-fatal */ }
             }
             try { this.savedUrl = await getPublicUrl({ externalId: this.savedExternalId }); } catch (e) { /* ignore */ }

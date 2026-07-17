@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Shared_To_Gallery__c</fullName>
+    <label>Shared To Gallery</label>
+    <description>When true, this template is published to the shared cross-authority gallery so any authority can clone it for their own use.</description>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>

@@ -4,6 +4,7 @@ import LightningConfirm from 'lightning/confirm';
 import { loadStyle } from 'lightning/platformResourceLoader';
 import FORM_FONTS from '@salesforce/resourceUrl/sfFormsFonts';
 import listFormsDetailed from '@salesforce/apex/FormBuilderController.listFormsDetailed';
+import listGallery from '@salesforce/apex/FormBuilderController.listGallery';
 import deleteForm from '@salesforce/apex/FormBuilderController.deleteForm';
 import cloneForm from '@salesforce/apex/FormBuilderController.cloneForm';
 import setActive from '@salesforce/apex/FormBuilderController.setActive';
@@ -40,6 +41,8 @@ export default class FormManager extends LightningElement {
     search = '';
     statusFilter = 'all';
     serviceFilter = 'all';
+    galleryRows = [];
+    galleryBusy = false;
 
     // Accessibility: element to move focus to after the next render, so keyboard
     // and screen-reader focus follow the view change (list <-> builder).
@@ -74,7 +77,35 @@ export default class FormManager extends LightningElement {
     }
 
     get isList() { return this.mode === 'list'; }
+    get isGallery() { return this.mode === 'gallery'; }
     get hasRows() { return this.rows.length > 0; }
+    get hasGalleryRows() { return this.galleryRows.length > 0; }
+
+    async openGallery() {
+        this.mode = 'gallery';
+        try {
+            this.galleryRows = await listGallery();
+        } catch (e) {
+            this.toast('שגיאה', this.msg(e), 'error');
+        }
+    }
+
+    async cloneFromGallery(event) {
+        const id = event.target.dataset.id;
+        if (!id || this.galleryBusy) return;
+        this.galleryBusy = true;
+        try {
+            await cloneForm({ recordId: id });
+            this.toast('שוכפל', 'הטופס נוסף לרשימת הטפסים שלך (לא פעיל — ערכו והפעילו).', 'success');
+            await this.load();
+            this.mode = 'list';
+            this._focusSelector = '.new-form-btn';
+        } catch (e) {
+            this.toast('שגיאה', this.msg(e), 'error');
+        } finally {
+            this.galleryBusy = false;
+        }
+    }
 
     // ---- Search / filter over the loaded forms ----
     get statusFilterOptions() {

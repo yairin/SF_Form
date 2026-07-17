@@ -185,6 +185,11 @@
         <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
+        <field>Form_Template__c.Shared_To_Gallery__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
         <field>Form_Response__c.Identity_Verified__c</field>
         <readable>true</readable>
         <editable>true</editable>

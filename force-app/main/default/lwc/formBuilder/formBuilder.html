@@ -38,6 +38,11 @@
                     </div>
                 </div>
 
+                <div class="slds-form-element slds-p-bottom_small">
+                    <lightning-input type="checkbox" label="פרסם למאגר הטפסים הכללי (רשויות אחרות יוכלו לשכפל)"
+                        checked={sharedToGallery} onchange={handleGalleryShared}></lightning-input>
+                </div>
+
                 <!-- AI review configuration -->
                 <div class="slds-box slds-box_xx-small slds-m-bottom_small slds-theme_shade">
                     <lightning-input type="checkbox" label="בדיקת AI לטופס זה" checked={aiEnabled} onchange={handleAiEnabled}></lightning-input>
