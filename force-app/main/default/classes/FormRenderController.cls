@@ -12,7 +12,7 @@ public without sharing class FormRenderController {
     @AuraEnabled
     public static Form_Template__c getForm(String externalId) {
         List<Form_Template__c> templates = [
-            SELECT Id, Name, Description__c, Schema_JSON__c, External_Id__c, Appearance_JSON__c
+            SELECT Id, Name, Description__c, Schema_JSON__c, External_Id__c, Appearance_JSON__c, Identity_Mode__c
             FROM Form_Template__c
             WHERE External_Id__c = :externalId AND Active__c = true
             LIMIT 1

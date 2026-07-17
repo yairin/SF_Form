@@ -229,6 +229,22 @@ private class FormBuilderControllerTest {
     }
 
     @isTest
+    static void identityModePersists() {
+        Form_Template__c t = FormBuilderController.saveForm(
+            null, 'טופס מזוהה', '', '[{"key":"a","label":"שדה","type":"text"}]', 'identity-x', null);
+        Test.startTest();
+        FormBuilderController.setIdentityMode(t.Id, 'Identified');
+        FormBuilderController.setIdentityMode(t.Id, 'not-a-real-mode'); // falls back to Anonymous
+        Test.stopTest();
+        Form_Template__c fetched = FormBuilderController.getTemplate(t.Id);
+        System.assertEquals('Anonymous', fetched.Identity_Mode__c, 'invalid mode coerced to Anonymous');
+        FormBuilderController.setIdentityMode(t.Id, 'Applicant_Choice');
+        System.assertEquals('Applicant_Choice',
+            FormBuilderController.getTemplate(t.Id).Identity_Mode__c, 'valid mode persisted');
+        System.assert(FormRenderController.getForm('identity-x').Identity_Mode__c != null, 'render returns identity mode');
+    }
+
+    @isTest
     static void renderReturnsAppearance() {
         String schema = '[{"key":"a","label":"שדה","type":"text"}]';
         Form_Template__c t = FormBuilderController.saveForm(null, 'טופס מעוצב', '', schema, 'render-appear', null);

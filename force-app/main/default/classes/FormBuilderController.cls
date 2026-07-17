@@ -74,12 +74,21 @@ public with sharing class FormBuilderController {
             SELECT Id, Name, Description__c, Schema_JSON__c, External_Id__c, Active__c, Service_Type__c,
                    AI_Review_Enabled__c, AI_Review_Instructions__c,
                    AI_Check_Attachments__c, AI_Contact_Applicant__c,
-                   Tasks_JSON__c, Appearance_JSON__c
+                   Tasks_JSON__c, Appearance_JSON__c, Identity_Mode__c
             FROM Form_Template__c
             WHERE Id = :recordId
             WITH USER_MODE
             LIMIT 1
         ];
+    }
+
+    /** Save the identity mode (anonymous / identified / applicant-choice) for a form. */
+    @AuraEnabled
+    public static void setIdentityMode(Id recordId, String mode) {
+        Set<String> allowed = new Set<String>{ 'Anonymous', 'Identified', 'Applicant_Choice' };
+        Form_Template__c f = [SELECT Id FROM Form_Template__c WHERE Id = :recordId WITH USER_MODE LIMIT 1];
+        f.Identity_Mode__c = allowed.contains(mode) ? mode : 'Anonymous';
+        update as user f;
     }
 
     /** Save the per-form workflow tasks + visual design the form creator defined. */

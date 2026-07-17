@@ -180,6 +180,16 @@
         <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
+        <field>Form_Template__c.Identity_Mode__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Form_Response__c.Identity_Verified__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
         <field>Case.Form_Response__c</field>
         <readable>true</readable>
         <editable>true</editable>

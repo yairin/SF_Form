@@ -6,6 +6,7 @@ import getTemplate from '@salesforce/apex/FormBuilderController.getTemplate';
 import getPublicUrl from '@salesforce/apex/FormBuilderController.getPublicUrl';
 import setAIConfig from '@salesforce/apex/FormBuilderController.setAIConfig';
 import setDesignConfig from '@salesforce/apex/FormBuilderController.setDesignConfig';
+import setIdentityMode from '@salesforce/apex/FormBuilderController.setIdentityMode';
 import uploadDesignAsset from '@salesforce/apex/FormBuilderController.uploadDesignAsset';
 
 const CHOICE = new Set(['select', 'radio', 'checkboxGroup']);
@@ -98,6 +99,7 @@ export default class FormBuilder extends LightningElement {
     aiCheckAttachments = false;
     aiContactApplicant = false;
     tasks = [];
+    identityMode = 'Anonymous';
     appearance = defaultAppearance();
     uploadingBg = false;
     uploadingLogo = false;
@@ -155,6 +157,7 @@ export default class FormBuilder extends LightningElement {
         this.aiCheckAttachments = false;
         this.aiContactApplicant = false;
         this.tasks = [];
+        this.identityMode = 'Anonymous';
         this.appearance = defaultAppearance();
         this.steps = [newStep()];
         this.ensureIds();
@@ -177,6 +180,7 @@ export default class FormBuilder extends LightningElement {
             this.aiInstructions = t.AI_Review_Instructions__c || '';
             this.aiCheckAttachments = t.AI_Check_Attachments__c === true;
             this.aiContactApplicant = t.AI_Contact_Applicant__c === true;
+            this.identityMode = t.Identity_Mode__c || 'Anonymous';
             this._editExternalId = t.External_Id__c;
             let parsed = [];
             try { parsed = JSON.parse(t.Schema_JSON__c || '[]'); } catch (e) { parsed = []; }
@@ -656,6 +660,14 @@ export default class FormBuilder extends LightningElement {
     handleAiInstructions(e) { this.aiInstructions = e.target.value; }
     handleAiCheckAttachments(e) { this.aiCheckAttachments = e.target.checked; }
     handleAiContactApplicant(e) { this.aiContactApplicant = e.target.checked; }
+    handleIdentityMode(e) { this.identityMode = e.target.value; }
+    get identityModeOptions() {
+        return [
+            ['Anonymous', 'אנונימי (ללא הזדהות)'],
+            ['Identified', 'מזוהה — חובה הזדהות ממשלתית'],
+            ['Applicant_Choice', 'לבחירת ממלא הטופס']
+        ].map(([v, l]) => ({ value: v, label: l, selected: v === this.identityMode }));
+    }
 
     buildSchema() {
         this.ensureIds();
@@ -751,6 +763,9 @@ export default class FormBuilder extends LightningElement {
                         tasksJson: this.buildTasksJson(),
                         appearanceJson: JSON.stringify(this.appearance)
                     });
+                } catch (e) { /* non-fatal */ }
+                try {
+                    await setIdentityMode({ recordId: saved.Id, mode: this.identityMode });
                 } catch (e) { /* non-fatal */ }
             }
             try { this.savedUrl = await getPublicUrl({ externalId: this.savedExternalId }); } catch (e) { /* ignore */ }

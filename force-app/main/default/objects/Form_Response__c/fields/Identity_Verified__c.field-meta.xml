@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Identity_Verified__c</fullName>
+    <label>Identity Verified</label>
+    <description>True when the applicant authenticated via the national identity system (הזדהות לאומית) before submitting. Set by the SSO flow once wired; false for anonymous submissions.</description>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>

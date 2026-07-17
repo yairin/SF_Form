@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Identity_Mode__c</fullName>
+    <label>Identity Mode</label>
+    <description>Whether filling this form requires national-identity authentication: Anonymous, Identified (gov SSO required), or Applicant_Choice. Infrastructure for the הזדהות לאומית integration.</description>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Anonymous</fullName>
+                <default>true</default>
+                <label>אנונימי</label>
+            </value>
+            <value>
+                <fullName>Identified</fullName>
+                <default>false</default>
+                <label>מזוהה (הזדהות ממשלתית)</label>
+            </value>
+            <value>
+                <fullName>Applicant_Choice</fullName>
+                <default>false</default>
+                <label>לבחירת הממלא</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

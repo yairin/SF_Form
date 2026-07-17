@@ -73,6 +73,7 @@ export default class DynamicForm extends LightningElement {
     title = 'טופס';
     description = '';
     appearance = null;
+    identityMode = 'Anonymous';
     fields = [];
     values = {};
     files = {}; // key -> [{name, base64}]
@@ -332,6 +333,7 @@ export default class DynamicForm extends LightningElement {
         try {
             const t = await getForm({ externalId: this._ext });
             this.applyAppearance(t.Appearance_JSON__c);
+            this.identityMode = t.Identity_Mode__c || 'Anonymous';
             this.applySchema(t.Name, t.Description__c, t.Schema_JSON__c);
         } catch (e) {
             this.notFound = true;
@@ -452,6 +454,16 @@ export default class DynamicForm extends LightningElement {
 
     clearDraft() {
         try { window.localStorage.removeItem(this.draftKey); } catch (e) { /* ignore */ }
+    }
+
+    // ---- National-identity mode (infrastructure for הזדהות לאומית SSO) ----
+    get identityRequired() { return this.identityMode === 'Identified'; }
+    get identityChoice() { return this.identityMode === 'Applicant_Choice'; }
+    get showIdentityNotice() { return this.identityRequired || this.identityChoice; }
+    get identityNoticeText() {
+        return this.identityRequired
+            ? 'טופס זה דורש הזדהות באמצעות מערכת ההזדהות הלאומית. הפרטים האישיים ימולאו אוטומטית לאחר ההזדהות.'
+            : 'ניתן להזדהות באמצעות מערכת ההזדהות הלאומית למילוי אוטומטי של הפרטים, או להמשיך ללא הזדהות.';
     }
 
     // ---- Appearance-driven styling (all inline so it works on a guest site) ----

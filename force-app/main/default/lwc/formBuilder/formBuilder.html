@@ -24,6 +24,20 @@
                     </div>
                 </div>
 
+                <div class="slds-form-element slds-p-bottom_small">
+                    <label class="slds-form-element__label" for="fb-identity">מצב הזדהות</label>
+                    <div class="slds-select_container">
+                        <select id="fb-identity" class="slds-select" onchange={handleIdentityMode}>
+                            <template for:each={identityModeOptions} for:item="o">
+                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                            </template>
+                        </select>
+                    </div>
+                    <div class="slds-form-element__help slds-text-color_weak">
+                        "מזוהה" ידרוש הזדהות דרך מערכת ההזדהות הלאומית וימלא אוטומטית את פרטי הפונה (יופעל עם חיבור ה-SSO).
+                    </div>
+                </div>
+
                 <!-- AI review configuration -->
                 <div class="slds-box slds-box_xx-small slds-m-bottom_small slds-theme_shade">
                     <lightning-input type="checkbox" label="בדיקת AI לטופס זה" checked={aiEnabled} onchange={handleAiEnabled}></lightning-input>

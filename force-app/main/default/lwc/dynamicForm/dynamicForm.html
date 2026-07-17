@@ -67,6 +67,14 @@
                 <p class="slds-text-body_small slds-p-bottom_small">{description}</p>
             </div>
 
+            <template lwc:if={showIdentityNotice}>
+                <div class="slds-box slds-box_x-small slds-m-bottom_small slds-theme_shade" role="status">
+                    <p class="slds-text-body_small">{identityNoticeText}</p>
+                    <button type="button" class="slds-button slds-button_neutral slds-m-top_xx-small" disabled
+                        title="יופעל לאחר חיבור מערכת ההזדהות הלאומית">התחבר עם הזדהות ממשלתית</button>
+                </div>
+            </template>
+
             <template lwc:if={draftFound}>
                 <div class="slds-box slds-box_x-small slds-theme_shade slds-m-bottom_small" role="status" aria-live="polite">
                     <p class="slds-p-bottom_xx-small">נמצאה טיוטה שמורה מתאריך {draftDate}. להמשיך מהמקום שבו הפסקת?</p>
