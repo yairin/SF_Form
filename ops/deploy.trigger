@@ -1,1 +1,1 @@
-Isolation hardening: fail-closed Apex, User provisioning Flow, field consolidation 20260717T130000Z
+Fix flow start filter (no resource refs in Start conditions) 20260719T060000Z
