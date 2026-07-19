@@ -1,1 +1,1 @@
-Field types + per-field validation (number range, short-text length/chars) 20260719T073000Z
+Fix guest-form inputs invisible/unfillable over styled background 20260719T080000Z

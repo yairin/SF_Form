@@ -301,3 +301,35 @@ a:focus {
 .form-suggest-item:hover, .form-suggest-item:focus-visible {
   background: var(--sf-brand, #1c5aa8); color: #fff; outline: none;
 }
+
+/* ---- Always-visible, fillable inputs ----
+   In the Experience/LWR context raw .slds-* inputs get little base styling, so
+   over a styled (image/overlay) background or a transparent card they can look
+   blank and unusable. Force a solid, legible control regardless of theme. */
+.slds-input,
+.slds-select,
+.slds-textarea,
+.form-autocomplete input {
+    background-color: #ffffff;
+    color: #181818;
+    border: 1px solid #b0adab;
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 2.25rem;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.slds-select { appearance: auto; -webkit-appearance: auto; }
+.slds-textarea { min-height: 4rem; }
+.slds-input::placeholder,
+.slds-textarea::placeholder { color: #6b6b6b; }
+.slds-input:focus,
+.slds-select:focus,
+.slds-textarea:focus,
+.form-autocomplete input:focus {
+    outline: 2px solid var(--sf-focus, #1c5aa8);
+    outline-offset: 1px;
+    border-color: #1c5aa8;
+}

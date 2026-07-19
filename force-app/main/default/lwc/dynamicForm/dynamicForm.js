@@ -567,7 +567,12 @@ export default class DynamicForm extends LightningElement {
         const max = (a && a.maxWidth) ? a.maxWidth : 560;
         let s = 'position:relative;z-index:1;max-width:' + max + 'px;margin:0 auto;';
         if (a) {
-            s += 'background:' + a.cardColor + ';color:' + a.textColor + ';'
+            // Default to an opaque light card so a partially-configured appearance
+            // (e.g. only a background image) never leaves the form floating,
+            // unreadable and hard to fill, over the background.
+            const card = a.cardColor || '#ffffff';
+            const text = a.textColor || '#181818';
+            s += 'background:' + card + ';color:' + text + ';'
                 + 'border-radius:' + this.cornerRadius + 'px;padding:1.25rem 1.5rem;box-shadow:0 6px 24px rgba(0,0,0,0.18);';
         }
         return s;
@@ -578,7 +583,8 @@ export default class DynamicForm extends LightningElement {
         const a = this.appearance;
         const radiusMap = { rounded: '8px', pill: '999px', square: '2px' };
         const r = radiusMap[a.buttonStyle] || '8px';
-        return 'background:' + a.accentColor + ';border-color:' + a.accentColor + ';border-radius:' + r + ';';
+        const accent = a.accentColor || '#0b5cab';
+        return 'background:' + accent + ';border-color:' + accent + ';border-radius:' + r + ';color:#fff;';
     }
 
     // Title + description alignment: new optional appearance key headingAlign
