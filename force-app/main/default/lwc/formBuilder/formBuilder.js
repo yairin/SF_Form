@@ -587,7 +587,10 @@ export default class FormBuilder extends LightningElement {
     }
 
     async handleBannerUpload(event) {
-        const file = (event.target.files || [])[0];
+        // Capture the input before the await: LWC nulls event.target after the
+        // synchronous dispatch, so touching it in finally would throw.
+        const input = event.target;
+        const file = (input.files || [])[0];
         if (!file) return;
         this.error = undefined;
         this.uploadingBanner = true;
@@ -599,12 +602,13 @@ export default class FormBuilder extends LightningElement {
             this.error = (e && e.body && e.body.message) || 'העלאת הבאנר נכשלה. אפשר להדביק כתובת URL במקום.';
         } finally {
             this.uploadingBanner = false;
-            event.target.value = null;
+            if (input) input.value = null;
         }
     }
 
     async handleMediaUpload(event) {
-        const file = (event.target.files || [])[0];
+        const input = event.target;
+        const file = (input.files || [])[0];
         if (!file) return;
         this.error = undefined;
         this.uploadingBg = true;
@@ -616,12 +620,13 @@ export default class FormBuilder extends LightningElement {
             this.error = (e && e.body && e.body.message) || 'העלאת המדיה נכשלה. אפשר להדביק כתובת URL במקום.';
         } finally {
             this.uploadingBg = false;
-            event.target.value = null;
+            if (input) input.value = null;
         }
     }
 
     async handleLogoUpload(event) {
-        const file = (event.target.files || [])[0];
+        const input = event.target;
+        const file = (input.files || [])[0];
         if (!file) return;
         this.error = undefined;
         this.uploadingLogo = true;
@@ -633,7 +638,7 @@ export default class FormBuilder extends LightningElement {
             this.error = (e && e.body && e.body.message) || 'העלאת הלוגו נכשלה. אפשר להדביק כתובת URL במקום.';
         } finally {
             this.uploadingLogo = false;
-            event.target.value = null;
+            if (input) input.value = null;
         }
     }
 
