@@ -24,17 +24,36 @@
 > ולכן גם חריג הגלריה (`שלי OR משותף`) לא ניתן לביטוי. לכן קבצי ה-`restrictionRules/`
 > נשמרים בקוד אך **מוחרגים מהפריסה** (`.forceignore`).
 
-הבידוד נאכף במחלקה `AuthorityScope`:
-- משתמש **עם** קוד-רשות ו**בלי** "View All Data" → מוגבל לרשות שלו; כל השאר (אדמין/אינטגרציה/
-  ללא קוד) → ללא הגבלה (רואה הכל) — תואם ל-bypass של Restriction Rules.
+הבידוד נאכף במחלקה `AuthorityScope` — **fail-closed**:
+- **לא-מוגבל רק עם "View All Data"** (אדמין טכני/מפתח). כל שאר המשתמשים מוגבלים לרשות שלהם,
+  ומשתמש עסקי ללא קוד → לא מתאים לאף רשומה מוחתמת → **רואה כלום** (ולא דולף).
 - שאילתות דפדוף מסוננות: `FormBuilderController.listForms/listFormsDetailed` לפי
   `Authority_Code__c`, ספירת התגובות + `FormResultsController.listResponses/getResults`
   לפי `Tenant_Code__c`. `getTemplate` / `getResponseDetail` חוסמים גישה חוצת-רשות לרשומה בודדת.
 - **הגלריה** (`listGallery`) והגשת אורחים (`FormResponseController`) נשארות ללא הגבלה בכוונה.
 
-**אופציונלי — הפעלת Restriction Rules ידנית ב-Setup (שכבת הגנה שנייה):** ניתן ליצור את
-הכללים במסך ה-Setup (ה-UI מאפשר בחירת שדה-משתמש שהמטא-דאטה דוחה). הקבצים ב-`restrictionRules/`
-משמשים כתיעוד למפתח (`Tenant_Code__c = $User.Authority_Code__c` לתגובות).
+**Provisioning של קוד-הרשות:** Flow `Set_User_Authority_Code_From_Municipal` (before-save על User,
+create+update) גוזר `Authority_Code__c ← Municipal__c` (קוד-ישוב למ"ס). כך הקוד תמיד מסונכרן
+ואינו נחסם ע"י ולידציית `Municipal__c`.
+
+**מודל שדות (מאוחד):** מפתח הבידוד לתגובה = `Tenant_Code__c` (שדה טקסט יחיד, נחתם רק ע"י הניתוב,
+read-only למנהלים). `Authority__c` (lookup) נשמר לרלציה/דוחות. שדה הנוסחה `Authority_Code__c`
+על התגובה **הוסר מהמקור** (מיותר; מחיקה פיזית בארגון — צעד אדמין אופציונלי, אין בו נתונים).
+
+### Runbook הפעלת הכלל (הסדר מחייב — fail-closed!)
+1. **פרוס** את ה-Flow והקוד (כבר ב-CI). ודא שה-Flow פעיל.
+2. **הרץ provisioning** על משתמשים קיימים (עדכון כלשהו מפעיל את ה-Flow, או Data Loader על Municipal__c).
+3. **בקרת 0** — חייב להחזיר ריק לפני הפעלת הכלל:
+   ```sql
+   SELECT Id, Name FROM User
+   WHERE IsActive = true AND UserType = 'Standard' AND Authority_Code__c = null
+   ```
+4. **צור משתמשי בדיקה:** `sf apex run --file scripts/provision-test-users.apex --target-org <org>`
+   (שני משתמשים לא-אדמין, קודים 0000 ו-4000). היכנס כל אחד → ודא שרואה רק את הרשות שלו.
+5. **הפעל את Restriction Rule** ב-Setup על `Form_Response__c`: New Restriction Rule,
+   Record Filter `Tenant_Code__c Equals $User.Authority_Code__c`, Enforcement = Restrict, Active.
+   (המטא-דאטה נדחית ב-org הזה, לכן יוצרים ב-UI; הקובץ ב-`restrictionRules/` משמש תיעוד.)
+6. **אימות סופי + Rollback:** כיבוי הכלל מחזיר מיידית.
 
 ---
 

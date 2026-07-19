@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <assignments>
+        <name>Set_Authority_Code</name>
+        <label>Set Authority Code</label>
+        <locationX>176</locationX>
+        <locationY>288</locationY>
+        <assignmentItems>
+            <assignToReference>$Record.Authority_Code__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Record.Municipal__c</elementReference>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <description>Provisioning: mirrors the User's Municipal__c (LAMAS locality code) into Authority_Code__c, the multi-authority isolation key. Runs before-save on create and update so the key is always derived (never blocked by the Municipal__c validation rule) and stays in sync.</description>
+    <environments>Default</environments>
+    <interviewLabel>Set User Authority Code From Municipal {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Set User Authority Code From Municipal</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Set_Authority_Code</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Municipal__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Authority_Code__c</field>
+            <operator>NotEqualTo</operator>
+            <value>
+                <elementReference>$Record.Municipal__c</elementReference>
+            </value>
+        </filters>
+        <object>User</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

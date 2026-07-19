@@ -280,14 +280,9 @@
         <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
-        <field>Form_Response__c.Authority_Code__c</field>
-        <readable>true</readable>
-        <editable>false</editable>
-    </fieldPermissions>
-    <fieldPermissions>
         <field>Form_Response__c.Tenant_Code__c</field>
         <readable>true</readable>
-        <editable>true</editable>
+        <editable>false</editable>
     </fieldPermissions>
     <fieldPermissions>
         <field>Form_Interaction__c.Direction__c</field>

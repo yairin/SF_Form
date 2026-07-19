@@ -1,1 +1,1 @@
-Isolation: Apex query-layer per-authority scoping (AuthorityScope) 20260717T120000Z
+Isolation hardening: fail-closed Apex, User provisioning Flow, field consolidation 20260717T130000Z

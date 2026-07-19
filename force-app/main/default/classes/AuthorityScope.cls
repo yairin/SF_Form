@@ -4,13 +4,16 @@
  * Restriction Rules were the preferred mechanism, but this org rejects a
  * $User.<custom field> criterion in a restriction-rule recordFilter (and the
  * filter is validated even when the rule is inactive), so isolation is enforced
- * here instead. The isolation keys are the stamped fields Form_Template__c.
- * Authority_Code__c and Form_Response__c.Tenant_Code__c (Authority_Code__c on the
- * response is a formula, which restriction rules and this scoping treat as read-only).
+ * here instead. The isolation keys are the stamped Text fields Form_Template__c.
+ * Authority_Code__c and Form_Response__c.Tenant_Code__c (a real field, since neither
+ * restriction rules nor this scoping can filter on a formula field).
  *
- * Semantics (mirroring restriction-rule bypass): a user WITH an authority code
- * and WITHOUT "View All Data" is scoped to their own authority; everyone else
- * (admins / integration users / users without a code) is unscoped and sees all.
+ * Semantics (fail-closed, mirroring restriction-rule bypass): ONLY users with
+ * "View All Data" (technical admins / developers) are unscoped and see everything.
+ * Every other user is scoped to their own authority code — and a business user
+ * whose code is blank (a provisioning gap) therefore matches no stamped record and
+ * sees nothing, rather than leaking cross-authority data. The code is provisioned
+ * from User.Municipal__c (locality code) by a before-save Flow.
  */
 public with sharing class AuthorityScope {
 
@@ -35,7 +38,9 @@ public with sharing class AuthorityScope {
         loaded = true;
         List<User> us = [SELECT Authority_Code__c FROM User WHERE Id = :UserInfo.getUserId() LIMIT 1];
         code = us.isEmpty() ? null : us[0].Authority_Code__c;
-        scoped = String.isNotBlank(code) && !viewAllData();
+        // Fail-closed: everyone who is not a View All Data admin is scoped. A scoped user
+        // with a blank code binds :authorityScopeCode = null, which matches no stamped record.
+        scoped = !viewAllData();
     }
 
     // PermissionSetAssignment includes the profile's implicit permission set, so this
