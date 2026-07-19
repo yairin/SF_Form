@@ -74,6 +74,27 @@ function typeError(type, value) {
     }
 }
 
+// Optional per-field validation configured in the builder: numeric range for
+// number/currency, and length + character rules for short text.
+function constraintError(f, value) {
+    const s = String(value == null ? '' : value).trim();
+    if (!s) return null;
+    const has = (x) => x != null && x !== '';
+    if ((f.type === 'number' || f.type === 'currency') && /^-?\d+(\.\d+)?$/.test(s)) {
+        const n = Number(s);
+        if (has(f.min) && n < Number(f.min)) return 'הערך חייב להיות לפחות ' + f.min;
+        if (has(f.max) && n > Number(f.max)) return 'הערך חייב להיות עד ' + f.max;
+    }
+    if (f.type === 'text') {
+        if (has(f.minLen) && s.length < Number(f.minLen)) return 'נדרשים לפחות ' + f.minLen + ' תווים';
+        if (has(f.maxLen) && s.length > Number(f.maxLen)) return 'מותר עד ' + f.maxLen + ' תווים';
+        if (f.allowSpaces === false && /\s/.test(s)) return 'אסור להזין רווחים';
+        // letters (incl. Hebrew), digits and space only
+        if (f.allowSpecial === false && /[^0-9A-Za-z\u0590-\u05FF ]/.test(s)) return 'מותרים אותיות ומספרים בלבד';
+    }
+    return null;
+}
+
 export default class DynamicForm extends LightningElement {
     _ext;
     _urlExt;
@@ -294,7 +315,10 @@ export default class DynamicForm extends LightningElement {
             const val = this.values[f.key];
             let m;
             if (f.required && this.isEmpty(val)) m = 'שדה חובה';
-            else if (!this.isEmpty(val)) m = typeError(f.type, Array.isArray(val) ? val.join(' ') : val);
+            else if (!this.isEmpty(val)) {
+                const sv = Array.isArray(val) ? val.join(' ') : val;
+                m = typeError(f.type, sv) || constraintError(f, sv);
+            }
             if (m) { errs[f.key] = m; bad = true; }
         });
         this.fieldErrors = errs;
@@ -409,16 +433,16 @@ export default class DynamicForm extends LightningElement {
                     required: !!f.required,
                     mapTo: f.mapTo,
                     options: (f.options || []).map((o) => ({ label: o, value: o })),
+                    // optional per-field validation config (used by constraintError)
+                    min: f.min, max: f.max, minLen: f.minLen, maxLen: f.maxLen,
+                    allowSpaces: f.allowSpaces, allowSpecial: f.allowSpecial,
                     isText: Object.keys(TEXT_TYPES).includes(f.type),
                     inputType: TEXT_TYPES[f.type] || 'text',
                     isTextarea: f.type === 'textarea',
                     isSelect: f.type === 'select',
                     isRadio: f.type === 'radio',
-                    // A 'checkbox' with options renders as a multi-check group (like
-                    // checkboxGroup); with no options it stays a single yes/no checkbox.
-                    isCheckbox: f.type === 'checkbox' && !(Array.isArray(f.options) && f.options.length),
-                    isCheckboxGroup: f.type === 'checkboxGroup'
-                        || (f.type === 'checkbox' && Array.isArray(f.options) && f.options.length > 0),
+                    isCheckbox: f.type === 'checkbox',
+                    isCheckboxGroup: f.type === 'checkboxGroup',
                     isFile: f.type === 'file',
                     helpText: f.helpText || f.help || null,
                     // per-file-field validation config (optional in schema)

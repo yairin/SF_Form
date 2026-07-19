@@ -27,6 +27,55 @@ private class FormValidationServiceTest {
         System.assertEquals(0, FormValidationService.validate(schema(), v).size(), 'valid payload passes');
     }
 
+    // A schema with one number field (range 10..20) and one short-text field
+    // (2..5 chars, no spaces, no special characters).
+    private static String constraintSchema() {
+        return JSON.serialize(new Map<String, Object>{
+            'fields' => new List<Object>{
+                new Map<String, Object>{ 'key' => 'n', 'label' => 'מספר', 'type' => 'number',
+                    'min' => 10, 'max' => 20 },
+                new Map<String, Object>{ 'key' => 't', 'label' => 'קוד', 'type' => 'text',
+                    'minLen' => 2, 'maxLen' => 5, 'allowSpaces' => false, 'allowSpecial' => false }
+            }
+        });
+    }
+
+    @isTest
+    static void constraintsPassWithinLimits() {
+        Map<String, Object> v = new Map<String, Object>{ 'n' => '15', 't' => 'abc' };
+        System.assertEquals(0, FormValidationService.validate(constraintSchema(), v).size(),
+            'in-range number and valid text pass');
+    }
+
+    @isTest
+    static void numberBelowMinFails() {
+        List<String> e = FormValidationService.validate(constraintSchema(), new Map<String, Object>{ 'n' => '5' });
+        System.assertEquals(1, e.size());
+        System.assert(e[0].contains('לפחות'), e[0]);
+    }
+
+    @isTest
+    static void numberAboveMaxFails() {
+        System.assertEquals(1,
+            FormValidationService.validate(constraintSchema(), new Map<String, Object>{ 'n' => '25' }).size());
+    }
+
+    @isTest
+    static void textTooShortAndTooLongFail() {
+        System.assertEquals(1,
+            FormValidationService.validate(constraintSchema(), new Map<String, Object>{ 't' => 'a' }).size(), 'too short');
+        System.assertEquals(1,
+            FormValidationService.validate(constraintSchema(), new Map<String, Object>{ 't' => 'abcdef' }).size(), 'too long');
+    }
+
+    @isTest
+    static void textSpacesAndSpecialCharsFail() {
+        System.assertEquals(1,
+            FormValidationService.validate(constraintSchema(), new Map<String, Object>{ 't' => 'a b' }).size(), 'space blocked');
+        System.assertEquals(1,
+            FormValidationService.validate(constraintSchema(), new Map<String, Object>{ 't' => 'a@b' }).size(), 'special blocked');
+    }
+
     @isTest
     static void requiredMissingIsCaught() {
         List<String> errs = FormValidationService.validate(schema(), new Map<String, Object>{ 'em' => 'a@b.com' });

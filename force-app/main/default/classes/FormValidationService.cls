@@ -31,6 +31,7 @@ public without sharing class FormValidationService {
                 continue;
             }
             String err = formatError(type, s, label);
+            if (err == null) err = constraintError(f, type, s, label);
             if (err != null) errors.add(err);
         }
         return errors;
@@ -85,6 +86,41 @@ public without sharing class FormValidationService {
             try { Date.valueOf(s); } catch (Exception e) { return 'תאריך לא תקין: ' + label; }
         }
         return null;
+    }
+
+    private static final Pattern WS_RE = Pattern.compile('\\s');
+    private static final Pattern SPECIAL_RE = Pattern.compile('[^0-9A-Za-z\\u0590-\\u05FF ]');
+
+    /**
+     * Optional per-field validation configured in the builder: numeric range for
+     * number/currency, and length + character rules for short text. Authoritative
+     * mirror of the client-side constraintError in dynamicForm.
+     */
+    private static String constraintError(Map<String, Object> f, String type, String s, String label) {
+        if ((type == 'number' || type == 'currency') && NUMBER_RE.matcher(s).matches()) {
+            Decimal n = Decimal.valueOf(s);
+            Decimal mn = numOf(f.get('min'));
+            Decimal mx = numOf(f.get('max'));
+            if (mn != null && n < mn) return 'הערך חייב להיות לפחות ' + mn + ': ' + label;
+            if (mx != null && n > mx) return 'הערך חייב להיות עד ' + mx + ': ' + label;
+        } else if (type == 'text') {
+            Integer minLen = intOf(f.get('minLen'));
+            Integer maxLen = intOf(f.get('maxLen'));
+            if (minLen != null && s.length() < minLen) return 'נדרשים לפחות ' + minLen + ' תווים: ' + label;
+            if (maxLen != null && s.length() > maxLen) return 'מותר עד ' + maxLen + ' תווים: ' + label;
+            if (f.get('allowSpaces') == false && WS_RE.matcher(s).find()) return 'אסור להזין רווחים: ' + label;
+            if (f.get('allowSpecial') == false && SPECIAL_RE.matcher(s).find()) return 'מותרים אותיות ומספרים בלבד: ' + label;
+        }
+        return null;
+    }
+
+    private static Decimal numOf(Object o) {
+        if (o == null) return null;
+        try { return Decimal.valueOf(String.valueOf(o)); } catch (Exception e) { return null; }
+    }
+    private static Integer intOf(Object o) {
+        if (o == null) return null;
+        try { return Decimal.valueOf(String.valueOf(o)).intValue(); } catch (Exception e) { return null; }
     }
 
     /** Israeli national ID (תעודת זהות) check-digit validation. */

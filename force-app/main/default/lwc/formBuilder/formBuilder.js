@@ -10,10 +10,13 @@ import setIdentityMode from '@salesforce/apex/FormBuilderController.setIdentityM
 import setGalleryShared from '@salesforce/apex/FormBuilderController.setGalleryShared';
 import uploadDesignAsset from '@salesforce/apex/FormBuilderController.uploadDesignAsset';
 
-// Field types that expose an options editor. 'checkbox' is included so a single
-// checkbox can optionally be turned into a multi-check list (leave options empty
-// for a plain yes/no checkbox); the guest renderer decides single vs group.
-const CHOICE = new Set(['select', 'radio', 'checkboxGroup', 'checkbox']);
+// Field types that expose an options editor. A single 'checkbox' is a yes/no field
+// (no options); multi-check lives in 'checkboxGroup' (בחירה מרובה).
+const CHOICE = new Set(['select', 'radio', 'checkboxGroup']);
+// Types that expose a numeric-range validation editor (min/max).
+const NUM_VALIDATION = new Set(['number', 'currency']);
+// Types that expose a short-text validation editor (length + character rules).
+const TEXT_VALIDATION = new Set(['text']);
 const PRIORITY_OPTIONS = [['High', 'גבוהה'], ['Normal', 'רגילה'], ['Low', 'נמוכה']];
 const BG_TYPE_OPTIONS = [
     ['none', 'ללא (ברירת מחדל)'], ['color', 'צבע אחיד'], ['gradient', 'מעבר צבעים (Gradient)'],
@@ -226,6 +229,14 @@ export default class FormBuilder extends LightningElement {
                     required: !!f.required,
                     options: (f.options || []).join('\n'),
                     mapTo: f.mapTo || '',
+                    // validation config (optional)
+                    min: f.min == null ? '' : String(f.min),
+                    max: f.max == null ? '' : String(f.max),
+                    minLen: f.minLen == null ? '' : String(f.minLen),
+                    maxLen: f.maxLen == null ? '' : String(f.maxLen),
+                    // absence = allowed; only an explicit false disallows
+                    allowSpaces: f.allowSpaces !== false,
+                    allowSpecial: f.allowSpecial !== false,
                     _vw: (f.visibleWhen && f.visibleWhen.field) ? f.visibleWhen : null,
                     cond: null
                 };
@@ -286,6 +297,11 @@ export default class FormBuilder extends LightningElement {
                     fieldClass: 'slds-box slds-box_xx-small slds-m-bottom_x-small slds-theme_default fb-field'
                         + (this._dragOverField === (s + ':' + i) ? ' fb-drop-target' : ''),
                     showOptions: CHOICE.has(f.type),
+                    showNumValidation: NUM_VALIDATION.has(f.type),
+                    showTextValidation: TEXT_VALIDATION.has(f.type),
+                    min: f.min, max: f.max, minLen: f.minLen, maxLen: f.maxLen,
+                    allowSpaces: f.allowSpaces !== false,
+                    allowSpecial: f.allowSpecial !== false,
                     typeOptions: TYPE_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === f.type })),
                     mapOptions: MAP_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === (f.mapTo || '') })),
                     // conditional-visibility rule editor
@@ -716,6 +732,18 @@ export default class FormBuilder extends LightningElement {
                             ? String(f.options || '').split('\n').map((x) => x.trim()).filter(Boolean)
                             : undefined
                     };
+                    // Optional per-field validation (emit only what was set / restricted).
+                    const numV = (x) => (x === '' || x == null || isNaN(Number(x)) ? undefined : Number(x));
+                    if (NUM_VALIDATION.has(f.type)) {
+                        out.min = numV(f.min);
+                        out.max = numV(f.max);
+                    }
+                    if (TEXT_VALIDATION.has(f.type)) {
+                        out.minLen = numV(f.minLen);
+                        out.maxLen = numV(f.maxLen);
+                        if (f.allowSpaces === false) out.allowSpaces = false;
+                        if (f.allowSpecial === false) out.allowSpecial = false;
+                    }
                     if (f.cond && f.cond.ctrlId && idToKey[f.cond.ctrlId] && idToKey[f.cond.ctrlId] !== f.__key) {
                         out.visibleWhen = { field: idToKey[f.cond.ctrlId], op: f.cond.op || 'equals', value: f.cond.value || '' };
                     }

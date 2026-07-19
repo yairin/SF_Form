@@ -314,6 +314,46 @@
                                         </div>
                                     </template>
                                 </div>
+                                <!-- numeric range validation (number / currency) -->
+                                <template lwc:if={f.showNumValidation}>
+                                    <div class="slds-grid slds-gutters_xx-small slds-wrap slds-p-top_xx-small">
+                                        <div class="slds-col slds-size_6-of-12">
+                                            <input type="number" class="slds-input" data-s={f.s} data-i={f.i} data-p="min"
+                                                value={f.min} onchange={handleField} placeholder="מינימום" aria-label="ערך מינימלי" />
+                                        </div>
+                                        <div class="slds-col slds-size_6-of-12">
+                                            <input type="number" class="slds-input" data-s={f.s} data-i={f.i} data-p="max"
+                                                value={f.max} onchange={handleField} placeholder="מקסימום" aria-label="ערך מקסימלי" />
+                                        </div>
+                                    </div>
+                                </template>
+                                <!-- short-text validation (length + character rules) -->
+                                <template lwc:if={f.showTextValidation}>
+                                    <div class="slds-grid slds-gutters_xx-small slds-wrap slds-p-top_xx-small">
+                                        <div class="slds-col slds-size_6-of-12">
+                                            <input type="number" min="0" class="slds-input" data-s={f.s} data-i={f.i} data-p="minLen"
+                                                value={f.minLen} onchange={handleField} placeholder="מס' תווים מינ'" aria-label="מספר תווים מינימלי" />
+                                        </div>
+                                        <div class="slds-col slds-size_6-of-12">
+                                            <input type="number" min="0" class="slds-input" data-s={f.s} data-i={f.i} data-p="maxLen"
+                                                value={f.maxLen} onchange={handleField} placeholder="מס' תווים מקס'" aria-label="מספר תווים מקסימלי" />
+                                        </div>
+                                        <div class="slds-col slds-size_6-of-12">
+                                            <label class="slds-text-body_small">
+                                                <input type="checkbox" data-s={f.s} data-i={f.i} data-p="allowSpaces"
+                                                    checked={f.allowSpaces} onchange={handleField} aria-label="לאפשר רווחים" />
+                                                <span> רווחים מותרים</span>
+                                            </label>
+                                        </div>
+                                        <div class="slds-col slds-size_6-of-12">
+                                            <label class="slds-text-body_small">
+                                                <input type="checkbox" data-s={f.s} data-i={f.i} data-p="allowSpecial"
+                                                    checked={f.allowSpecial} onchange={handleField} aria-label="לאפשר סימנים מיוחדים" />
+                                                <span> סימנים מיוחדים מותרים</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </template>
                                 <!-- conditional visibility rule -->
                                 <div class="slds-grid slds-wrap slds-gutters_xx-small slds-p-top_xx-small">
                                     <div class="slds-col slds-size_12-of-12">

@@ -1,1 +1,1 @@
-Feature: options editor for checkbox field (single or multi-check) 20260719T070000Z
+Field types + per-field validation (number range, short-text length/chars) 20260719T073000Z
