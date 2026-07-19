@@ -414,8 +414,11 @@ export default class DynamicForm extends LightningElement {
                     isTextarea: f.type === 'textarea',
                     isSelect: f.type === 'select',
                     isRadio: f.type === 'radio',
-                    isCheckbox: f.type === 'checkbox',
-                    isCheckboxGroup: f.type === 'checkboxGroup',
+                    // A 'checkbox' with options renders as a multi-check group (like
+                    // checkboxGroup); with no options it stays a single yes/no checkbox.
+                    isCheckbox: f.type === 'checkbox' && !(Array.isArray(f.options) && f.options.length),
+                    isCheckboxGroup: f.type === 'checkboxGroup'
+                        || (f.type === 'checkbox' && Array.isArray(f.options) && f.options.length > 0),
                     isFile: f.type === 'file',
                     helpText: f.helpText || f.help || null,
                     // per-file-field validation config (optional in schema)

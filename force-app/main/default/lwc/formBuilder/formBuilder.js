@@ -10,7 +10,10 @@ import setIdentityMode from '@salesforce/apex/FormBuilderController.setIdentityM
 import setGalleryShared from '@salesforce/apex/FormBuilderController.setGalleryShared';
 import uploadDesignAsset from '@salesforce/apex/FormBuilderController.uploadDesignAsset';
 
-const CHOICE = new Set(['select', 'radio', 'checkboxGroup']);
+// Field types that expose an options editor. 'checkbox' is included so a single
+// checkbox can optionally be turned into a multi-check list (leave options empty
+// for a plain yes/no checkbox); the guest renderer decides single vs group.
+const CHOICE = new Set(['select', 'radio', 'checkboxGroup', 'checkbox']);
 const PRIORITY_OPTIONS = [['High', 'גבוהה'], ['Normal', 'רגילה'], ['Low', 'נמוכה']];
 const BG_TYPE_OPTIONS = [
     ['none', 'ללא (ברירת מחדל)'], ['color', 'צבע אחיד'], ['gradient', 'מעבר צבעים (Gradient)'],
