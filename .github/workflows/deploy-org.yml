@@ -82,6 +82,9 @@ jobs:
       - name: Seed reference data (departments + service types)
         run: sf apex run --file scripts/seed.apex --target-org target
 
+      - name: Seed demo form (capability showcase)
+        run: sf apex run --file scripts/seed-demo-form.apex --target-org target
+
       - name: Smoke test (create demo response, verify Answers)
         run: |
           out=$(sf apex run --file scripts/smoke.apex --target-org target --json)

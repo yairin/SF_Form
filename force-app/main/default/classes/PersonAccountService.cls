@@ -197,10 +197,10 @@ public without sharing class PersonAccountService {
         return out;
     }
 
-    private static Map<String, Object> safeMap(String json) {
-        if (String.isBlank(json)) return new Map<String, Object>();
+    private static Map<String, Object> safeMap(String raw) {
+        if (String.isBlank(raw)) return new Map<String, Object>();
         try {
-            Object o = JSON.deserializeUntyped(json);
+            Object o = JSON.deserializeUntyped(raw);
             return (o instanceof Map<String, Object>) ? (Map<String, Object>) o : new Map<String, Object>();
         } catch (Exception e) {
             return new Map<String, Object>();

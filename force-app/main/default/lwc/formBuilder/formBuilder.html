@@ -51,11 +51,11 @@
                         <div class="slds-p-top_x-small">
                             <p class="slds-text-body_small slds-text-color_weak slds-p-bottom_xx-small">
                                 שדות הפרטים האישיים (שם פרטי/משפחה, אימייל, טלפון, עיר, רחוב) ממופים אוטומטית.
-                                מיפוי נוסף (רשות): JSON —
-                                <code>{"map":{"idNumber":"Id_Number__pc"},"matchAccountField":"Id_Number__pc","matchFormKey":"idNumber"}</code>
+                                מיפוי נוסף אופציונלי ב-JSON: מפתח "map" (מפתח-שדה → שם-שדה-Account),
+                                ו-"matchAccountField"/"matchFormKey" לזיהוי כפילויות.
                             </p>
                             <textarea class="slds-textarea" aria-label="מיפוי Person Account (JSON)" rows="3"
-                                onchange={handlePersonAccountMap} placeholder='{"map":{...},"matchAccountField":"...","matchFormKey":"..."}'>{personAccountMap}</textarea>
+                                onchange={handlePersonAccountMap} placeholder="JSON אופציונלי למיפוי מתקדם">{personAccountMap}</textarea>
                         </div>
                     </template>
                 </div>
