@@ -88,9 +88,10 @@ jobs:
         # Best-effort: never fails the deploy.
         run: |
           set +e
-          names=$(sf data query --query "SELECT Name FROM Network" --target-org target --json \
+          # Only our project's site(s) — never touch unrelated Experience sites in the org.
+          names=$(sf data query --query "SELECT Name FROM Network WHERE Name LIKE 'SF Forms%'" --target-org target --json \
             | python3 -c "import sys,json; d=json.load(sys.stdin); print('\n'.join(r['Name'] for r in d.get('result',{}).get('records',[])))" 2>/dev/null)
-          if [ -z "$names" ]; then echo "No Experience sites found (or query unavailable) — skipping."; exit 0; fi
+          if [ -z "$names" ]; then echo "No SF Forms Experience site found — skipping."; exit 0; fi
           echo "Experience sites:"; echo "$names"
           while IFS= read -r n; do
             [ -z "$n" ] && continue

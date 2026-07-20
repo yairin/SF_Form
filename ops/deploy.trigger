@@ -1,1 +1,1 @@
-CI: auto-publish Experience site(s) after deploy 20260720T170000Z
+Scope auto-publish to SF Forms site(s) only 20260720T172000Z
