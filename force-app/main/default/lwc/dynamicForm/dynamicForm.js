@@ -633,7 +633,14 @@ export default class DynamicForm extends LightningElement {
         try {
             const raw = window.localStorage.getItem(this.draftKey);
             const d = raw ? JSON.parse(raw) : null;
-            if (d && d.values) this.values = { ...this.values, ...d.values };
+            if (d && d.values) {
+                // Only restore keys that belong to THIS form, so a stale draft never
+                // injects values from a different form/schema.
+                const keys = new Set(this.fields.map((f) => f.key));
+                const filtered = {};
+                Object.keys(d.values).forEach((k) => { if (keys.has(k)) filtered[k] = d.values[k]; });
+                this.values = { ...this.values, ...filtered };
+            }
         } catch (e) { /* ignore */ }
         this.draftFound = false;
     }
