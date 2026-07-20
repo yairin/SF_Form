@@ -82,8 +82,23 @@ jobs:
       - name: Seed reference data (departments + service types)
         run: sf apex run --file scripts/seed.apex --target-org target
 
-      - name: Seed demo form (capability showcase)
-        run: sf apex run --file scripts/seed-demo-form.apex --target-org target
+      - name: Publish Experience site(s)
+        # Republish every Experience site so the guest pages pick up the freshly
+        # deployed LWC bundles (otherwise the site keeps serving an old snapshot).
+        # Best-effort: never fails the deploy.
+        run: |
+          set +e
+          names=$(sf data query --query "SELECT Name FROM Network" --target-org target --json \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print('\n'.join(r['Name'] for r in d.get('result',{}).get('records',[])))" 2>/dev/null)
+          if [ -z "$names" ]; then echo "No Experience sites found (or query unavailable) — skipping."; exit 0; fi
+          echo "Experience sites:"; echo "$names"
+          while IFS= read -r n; do
+            [ -z "$n" ] && continue
+            echo "::group::Publishing $n"
+            sf community publish --name "$n" --target-org target || echo "publish failed for '$n' (ignored)"
+            echo "::endgroup::"
+          done <<< "$names"
+          exit 0
 
       - name: Smoke test (create demo response, verify Answers)
         run: |
