@@ -314,6 +314,15 @@
                                         </div>
                                     </template>
                                 </div>
+                                <!-- repeater columns (table / repeating rows) -->
+                                <template lwc:if={f.showColumns}>
+                                    <div class="slds-p-top_xx-small">
+                                        <label class="slds-form-element__label">עמודות הטבלה — שורה לכל עמודה: <code>תווית|סוג</code> (סוג: text/number/date/email/phone/select; ל-select: <code>תווית|select|א;ב;ג</code>)</label>
+                                        <textarea class="slds-textarea" data-s={f.s} data-i={f.i} data-p="columnsText"
+                                            aria-label="עמודות הטבלה" onchange={handleField}
+                                            placeholder="שם הזמר|text&#10;שם המלחין|text&#10;משך|number">{f.columnsText}</textarea>
+                                    </div>
+                                </template>
                                 <!-- numeric range validation (number / currency) -->
                                 <template lwc:if={f.showNumValidation}>
                                     <div class="slds-grid slds-gutters_xx-small slds-wrap slds-p-top_xx-small">

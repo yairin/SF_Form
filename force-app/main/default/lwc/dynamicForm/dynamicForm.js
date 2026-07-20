@@ -218,8 +218,33 @@ export default class DynamicForm extends LightningElement {
             const isStreet = f.type === 'street';
             const isAutocomplete = isCity || isStreet;
             const sugg = this.addrSuggest[f.key] || [];
+            // repeater: build the current rows (columns × row values) for rendering
+            let repeaterRows = null;
+            if (f.isRepeater) {
+                const rowsData = Array.isArray(this.values[f.key]) ? this.values[f.key] : [];
+                repeaterRows = rowsData.map((row, ri) => ({
+                    rowKey: f.key + '-r' + ri,
+                    index: ri,
+                    removeLabel: 'הסר שורה ' + (ri + 1),
+                    cells: (f.columns || []).map((c) => {
+                        const cv = (row && row[c.key] != null) ? row[c.key] : '';
+                        return {
+                            cellKey: f.key + '-r' + ri + '-' + c.key,
+                            colKey: c.key,
+                            label: c.label,
+                            cellInputType: c.cellInputType,
+                            isSelectCol: c.isSelectCol,
+                            value: cv,
+                            cellOptions: (c.cellOptions || []).map((o) => ({
+                                label: o.label, value: o.value, selected: o.value === cv
+                            }))
+                        };
+                    })
+                }));
+            }
             return {
                 ...f,
+                repeaterRows,
                 status: this.fileStatus[f.key],
                 fieldError: this.fieldErrors[f.key],
                 ariaInvalid: hasErr ? 'true' : 'false',
@@ -311,6 +336,13 @@ export default class DynamicForm extends LightningElement {
                 if (f.isFile) {
                     const items = this.files[f.key] || [];
                     display = items.length ? items.map((x) => x.name).join(', ') : '—';
+                } else if (f.isRepeater) {
+                    const rows = Array.isArray(this.values[f.key]) ? this.values[f.key] : [];
+                    display = rows.length
+                        ? rows.map((row) => (f.columns || [])
+                            .map((c) => c.label + ': ' + (row && row[c.key] != null && row[c.key] !== '' ? row[c.key] : '—'))
+                            .join(', ')).join(' | ')
+                        : '—';
                 } else {
                     const v = this.values[f.key];
                     if (Array.isArray(v)) display = v.length ? v.join(', ') : '—';
@@ -386,6 +418,33 @@ export default class DynamicForm extends LightningElement {
             this.showErrorSummary = false;
             this.stepIndex = target;
         }
+    }
+
+    // ---- Repeater (table / repeating rows) ----
+    addRepeaterRow(event) {
+        const key = event.currentTarget.dataset.key;
+        const rows = Array.isArray(this.values[key]) ? [...this.values[key]] : [];
+        rows.push({});
+        this.values = { ...this.values, [key]: rows };
+        this.scheduleDraftSave();
+    }
+    removeRepeaterRow(event) {
+        const key = event.currentTarget.dataset.key;
+        const ri = Number(event.currentTarget.dataset.row);
+        const rows = Array.isArray(this.values[key]) ? [...this.values[key]] : [];
+        rows.splice(ri, 1);
+        this.values = { ...this.values, [key]: rows };
+        this.scheduleDraftSave();
+    }
+    handleRepeaterCell(event) {
+        const key = event.target.dataset.key;
+        const ri = Number(event.target.dataset.row);
+        const col = event.target.dataset.col;
+        const rows = Array.isArray(this.values[key]) ? this.values[key].map((r) => ({ ...r })) : [];
+        if (!rows[ri]) rows[ri] = {};
+        rows[ri][col] = event.target.value;
+        this.values = { ...this.values, [key]: rows };
+        this.scheduleDraftSave();
     }
 
     // Focus management: after a render triggered by validation failure or a
@@ -479,6 +538,15 @@ export default class DynamicForm extends LightningElement {
                     isCheckbox: f.type === 'checkbox',
                     isCheckboxGroup: f.type === 'checkboxGroup',
                     isFile: f.type === 'file',
+                    isRepeater: f.type === 'repeater',
+                    columns: (f.columns || []).map((c) => ({
+                        key: c.key,
+                        label: c.label,
+                        type: c.type,
+                        cellInputType: ({ text: 'text', number: 'number', date: 'date', email: 'email', phone: 'tel' })[c.type] || 'text',
+                        isSelectCol: c.type === 'select',
+                        cellOptions: (c.options || []).map((o) => ({ label: o, value: o }))
+                    })),
                     helpText: f.helpText || f.help || null,
                     // per-file-field validation config (optional in schema)
                     acceptList: Array.isArray(f.accept) && f.accept.length ? f.accept.map((x) => String(x).toLowerCase()) : DEFAULT_ACCEPT,

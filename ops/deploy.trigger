@@ -1,1 +1,1 @@
-Wizard step tracker (numbered circles, done/current/upcoming) 20260720T130000Z
+Repeater field type (table / repeating rows) — builder + guest renderer 20260720T133000Z

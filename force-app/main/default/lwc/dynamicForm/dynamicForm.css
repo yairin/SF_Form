@@ -424,3 +424,32 @@ a:focus {
     .form-step__label { display: none; }   /* compact tracker on small screens */
     .form-step { min-width: 44px; }
 }
+
+/* ---- Repeater (table / repeating rows) ---- */
+.form-repeater { display: flex; flex-direction: column; gap: 0.5rem; }
+.form-repeater__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: flex-end;
+    padding: 0.6rem;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.015);
+}
+.form-repeater__cell { flex: 1 1 140px; min-width: 120px; display: flex; flex-direction: column; gap: 0.2rem; }
+.form-repeater__cell-label { font-size: 0.72rem; color: #706e6b; }
+.form-repeater__remove {
+    flex: 0 0 auto;
+    align-self: center;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 1px solid #c9c7c5;
+    background: #fff;
+    color: #c23934;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+.form-repeater__remove:hover { background: #fdecea; border-color: #c23934; }
+.form-repeater__add { align-self: flex-start; }

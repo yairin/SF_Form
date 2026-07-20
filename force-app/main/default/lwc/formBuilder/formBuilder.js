@@ -17,6 +17,36 @@ const CHOICE = new Set(['select', 'radio', 'checkboxGroup']);
 const NUM_VALIDATION = new Set(['number', 'currency']);
 // Types that expose a short-text validation editor (length + character rules).
 const TEXT_VALIDATION = new Set(['text']);
+// Column cell types allowed inside a repeater (table / repeating rows).
+const REPEATER_COL_TYPES = new Set(['text', 'number', 'date', 'email', 'phone', 'select']);
+
+// Build a stable-ish column key from a label (fallback to c1, c2… by index).
+function colKey(label, i) {
+    const base = String(label || '').trim().toLowerCase()
+        .replace(/[^a-z0-9֐-׿]+/g, '_').replace(/^_+|_+$/g, '');
+    return base || ('c' + (i + 1));
+}
+// Parse the columns textarea ("label" | "label|type" | "label|select|a;b;c" per line).
+function parseColumns(text) {
+    return String(text || '').split('\n').map((line) => line.trim()).filter(Boolean).map((line, i) => {
+        const parts = line.split('|').map((p) => p.trim());
+        const label = parts[0];
+        let type = (parts[1] || 'text').toLowerCase();
+        if (!REPEATER_COL_TYPES.has(type)) type = 'text';
+        const col = { key: colKey(label, i), label, type };
+        if (type === 'select' && parts[2]) {
+            col.options = parts[2].split(';').map((o) => o.trim()).filter(Boolean);
+        }
+        return col;
+    });
+}
+function columnsToText(cols) {
+    return (cols || []).map((c) => {
+        let s = c.label + '|' + (c.type || 'text');
+        if (c.type === 'select' && c.options && c.options.length) s += '|' + c.options.join(';');
+        return s;
+    }).join('\n');
+}
 const PRIORITY_OPTIONS = [['High', 'גבוהה'], ['Normal', 'רגילה'], ['Low', 'נמוכה']];
 const BG_TYPE_OPTIONS = [
     ['none', 'ללא (ברירת מחדל)'], ['color', 'צבע אחיד'], ['gradient', 'מעבר צבעים (Gradient)'],
@@ -69,6 +99,7 @@ const TYPE_OPTIONS = [
     ['file', 'העלאת קובץ'],
     ['select', 'בחירה מרשימה'], ['radio', 'בחירה יחידה'],
     ['checkbox', 'תיבת סימון'], ['checkboxGroup', 'בחירה מרובה'],
+    ['repeater', 'טבלה / שורות חוזרות'],
     // personal-details field types
     ['firstName', 'שם פרטי'], ['lastName', 'שם משפחה'], ['city', 'עיר (השלמה אוטומטית)'],
     ['street', 'רחוב (השלמה אוטומטית)'], ['houseNumber', 'מספר בית'], ['apartment', 'דירה'], ['age', 'גיל']
@@ -228,6 +259,7 @@ export default class FormBuilder extends LightningElement {
                     label: f.label || '',
                     required: !!f.required,
                     options: (f.options || []).join('\n'),
+                    columnsText: columnsToText(f.columns),
                     mapTo: f.mapTo || '',
                     // validation config (optional)
                     min: f.min == null ? '' : String(f.min),
@@ -297,6 +329,8 @@ export default class FormBuilder extends LightningElement {
                     fieldClass: 'slds-box slds-box_xx-small slds-m-bottom_x-small slds-theme_default fb-field'
                         + (this._dragOverField === (s + ':' + i) ? ' fb-drop-target' : ''),
                     showOptions: CHOICE.has(f.type),
+                    showColumns: f.type === 'repeater',
+                    columnsText: f.columnsText,
                     showNumValidation: NUM_VALIDATION.has(f.type),
                     showTextValidation: TEXT_VALIDATION.has(f.type),
                     min: f.min, max: f.max, minLen: f.minLen, maxLen: f.maxLen,
@@ -730,7 +764,8 @@ export default class FormBuilder extends LightningElement {
                         mapTo: f.mapTo || undefined,
                         options: CHOICE.has(f.type)
                             ? String(f.options || '').split('\n').map((x) => x.trim()).filter(Boolean)
-                            : undefined
+                            : undefined,
+                        columns: f.type === 'repeater' ? parseColumns(f.columnsText) : undefined
                     };
                     // Optional per-field validation (emit only what was set / restricted).
                     const numV = (x) => (x === '' || x == null || isNaN(Number(x)) ? undefined : Number(x));

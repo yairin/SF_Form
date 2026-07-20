@@ -250,6 +250,38 @@
                                     </select>
                                 </div>
                             </template>
+                            <template lwc:elseif={f.isRepeater}>
+                                <div class="form-repeater">
+                                    <template for:each={f.repeaterRows} for:item="row">
+                                        <div key={row.rowKey} class="form-repeater__row">
+                                            <template for:each={row.cells} for:item="cell">
+                                                <div key={cell.cellKey} class="form-repeater__cell">
+                                                    <label class="form-repeater__cell-label">{cell.label}</label>
+                                                    <template lwc:if={cell.isSelectCol}>
+                                                        <select class="slds-select" data-key={f.key} data-row={row.index}
+                                                            data-col={cell.colKey} onchange={handleRepeaterCell}>
+                                                            <option value="">— בחר —</option>
+                                                            <template for:each={cell.cellOptions} for:item="o">
+                                                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                                            </template>
+                                                        </select>
+                                                    </template>
+                                                    <template lwc:else>
+                                                        <input type={cell.cellInputType} class="slds-input" value={cell.value}
+                                                            data-key={f.key} data-row={row.index} data-col={cell.colKey}
+                                                            onchange={handleRepeaterCell} />
+                                                    </template>
+                                                </div>
+                                            </template>
+                                            <button type="button" class="form-repeater__remove" data-key={f.key}
+                                                data-row={row.index} onclick={removeRepeaterRow}
+                                                aria-label={row.removeLabel} title={row.removeLabel}>×</button>
+                                        </div>
+                                    </template>
+                                    <button type="button" class="slds-button slds-button_neutral form-repeater__add"
+                                        data-key={f.key} onclick={addRepeaterRow}>+ הוסף שורה</button>
+                                </div>
+                            </template>
                         </div>
                     </template>
                     <template lwc:if={f.helpText}>
