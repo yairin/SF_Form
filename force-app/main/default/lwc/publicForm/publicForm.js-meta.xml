@@ -12,7 +12,7 @@
     <targetConfigs>
         <targetConfig targets="lightningCommunity__Default">
             <property name="formName" type="String" label="Form Name" default="טופס רישום לאירוע"/>
-            <property name="externalId" type="String" label="Form External Id" default="masham-demo"/>
+            <property name="externalId" type="String" label="Form External Id" default="event-registration"/>
         </targetConfig>
     </targetConfigs>
 </LightningComponentBundle>
