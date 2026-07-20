@@ -276,6 +276,31 @@ export default class DynamicForm extends LightningElement {
         return 'width:' + pct + '%';
     }
 
+    // Numbered horizontal step tracker (done ✓ / current / upcoming), like a wizard.
+    get stepTracker() {
+        const cur = this.stepIndex;
+        const titles = this.allStepTitles;
+        return titles.map((title, si) => {
+            const done = si < cur;
+            const current = si === cur;
+            let cls = 'form-step';
+            if (done) cls += ' form-step_done';
+            else if (current) cls += ' form-step_current';
+            else cls += ' form-step_todo';
+            return {
+                index: si,
+                num: si + 1,
+                title,
+                isDone: done,
+                isCurrent: current,
+                clickable: done, // completed steps are navigable
+                stepClass: cls,
+                circleClass: 'form-step__circle',
+                ariaCurrent: current ? 'step' : null
+            };
+        });
+    }
+
     // Read-only recap of all entered values, grouped by content step, for the
     // review step. Files show their file names; empty optional fields show "—".
     get reviewGroups() {
@@ -351,6 +376,16 @@ export default class DynamicForm extends LightningElement {
         this.error = undefined;
         this.showErrorSummary = false;
         this.stepIndex = Number(event.currentTarget.dataset.step);
+    }
+
+    // Click a completed circle in the step tracker to jump back to it.
+    goStep(event) {
+        const target = Number(event.currentTarget.dataset.step);
+        if (target < this.stepIndex) {
+            this.error = undefined;
+            this.showErrorSummary = false;
+            this.stepIndex = target;
+        }
     }
 
     // Focus management: after a render triggered by validation failure or a

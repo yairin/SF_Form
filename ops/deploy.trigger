@@ -1,1 +1,1 @@
-Fix guest-form inputs invisible/unfillable over styled background 20260719T080000Z
+Wizard step tracker (numbered circles, done/current/upcoming) 20260720T130000Z

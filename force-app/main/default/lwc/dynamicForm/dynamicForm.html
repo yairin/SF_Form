@@ -98,12 +98,29 @@
             </template>
 
             <template lwc:if={isWizard}>
-                <div class="slds-p-bottom_small">
-                    <p class="slds-text-title_bold slds-p-bottom_xx-small" aria-live="polite">{stepProgressLabel}</p>
-                    <div class="slds-progress-bar" role="progressbar" aria-label={stepProgressLabel}>
-                        <span class="slds-progress-bar__value" style={progressStyle}></span>
-                    </div>
-                </div>
+                <p class="slds-assistive-text" aria-live="polite">{stepProgressLabel}</p>
+                <ol class="form-steps" aria-label="שלבי הטופס">
+                    <template for:each={stepTracker} for:item="st">
+                        <li key={st.index} class={st.stepClass} aria-current={st.ariaCurrent}>
+                            <template lwc:if={st.clickable}>
+                                <button type="button" class="form-step__btn" data-step={st.index}
+                                    onclick={goStep} title={st.title}>
+                                    <span class={st.circleClass} aria-hidden="true">
+                                        <template lwc:if={st.isDone}>&#x2713;</template>
+                                        <template lwc:else>{st.num}</template>
+                                    </span>
+                                    <span class="form-step__label">{st.title}</span>
+                                </button>
+                            </template>
+                            <template lwc:else>
+                                <span class="form-step__btn form-step__btn_static">
+                                    <span class={st.circleClass} aria-hidden="true">{st.num}</span>
+                                    <span class="form-step__label">{st.title}</span>
+                                </span>
+                            </template>
+                        </li>
+                    </template>
+                </ol>
             </template>
 
             <template for:each={currentFieldsView} for:item="f">
