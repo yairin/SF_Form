@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>הדגמה — בקשה לרישיון עסק · MuniForce City</title>
+<style>
+  :root{
+    --sf-brand:#1c5aa8; --sf-brand-deep:#123f78; --sf-line:#dce3ec;
+    --sf-font:"Rubik","Segoe UI","Assistant","Heebo",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:var(--sf-font); color:#16202e; direction:rtl;
+    background:linear-gradient(160deg,#eef3fa 0%,#dde8f5 100%);
+    min-height:100%; display:flex; align-items:center; justify-content:center;
+    padding:20px 16px;
+  }
+  .card{
+    width:100%; max-width:700px; background:#fff; border-radius:14px;
+    box-shadow:0 18px 50px rgba(18,63,120,.16); padding:26px 30px 30px;
+    position:relative; overflow:hidden;
+  }
+  .card__accent{position:absolute;top:0;inset-inline:0;height:5px;background:linear-gradient(90deg,#1c5aa8,#2a6fc4)}
+  header.form-head{text-align:center; margin-bottom:6px}
+  header.form-head img{height:70px;width:auto;margin:6px auto 10px;display:block}
+  h1.form-title{font-size:1.5rem;margin:.2rem 0 .1rem;color:#123f78}
+  p.form-desc{margin:.1rem 0 1rem;color:#51617a;font-size:.92rem;line-height:1.4}
+
+  /* step tracker (from the real component) */
+  .form-steps{list-style:none;margin:0 0 1.4rem;padding:0;display:flex;flex-direction:row;align-items:flex-start;gap:0}
+  .form-step{position:relative;flex:1 1 0;min-width:72px;text-align:center}
+  .form-step::before{content:"";position:absolute;top:16px;inset-inline-start:50%;inline-size:100%;height:3px;background:#d8dde6;z-index:0;transition:background-color .4s}
+  .form-step:last-child::before{display:none}
+  .form-step_done::before{background:#2e844a}
+  .form-step__inner{position:relative;z-index:1;display:inline-flex;flex-direction:column;align-items:center;gap:.4rem;width:100%}
+  .form-step__circle{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:700;background:#fff;color:#706e6b;border:2px solid #d8dde6;transition:all .35s}
+  .form-step_current .form-step__circle{background:var(--sf-brand);border-color:var(--sf-brand);color:#fff;box-shadow:0 0 0 5px rgba(28,90,168,.15)}
+  .form-step_done .form-step__circle{background:#2e844a;border-color:#2e844a;color:#fff}
+  .form-step__label{font-size:.74rem;line-height:1.15;color:#7a8091;max-width:120px}
+  .form-step_current .form-step__label{font-weight:700;color:#16325c}
+  .form-step_done .form-step__label{color:#2e844a}
+
+  .field{margin-bottom:14px}
+  .field__label{display:block;font-weight:600;font-size:.9rem;margin-bottom:5px}
+  .req{color:#c23934}
+  .ctrl{background:#fff;color:#181818;border:1px solid #b0adab;border-radius:6px;padding:.5rem .6rem;width:100%;min-height:2.4rem;font:inherit;transition:border-color .15s,box-shadow .15s}
+  .ctrl:focus,.ctrl.focus{outline:none;border-color:var(--sf-brand);box-shadow:0 0 0 3px rgba(28,90,168,.18)}
+  select.ctrl{appearance:auto}
+  .ctrl.err{border-color:#c23934;box-shadow:0 0 0 3px rgba(194,57,52,.14)}
+  .field__error{color:#c23934;font-size:.8rem;margin-top:4px;display:none}
+  .field__error.show{display:block}
+  .grid2{display:flex;gap:12px;flex-wrap:wrap}
+  .grid2 .field{flex:1 1 45%;min-width:180px}
+
+  /* autocomplete */
+  .ac{position:relative}
+  .ac__list{position:absolute;z-index:20;inset-inline:0;top:100%;margin:2px 0 0;padding:4px 0;list-style:none;background:#fff;border:1px solid var(--sf-line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.16);max-height:210px;overflow:auto;display:none}
+  .ac__list.show{display:block}
+  .ac__item{padding:8px 12px;cursor:pointer;font-size:.92rem}
+  .ac__item.active,.ac__item:hover{background:var(--sf-brand);color:#fff}
+
+  /* choice */
+  .choice{display:flex;flex-direction:column;gap:8px}
+  .choice.row{flex-direction:row;flex-wrap:wrap;gap:14px}
+  .opt{display:flex;align-items:center;gap:8px;font-size:.92rem;cursor:pointer}
+  .opt input{width:18px;height:18px;accent-color:var(--sf-brand)}
+
+  /* repeater */
+  .rep{display:flex;flex-direction:column;gap:8px}
+  .rep__row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;padding:.6rem;border:1px solid #e5e5e5;border-radius:8px;background:rgba(0,0,0,.015);animation:pop .3s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  .rep__cell{flex:1 1 130px;min-width:110px;display:flex;flex-direction:column;gap:3px}
+  .rep__cell label{font-size:.72rem;color:#706e6b}
+  .rep__add{align-self:flex-start;background:#eef3fa;border:1px dashed var(--sf-brand);color:var(--sf-brand-deep);border-radius:8px;padding:.4rem .9rem;font:inherit;font-weight:600;cursor:pointer}
+
+  /* dropzone + file chip + AI */
+  .dz{display:flex;flex-direction:column;align-items:center;gap:.25rem;text-align:center;border:2px dashed #b0adab;border-radius:8px;padding:1.2rem 1rem;background:rgba(0,0,0,.02);transition:all .2s}
+  .dz.active{border-color:var(--sf-brand);background:rgba(28,90,168,.08)}
+  .dz__t{font-weight:600}
+  .dz__h{font-size:.75rem;opacity:.75}
+  .chip{display:flex;align-items:center;gap:.55rem;border:1px solid #dddbda;border-radius:6px;padding:.4rem .55rem;margin-top:8px;animation:pop .3s ease}
+  .chip__ic{width:34px;height:34px;border-radius:5px;background:#eef3fa;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+  .chip__nm{flex:1 1 auto;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .chip__sz{font-size:.72rem;opacity:.7}
+  .ai{margin-top:10px;border:1px solid var(--sf-line);border-radius:10px;padding:.7rem .9rem;background:#f7fafe;display:none}
+  .ai.show{display:block;animation:pop .3s ease}
+  .ai__head{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--sf-brand-deep);font-size:.92rem}
+  .ai__dot{width:10px;height:10px;border-radius:50%;background:#f4a72c;animation:pulse 1s infinite}
+  .ai.ok .ai__dot{background:#2e844a;animation:none}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+  .ai__body{font-size:.85rem;color:#3a4a5f;margin-top:6px;line-height:1.5}
+  .ai__body b{color:#2e844a}
+
+  .nav{display:flex;justify-content:space-between;gap:12px;margin-top:22px}
+  .btn{font:inherit;font-weight:600;border-radius:10px;padding:.6rem 1.4rem;cursor:pointer;border:1px solid transparent;transition:transform .1s,filter .15s}
+  .btn:active{transform:translateY(1px)}
+  .btn--primary{background:linear-gradient(180deg,#2a6fc4,#1c5aa8);color:#fff}
+  .btn--primary:hover{filter:brightness(1.05)}
+  .btn--ghost{background:#fff;color:var(--sf-brand-deep);border-color:var(--sf-line)}
+  .btn[hidden]{display:none}
+
+  .step-pane{display:none}
+  .step-pane.show{display:block;animation:slide .45s ease}
+  @keyframes slide{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+
+  /* success */
+  .success{display:none;text-align:center;padding:14px 6px}
+  .success.show{display:block;animation:pop .5s ease}
+  .success__ic{width:76px;height:76px;border-radius:50%;background:#e6f5ec;color:#2e844a;display:flex;align-items:center;justify-content:center;font-size:2.6rem;margin:0 auto 14px}
+  .refbox{border:1px solid #c9c7c5;border-radius:8px;padding:1rem 1.25rem;background:rgba(28,90,168,.06);display:inline-block;min-width:60%;margin-top:8px}
+  .refbox__l{margin:0;opacity:.8;font-size:.85rem}
+  .refbox__v{font-size:1.5rem;font-weight:800;letter-spacing:.05em;margin:.25rem 0;direction:ltr}
+
+  /* fake cursor */
+  #cursor{position:fixed;z-index:9999;width:22px;height:22px;left:0;top:0;pointer-events:none;transition:left .55s cubic-bezier(.4,.1,.2,1),top .55s cubic-bezier(.4,.1,.2,1);filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+  #cursor.click{animation:cl .3s ease}
+  @keyframes cl{0%,100%{transform:scale(1)}45%{transform:scale(.7)}}
+  .toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:#123f78;color:#fff;padding:.55rem 1.1rem;border-radius:999px;font-size:.9rem;font-weight:600;opacity:0;transition:opacity .3s;z-index:9998;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<svg id="cursor" viewBox="0 0 24 24" fill="#fff" stroke="#123f78" stroke-width="1.5"><path d="M4 2 L4 20 L9 15 L12.5 22 L15 21 L11.5 14 L18 14 Z"/></svg>
+
+<div class="card">
+  <div class="card__accent"></div>
+  <header class="form-head">
+    <img id="logo" alt="עיריית מוניפורס — MuniForce City">
+    <h1 class="form-title">בקשה לרישיון עסק</h1>
+    <p class="form-desc">טופס עירוני להגשת בקשה לרישיון עסק — פרטי המבקש/ת, מען העסק, פרטי העסק ובעלי הזכויות, וצירוף מסמכים לאימות.</p>
+  </header>
+
+  <ol class="form-steps" id="steps">
+    <li class="form-step form-step_current"><span class="form-step__inner"><span class="form-step__circle">1</span><span class="form-step__label">פרטי המבקש/ת</span></span></li>
+    <li class="form-step form-step_todo"><span class="form-step__inner"><span class="form-step__circle">2</span><span class="form-step__label">מען העסק</span></span></li>
+    <li class="form-step form-step_todo"><span class="form-step__inner"><span class="form-step__circle">3</span><span class="form-step__label">פרטי העסק ובעלי הזכויות</span></span></li>
+    <li class="form-step form-step_todo"><span class="form-step__inner"><span class="form-step__circle">4</span><span class="form-step__label">מסמכים והצהרות</span></span></li>
+  </ol>
+
+  <div id="body">
+    <!-- Step 1 -->
+    <section class="step-pane show" data-step="0">
+      <div class="grid2">
+        <div class="field"><label class="field__label">שם פרטי <span class="req">*</span></label><input class="ctrl" id="firstName"></div>
+        <div class="field"><label class="field__label">שם משפחה <span class="req">*</span></label><input class="ctrl" id="lastName"></div>
+      </div>
+      <div class="field"><label class="field__label">תעודת זהות <span class="req">*</span></label><input class="ctrl" id="idNumber" inputmode="numeric">
+        <div class="field__error" id="idNumber-err">תעודת זהות לא תקינה</div></div>
+      <div class="grid2">
+        <div class="field"><label class="field__label">דוא"ל <span class="req">*</span></label><input class="ctrl" id="email"></div>
+        <div class="field"><label class="field__label">טלפון נייד <span class="req">*</span></label><input class="ctrl" id="phone" inputmode="tel"></div>
+      </div>
+    </section>
+
+    <!-- Step 2 -->
+    <section class="step-pane" data-step="1">
+      <div class="field"><label class="field__label">שם העסק <span class="req">*</span></label><input class="ctrl" id="businessName">
+        <div class="field__error" id="businessName-err">נדרשים לפחות 2 תווים</div></div>
+      <div class="grid2">
+        <div class="field ac"><label class="field__label">עיר <span class="req">*</span></label><input class="ctrl" id="city" autocomplete="off">
+          <ul class="ac__list" id="city-list"></ul></div>
+        <div class="field ac"><label class="field__label">רחוב <span class="req">*</span></label><input class="ctrl" id="street" autocomplete="off">
+          <ul class="ac__list" id="street-list"></ul></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label class="field__label">מספר בית <span class="req">*</span></label><input class="ctrl" id="houseNumber" inputmode="numeric"></div>
+        <div class="field"><label class="field__label">טלפון העסק</label><input class="ctrl" id="businessPhone" inputmode="tel"></div>
+      </div>
+    </section>
+
+    <!-- Step 3 -->
+    <section class="step-pane" data-step="2">
+      <div class="field"><label class="field__label">סוג העסק <span class="req">*</span></label>
+        <select class="ctrl" id="businessType">
+          <option value="">— בחר/י —</option>
+          <option>מסעדה / בית קפה</option><option>חנות קמעונאית</option><option>מספרה / טיפוח</option>
+          <option>מוסך</option><option>בית מלאכה</option><option>משרד / שירותים</option><option>אחר</option>
+        </select></div>
+      <div class="field"><label class="field__label">האם העסק כולל הכנה או הגשה של מזון? <span class="req">*</span></label>
+        <div class="choice row" id="foodHandling">
+          <label class="opt"><input type="radio" name="food"> כן</label>
+          <label class="opt"><input type="radio" name="food"> לא</label>
+        </div></div>
+      <div class="grid2">
+        <div class="field"><label class="field__label">שטח העסק (מ"ר) <span class="req">*</span></label><input class="ctrl" id="areaSqm" inputmode="numeric"></div>
+        <div class="field"><label class="field__label">מספר עובדים <span class="req">*</span></label><input class="ctrl" id="employees" inputmode="numeric"></div>
+      </div>
+      <div class="field"><label class="field__label">בעלי זכויות בעסק <span class="req">*</span></label>
+        <div class="rep" id="owners"></div>
+        <button class="rep__add" id="addOwner" type="button">＋ הוספת בעל/ת זכויות</button>
+      </div>
+    </section>
+
+    <!-- Step 4 -->
+    <section class="step-pane" data-step="3">
+      <div class="field"><label class="field__label">מסמכים שמצורפים לבקשה</label>
+        <div class="choice" id="attachedDocs">
+          <label class="opt"><input type="checkbox"> תרשים סביבה</label>
+          <label class="opt"><input type="checkbox"> תוכנית עסק (גרמושקה)</label>
+          <label class="opt"><input type="checkbox"> חוזה שכירות / נסח טאבו</label>
+          <label class="opt"><input type="checkbox"> אישור כיבוי אש</label>
+          <label class="opt"><input type="checkbox"> תעודת עוסק מורשה</label>
+        </div></div>
+      <div class="field"><label class="field__label">תוכנית העסק (גרמושקה) <span class="req">*</span></label>
+        <div class="dz" id="dz1"><span class="dz__t">גרירת קובץ לכאן או לחיצה לבחירה</span><span class="dz__h">PDF · עד 10MB</span></div>
+        <div id="dz1-chips"></div></div>
+      <div class="field"><label class="field__label">צילום תעודת זהות של המבקש/ת <span class="req">*</span></label>
+        <div class="dz" id="dz2"><span class="dz__t">גרירת קובץ לכאן או לחיצה לבחירה</span><span class="dz__h">JPG · PNG · PDF</span></div>
+        <div id="dz2-chips"></div>
+        <div class="ai" id="ai"><div class="ai__head"><span class="ai__dot"></span><span id="ai-title">בינה מלאכותית בודקת את המסמכים…</span></div>
+          <div class="ai__body" id="ai-body"></div></div></div>
+      <div class="field"><label class="opt" style="align-items:flex-start"><input type="checkbox" id="consent"> <span>אני מצהיר/ה כי הפרטים נכונים ומאשר/ת את תנאי הגשת הבקשה לרישוי עסק <span class="req">*</span></span></label></div>
+    </section>
+
+    <!-- Success -->
+    <section class="success" id="success">
+      <div class="success__ic">✓</div>
+      <h2 style="color:#123f78;margin:.2rem 0">הבקשה נשלחה בהצלחה!</h2>
+      <p style="color:#51617a">בקשתך לרישיון עסק התקבלה ועברה בדיקת בינה מלאכותית ראשונית. נעדכן אותך בדוא"ל.</p>
+      <div class="refbox"><p class="refbox__l">מספר אסמכתא</p><p class="refbox__v" id="ref">MF-2026-04871</p></div>
+    </section>
+  </div>
+
+  <div class="nav" id="nav">
+    <button class="btn btn--ghost" id="back" hidden>הקודם</button>
+    <button class="btn btn--primary" id="next" style="margin-inline-start:auto">הבא ›</button>
+  </div>
+</div>
+
+<script>
+const LOGO="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNjAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMzYwIDEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSLXoteZ16jXmdeZ16og157Xldeg15nXpNeV16jXoSDigJQgTXVuaUZvcmNlIENpdHkiPgogIDxkZWZzPgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJtZlNoaWVsZCIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMyYTZmYzQiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMTIzZjc4Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJtZlNreSIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNlYWYyZmIiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjY2ZlMGY0Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KCiAgPCEtLSBFbWJsZW06IGNpdmljIHNoaWVsZCB3aXRoIGEgY2l0eSBza3lsaW5lICsgcmlzaW5nIHN1biAtLT4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNCwxMCkiPgogICAgPHBhdGggZD0iTTUwIDIgTDk0IDE2IFY1MiBDOTQgNzggNzQgOTYgNTAgMTA0IEMyNiA5NiA2IDc4IDYgNTIgVjE2IFoiCiAgICAgICAgICBmaWxsPSJ1cmwoI21mU2hpZWxkKSIgc3Ryb2tlPSIjMGUzMzVmIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxwYXRoIGQ9Ik01MCAxMCBMODYgMjEgVjUyIEM4NiA3MyA3MCA4OCA1MCA5NSBDMzAgODggMTQgNzMgMTQgNTIgVjIxIFoiCiAgICAgICAgICBmaWxsPSJ1cmwoI21mU2t5KSIvPgogICAgPCEtLSByaXNpbmcgc3VuIC0tPgogICAgPGNpcmNsZSBjeD0iNTAiIGN5PSI0NCIgcj0iMTAiIGZpbGw9IiNmNGE3MmMiLz4KICAgIDxnIHN0cm9rZT0iI2Y0YTcyYyIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+CiAgICAgIDxsaW5lIHgxPSI1MCIgeTE9IjI0IiB4Mj0iNTAiIHkyPSIzMCIvPgogICAgICA8bGluZSB4MT0iMzQiIHkxPSIzMCIgeDI9IjM4IiB5Mj0iMzQiLz4KICAgICAgPGxpbmUgeDE9IjY2IiB5MT0iMzAiIHgyPSI2MiIgeTI9IjM0Ii8+CiAgICA8L2c+CiAgICA8IS0tIHNreWxpbmU6IHRocmVlIG11bmljaXBhbCBidWlsZGluZ3MgKyBjZW50cmFsIHRvd2VyIC0tPgogICAgPGcgZmlsbD0iIzFjNWFhOCI+CiAgICAgIDxyZWN0IHg9IjI0IiB5PSI1OCIgd2lkdGg9IjE0IiBoZWlnaHQ9IjI2IiByeD0iMS41Ii8+CiAgICAgIDxyZWN0IHg9IjYyIiB5PSI1OCIgd2lkdGg9IjE0IiBoZWlnaHQ9IjI2IiByeD0iMS41Ii8+CiAgICAgIDxyZWN0IHg9IjQyIiB5PSI0NiIgd2lkdGg9IjE2IiBoZWlnaHQ9IjM4IiByeD0iMS41Ii8+CiAgICAgIDxyZWN0IHg9IjQ4LjUiIHk9IjM2IiB3aWR0aD0iMyIgaGVpZ2h0PSIxMiIvPgogICAgICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjM1IiByPSIyLjQiIGZpbGw9IiNmNGE3MmMiLz4KICAgIDwvZz4KICAgIDwhLS0gd2luZG93cyAtLT4KICAgIDxnIGZpbGw9IiNlYWYyZmIiPgogICAgICA8cmVjdCB4PSIyNyIgeT0iNjIiIHdpZHRoPSIzIiBoZWlnaHQ9IjMiLz48cmVjdCB4PSIzMiIgeT0iNjIiIHdpZHRoPSIzIiBoZWlnaHQ9IjMiLz4KICAgICAgPHJlY3QgeD0iMjciIHk9IjY4IiB3aWR0aD0iMyIgaGVpZ2h0PSIzIi8+PHJlY3QgeD0iMzIiIHk9IjY4IiB3aWR0aD0iMyIgaGVpZ2h0PSIzIi8+CiAgICAgIDxyZWN0IHg9IjY1IiB5PSI2MiIgd2lkdGg9IjMiIGhlaWdodD0iMyIvPjxyZWN0IHg9IjcwIiB5PSI2MiIgd2lkdGg9IjMiIGhlaWdodD0iMyIvPgogICAgICA8cmVjdCB4PSI2NSIgeT0iNjgiIHdpZHRoPSIzIiBoZWlnaHQ9IjMiLz48cmVjdCB4PSI3MCIgeT0iNjgiIHdpZHRoPSIzIiBoZWlnaHQ9IjMiLz4KICAgICAgPHJlY3QgeD0iNDUiIHk9IjUyIiB3aWR0aD0iMy41IiBoZWlnaHQ9IjMuNSIvPjxyZWN0IHg9IjUxLjUiIHk9IjUyIiB3aWR0aD0iMy41IiBoZWlnaHQ9IjMuNSIvPgogICAgICA8cmVjdCB4PSI0NSIgeT0iNjAiIHdpZHRoPSIzLjUiIGhlaWdodD0iMy41Ii8+PHJlY3QgeD0iNTEuNSIgeT0iNjAiIHdpZHRoPSIzLjUiIGhlaWdodD0iMy41Ii8+CiAgICAgIDxyZWN0IHg9IjQ1IiB5PSI2OCIgd2lkdGg9IjMuNSIgaGVpZ2h0PSIzLjUiLz48cmVjdCB4PSI1MS41IiB5PSI2OCIgd2lkdGg9IjMuNSIgaGVpZ2h0PSIzLjUiLz4KICAgIDwvZz4KICA8L2c+CgogIDwhLS0gV29yZG1hcmsgLS0+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTIyLDApIiBmb250LWZhbWlseT0iJ1J1YmlrJywnU2Vnb2UgVUknLCdBc3Npc3RhbnQnLEFyaWFsLHNhbnMtc2VyaWYiPgogICAgPHRleHQgeD0iMCIgeT0iNTIiIGZvbnQtc2l6ZT0iMjkiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMxMjNmNzgiPtei15nXqNeZ15nXqiDXnteV16DXmdek15XXqNehPC90ZXh0PgogICAgPHRleHQgeD0iMCIgeT0iNzgiIGZvbnQtc2l6ZT0iMTciIGZvbnQtd2VpZ2h0PSI2MDAiIGxldHRlci1zcGFjaW5nPSIxLjUiIGZpbGw9IiMxYzVhYTgiPk1VTklGT1JDRSBDSVRZPC90ZXh0PgogICAgPHRleHQgeD0iMCIgeT0iOTgiIGZvbnQtc2l6ZT0iMTEuNSIgZm9udC13ZWlnaHQ9IjUwMCIgZmlsbD0iIzVhNmI4MiI+16nXmdeo15XXqteZ150g15PXmdeS15nXmNec15nXmdedINec16rXldep15E8L3RleHQ+CiAgPC9nPgo8L3N2Zz4K";
+document.getElementById('logo').src=LOGO;
+
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const $=s=>document.querySelector(s);
+const cursor=$('#cursor');
+function rectCenter(el){const r=el.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};}
+async function moveTo(el,{offx=0,offy=0}={}){const c=rectCenter(el);cursor.style.left=(c.x+offx)+'px';cursor.style.top=(c.y+offy)+'px';await sleep(620);}
+async function click(el){await moveTo(el);cursor.classList.add('click');await sleep(150);cursor.classList.remove('click');await sleep(120);}
+async function type(el,text,{err=false}={}){el.classList.add('focus');el.focus();for(const ch of text){el.value+=ch;await sleep(55+Math.round(20*(ch===' '?1:0)));}await sleep(250);el.classList.remove('focus');}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1700);}
+
+const steps=[...document.querySelectorAll('.form-step')];
+const panes=[...document.querySelectorAll('.step-pane')];
+let cur=0;
+function renderSteps(){steps.forEach((s,i)=>{s.className='form-step '+(i<cur?'form-step_done':i===cur?'form-step_current':'form-step_todo');const c=s.querySelector('.form-step__circle');c.textContent=i<cur?'✓':(i+1);});}
+async function goStep(i){panes[cur].classList.remove('show');cur=i;renderSteps();$('#back').hidden=cur===0;$('#next').textContent=cur===3?'שליחת הבקשה':'הבא ›';await sleep(120);panes[cur].classList.add('show');window.scrollTo({top:0,behavior:'smooth'});await sleep(500);}
+
+// owners repeater
+let ownerRows=0;
+function addOwnerRow(){ownerRows++;const div=document.createElement('div');div.className='rep__row';div.innerHTML=
+  '<div class="rep__cell"><label>שם מלא</label><input class="ctrl"></div>'+
+  '<div class="rep__cell"><label>ת"ז</label><input class="ctrl"></div>'+
+  '<div class="rep__cell"><label>תפקיד</label><select class="ctrl"><option>בעלים</option><option>מנהל/ת</option><option>שותף/ה</option></select></div>'+
+  '<div class="rep__cell"><label>אחוז אחזקה</label><input class="ctrl"></div>';
+  $('#owners').appendChild(div);return div;}
+
+async function fillOwner(row,name,id,pct){const [n,i,,p]=row.querySelectorAll('input,select');await type(n,name);await type(i,id);await type(p,pct);}
+
+// autocomplete
+async function autocomplete(inputSel,listSel,typed,options,pick){
+  const inp=$(inputSel),list=$(listSel);
+  await click(inp);await type(inp,typed);
+  list.innerHTML=options.map((o,ix)=>`<li class="ac__item${ix===pick?' active':''}">${o}</li>`).join('');
+  list.classList.add('show');await sleep(700);
+  const item=list.children[pick];await moveTo(item);item.classList.add('active');await sleep(300);
+  inp.value=options[pick];list.classList.remove('show');await sleep(300);
+}
+
+async function run(){
+  await sleep(900);
+  window.__STAGE__='step1';
+  toast('שלב 1 מתוך 4 · פרטי המבקש/ת');
+  // Step 1
+  await click($('#firstName'));await type($('#firstName'),'דנה');
+  await click($('#lastName'));await type($('#lastName'),'לוי');
+  // invalid ID -> error -> fix (demonstrates per-field validation)
+  await click($('#idNumber'));await type($('#idNumber'),'12345');
+  $('#idNumber').classList.add('err');$('#idNumber-err').classList.add('show');toast('ולידציה: ת"ז לא תקינה');await sleep(1300);
+  $('#idNumber').value='';await type($('#idNumber'),'039573187');
+  $('#idNumber').classList.remove('err');$('#idNumber-err').classList.remove('show');await sleep(300);
+  await click($('#email'));await type($('#email'),'dana.levi@mail.com');
+  await click($('#phone'));await type($('#phone'),'0521234567');
+  window.__STAGE__='to-step2';await click($('#next'));await goStep(1);
+
+  // Step 2 — text length + address autocomplete
+  toast('שלב 2 מתוך 4 · מען העסק');
+  await click($('#businessName'));await type($('#businessName'),'מאפיית דנה');
+  await autocomplete('#city','#city-list','תל',['תל אביב - יפו','תל מונד','תל שבע'],0);
+  await autocomplete('#street','#street-list','דיז',['דיזנגוף','דיזנגוף פינת פרישמן','דיזנגוף סנטר'],0);
+  await click($('#houseNumber'));await type($('#houseNumber'),'112');
+  await click($('#businessPhone'));await type($('#businessPhone'),'035550111');
+  window.__STAGE__='to-step3';await click($('#next'));await goStep(2);
+
+  // Step 3 — every choice type + numeric range + repeater
+  toast('שלב 3 מתוך 4 · פרטי העסק');
+  await click($('#businessType'));$('#businessType').value='מסעדה / בית קפה';await sleep(400);
+  const foodYes=$('#foodHandling').querySelectorAll('input')[0];await click(foodYes);foodYes.checked=true;await sleep(300);
+  await click($('#areaSqm'));await type($('#areaSqm'),'85');
+  await click($('#employees'));await type($('#employees'),'6');
+  toast('טבלה חוזרת: בעלי זכויות');
+  const r1=addOwnerRow();await sleep(200);await fillOwner(r1,'דנה לוי','039573187','60');
+  await click($('#addOwner'));const r2=addOwnerRow();await fillOwner(r2,'אבי כהן','022333445','40');
+  window.__STAGE__='to-step4';await click($('#next'));await goStep(3);
+
+  // Step 4 — multi-select, upload, AI review, consent
+  toast('שלב 4 מתוך 4 · מסמכים והצהרות');
+  const docs=$('#attachedDocs').querySelectorAll('input');
+  await click(docs[1]);docs[1].checked=true;await click(docs[2]);docs[2].checked=true;await sleep(200);
+  // upload 1: business plan
+  const dz1=$('#dz1');dz1.classList.add('active');await moveTo(dz1);await sleep(400);dz1.classList.remove('active');
+  $('#dz1-chips').innerHTML='<div class="chip"><span class="chip__ic">📄</span><span class="chip__nm">תוכנית-עסק-גרמושקה.pdf</span><span class="chip__sz">1.8MB</span></div>';await sleep(500);
+  // upload 2: id scan -> triggers AI
+  const dz2=$('#dz2');dz2.classList.add('active');await moveTo(dz2);await sleep(400);dz2.classList.remove('active');
+  $('#dz2-chips').innerHTML='<div class="chip"><span class="chip__ic">🪪</span><span class="chip__nm">תעודת-זהות.jpg</span><span class="chip__sz">640KB</span></div>';await sleep(400);
+  window.__STAGE__='ai';const ai=$('#ai');ai.classList.add('show');toast('בינה מלאכותית בודקת מסמכים…');await sleep(2600);
+  ai.classList.add('ok');$('#ai-title').textContent='בדיקת בינה מלאכותית הושלמה';
+  $('#ai-body').innerHTML='✓ צילום תעודת הזהות קריא. השם שחולץ מהמסמך — <b>דנה לוי</b> — תואם לפרטים שהוזנו.<br>✓ תוכנית העסק צורפה. <b>כל המסמכים הנדרשים קיימים.</b>';await sleep(2600);
+  await click($('#consent'));$('#consent').checked=true;await sleep(500);
+  await click($('#next'));
+  // submit -> success
+  panes[3].classList.remove('show');$('#nav').style.display='none';renderSteps2Done();
+  await sleep(150);$('#success').classList.add('show');toast('הבקשה נשלחה בהצלחה ✓');window.scrollTo({top:0,behavior:'smooth'});
+  await sleep(2600);
+  window.__DEMO_DONE__=true;
+}
+function renderSteps2Done(){steps.forEach(s=>{s.className='form-step form-step_done';s.querySelector('.form-step__circle').textContent='✓';});}
+window.__STAGE__='init';
+window.addEventListener('error',e=>{window.__ERR__='error:'+e.message;});
+window.addEventListener('unhandledrejection',e=>{window.__ERR__='reject:'+(e.reason&&e.reason.message||e.reason);});
+run().then(()=>{window.__STAGE__='resolved';}).catch(e=>{window.__ERR__='run:'+(e&&e.message||e);console.error('RUNERR',e);});
+</script>
+</body>
+</html>

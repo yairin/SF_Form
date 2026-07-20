@@ -82,6 +82,15 @@ jobs:
       - name: Seed reference data (departments + service types)
         run: sf apex run --file scripts/seed.apex --target-org target
 
+      - name: Seed demo forms (arnona discount + business license)
+        # Idempotent showcase forms for MuniForce City. Best-effort: a seed failure
+        # never fails the deploy (the core metadata + reference data already landed).
+        run: |
+          sf apex run --file scripts/seed-demo-form.apex --target-org target \
+            || echo "arnona demo seed failed (ignored)."
+          sf apex run --file scripts/seed-business-license.apex --target-org target \
+            || echo "business-license demo seed failed (ignored)."
+
       - name: Publish Experience site(s)
         # Republish every Experience site so the guest pages pick up the freshly
         # deployed LWC bundles (otherwise the site keeps serving an old snapshot).
