@@ -340,7 +340,7 @@ a:focus {
     margin: 0 0 1.25rem;
     padding: 0;
     display: flex;
-    flex-direction: row-reverse;        /* RTL: step 1 on the right */
+    flex-direction: row;                /* the RTL container already puts step 1 on the right */
     align-items: flex-start;
     gap: 0;
     overflow-x: auto;
@@ -352,18 +352,19 @@ a:focus {
     min-width: 72px;
     text-align: center;
 }
-/* connector line between circles (drawn on the leading side) */
+/* connector from this circle's centre toward the NEXT step (inline-end = left in RTL).
+   Logical properties keep it correct in both RTL and LTR. */
 .form-step::before {
     content: "";
     position: absolute;
     top: 15px;
-    right: -50%;
-    width: 100%;
+    inset-inline-start: 50%;
+    inline-size: 100%;
     height: 2px;
     background: #d8dde6;
     z-index: 0;
 }
-.form-step:last-child::before { display: none; }   /* no line before step 1 */
+.form-step:last-child::before { display: none; }   /* last step has no trailing connector */
 .form-step_done::before { background: #2e844a; }    /* completed segment green */
 .form-step__btn {
     position: relative;

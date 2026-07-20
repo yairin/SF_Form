@@ -128,7 +128,7 @@
                     <template lwc:if={f.isCheckbox}>
                         <label class="form-consent">
                             <input type="checkbox" class="form-consent__box" id={f.key} data-key={f.key}
-                                aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid}
+                                checked={f.isChecked} aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid}
                                 aria-describedby={f.describedBy} onchange={handleChange} />
                             <span class="form-consent__label">{f.label}<template lwc:if={f.required}> <abbr class="slds-required" title="חובה">*</abbr></template></span>
                         </label>
@@ -140,16 +140,16 @@
                                 <template lwc:if={f.required}><abbr class="slds-required" title="חובה">* </abbr></template>{f.label}
                             </legend>
                             <template lwc:if={f.isRadio}>
-                                <template for:each={f.options} for:item="o">
+                                <template for:each={f.viewOptions} for:item="o">
                                     <label key={o.value} class="slds-p-right_medium">
-                                        <input type="radio" data-key={f.key} name={f.key} value={o.value} onchange={handleChange} /> {o.label}
+                                        <input type="radio" data-key={f.key} name={f.key} value={o.value} checked={o.checked} onchange={handleChange} /> {o.label}
                                     </label>
                                 </template>
                             </template>
                             <template lwc:else>
-                                <template for:each={f.options} for:item="o">
+                                <template for:each={f.viewOptions} for:item="o">
                                     <label key={o.value} class="slds-p-right_medium">
-                                        <input type="checkbox" data-key={f.key} value={o.value} onchange={handleChange} /> {o.label}
+                                        <input type="checkbox" data-key={f.key} value={o.value} checked={o.checked} onchange={handleChange} /> {o.label}
                                     </label>
                                 </template>
                             </template>
@@ -183,6 +183,7 @@
                             </template>
                             <template lwc:elseif={f.isText}>
                                 <input type={f.inputType} id={f.key} data-key={f.key} class="slds-input"
+                                    value={f.currentValue}
                                     aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid}
                                     aria-describedby={f.describedBy} onchange={handleChange} />
                             </template>
@@ -236,6 +237,7 @@
                             </template>
                             <template lwc:elseif={f.isTextarea}>
                                 <textarea id={f.key} data-key={f.key} class="slds-textarea"
+                                    value={f.currentValue}
                                     aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid}
                                     aria-describedby={f.describedBy} onchange={handleChange}></textarea>
                             </template>
@@ -245,8 +247,8 @@
                                         aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid}
                                         aria-describedby={f.describedBy} onchange={handleChange}>
                                         <option value="">— בחר —</option>
-                                        <template for:each={f.options} for:item="o">
-                                            <option key={o.value} value={o.value}>{o.label}</option>
+                                        <template for:each={f.viewOptions} for:item="o">
+                                            <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
                                         </template>
                                     </select>
                                 </div>

@@ -242,9 +242,22 @@ export default class DynamicForm extends LightningElement {
                     })
                 }));
             }
+            // Bind the current value back onto controls so drafts, step-back navigation
+            // and prefills actually SHOW (the inputs are otherwise uncontrolled).
+            const cur = this.values[f.key];
+            const curStr = cur == null ? '' : String(cur);
+            const curArr = Array.isArray(cur) ? cur.map((x) => String(x)) : [];
+            const viewOptions = (f.options || []).map((o) => ({
+                label: o.label,
+                value: o.value,
+                selected: curStr === String(o.value),
+                checked: f.isCheckboxGroup ? curArr.includes(String(o.value)) : curStr === String(o.value)
+            }));
             return {
                 ...f,
                 repeaterRows,
+                viewOptions,
+                isChecked: curStr === 'כן',
                 status: this.fileStatus[f.key],
                 fieldError: this.fieldErrors[f.key],
                 ariaInvalid: hasErr ? 'true' : 'false',
