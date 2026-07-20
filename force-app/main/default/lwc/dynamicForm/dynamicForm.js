@@ -388,6 +388,22 @@ export default class DynamicForm extends LightningElement {
         return this.validateFields(this.currentFields);
     }
 
+    // Validate a single field and set/clear its inline error (used on field blur).
+    validateOne(f) {
+        if (!f) return;
+        if (this.visibleKeySet[f.key] === false) return;
+        const val = this.values[f.key];
+        let m;
+        if (f.required && this.isEmpty(val)) m = 'שדה חובה';
+        else if (!this.isEmpty(val)) {
+            const sv = Array.isArray(val) ? val.join(' ') : val;
+            m = typeError(f.type, sv) || constraintError(f, sv);
+        }
+        const e = { ...this.fieldErrors };
+        if (m) e[f.key] = m; else delete e[f.key];
+        this.fieldErrors = e;
+    }
+
     nextStep() {
         this.error = undefined;
         if (this.stepHasErrors()) { this._pendingFocus = 'summary'; return; }
@@ -733,6 +749,9 @@ export default class DynamicForm extends LightningElement {
         }
         // reassign so conditional-visibility getters recompute
         this.values = { ...this.values };
+        // validate this single field now (onchange fires on blur → immediate feedback
+        // as the applicant moves to the next field), not only on step transition.
+        this.validateOne(f);
         this.scheduleDraftSave();
     }
 

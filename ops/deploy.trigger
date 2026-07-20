@@ -1,1 +1,1 @@
-Fix PA service identifier + LWC braces; add MASHAM demo form seed 20260720T143000Z
+Per-field validation on blur (validateOne on change) 20260720T150000Z
