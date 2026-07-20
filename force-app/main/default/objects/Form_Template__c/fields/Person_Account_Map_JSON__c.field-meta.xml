@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Person_Account_Map_JSON__c</fullName>
+    <label>Person Account Map (JSON)</label>
+    <description>Optional overrides for the form-field to Account-field mapping. JSON: {"map":{"formFieldKey":"AccountFieldApiName"},"matchAccountField":"...","matchFormKey":"..."}. Known personal-detail field types are auto-mapped when this is blank.</description>
+    <type>LongTextArea</type>
+    <length>32768</length>
+    <visibleLines>4</visibleLines>
+    <required>false</required>
+</CustomField>

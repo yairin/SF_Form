@@ -43,6 +43,23 @@
                         checked={sharedToGallery} onchange={handleGalleryShared}></lightning-input>
                 </div>
 
+                <!-- Person Account creation -->
+                <div class="slds-box slds-box_xx-small slds-m-bottom_small slds-theme_shade">
+                    <lightning-input type="checkbox" label="צור/עדכן כרטיס אדם (Person Account) מההגשה"
+                        checked={createPersonAccount} onchange={handleCreatePersonAccount}></lightning-input>
+                    <template lwc:if={createPersonAccount}>
+                        <div class="slds-p-top_x-small">
+                            <p class="slds-text-body_small slds-text-color_weak slds-p-bottom_xx-small">
+                                שדות הפרטים האישיים (שם פרטי/משפחה, אימייל, טלפון, עיר, רחוב) ממופים אוטומטית.
+                                מיפוי נוסף (רשות): JSON —
+                                <code>{"map":{"idNumber":"Id_Number__pc"},"matchAccountField":"Id_Number__pc","matchFormKey":"idNumber"}</code>
+                            </p>
+                            <textarea class="slds-textarea" aria-label="מיפוי Person Account (JSON)" rows="3"
+                                onchange={handlePersonAccountMap} placeholder='{"map":{...},"matchAccountField":"...","matchFormKey":"..."}'>{personAccountMap}</textarea>
+                        </div>
+                    </template>
+                </div>
+
                 <!-- AI review configuration -->
                 <div class="slds-box slds-box_xx-small slds-m-bottom_small slds-theme_shade">
                     <lightning-input type="checkbox" label="בדיקת AI לטופס זה" checked={aiEnabled} onchange={handleAiEnabled}></lightning-input>

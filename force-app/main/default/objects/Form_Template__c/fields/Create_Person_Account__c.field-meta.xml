@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Create_Person_Account__c</fullName>
+    <label>Create Person Account</label>
+    <description>When enabled, a submission of this form creates/updates a Person Account, mapping the personal-details fields (and any JSON overrides) onto Account fields. No-op if Person Accounts is not enabled in the org.</description>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>

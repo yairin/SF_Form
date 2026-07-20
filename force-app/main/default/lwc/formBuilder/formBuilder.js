@@ -7,6 +7,7 @@ import getPublicUrl from '@salesforce/apex/FormBuilderController.getPublicUrl';
 import setAIConfig from '@salesforce/apex/FormBuilderController.setAIConfig';
 import setDesignConfig from '@salesforce/apex/FormBuilderController.setDesignConfig';
 import setIdentityMode from '@salesforce/apex/FormBuilderController.setIdentityMode';
+import setPersonAccountConfig from '@salesforce/apex/FormBuilderController.setPersonAccountConfig';
 import setGalleryShared from '@salesforce/apex/FormBuilderController.setGalleryShared';
 import uploadDesignAsset from '@salesforce/apex/FormBuilderController.uploadDesignAsset';
 
@@ -138,6 +139,8 @@ export default class FormBuilder extends LightningElement {
     aiContactApplicant = false;
     tasks = [];
     identityMode = 'Anonymous';
+    createPersonAccount = false;
+    personAccountMap = '';
     sharedToGallery = false;
     appearance = defaultAppearance();
     uploadingBg = false;
@@ -198,6 +201,8 @@ export default class FormBuilder extends LightningElement {
         this.tasks = [];
         this.identityMode = 'Anonymous';
         this.sharedToGallery = false;
+        this.createPersonAccount = false;
+        this.personAccountMap = '';
         this.appearance = defaultAppearance();
         this.steps = [newStep()];
         this.ensureIds();
@@ -222,6 +227,8 @@ export default class FormBuilder extends LightningElement {
             this.aiContactApplicant = t.AI_Contact_Applicant__c === true;
             this.identityMode = t.Identity_Mode__c || 'Anonymous';
             this.sharedToGallery = t.Shared_To_Gallery__c === true;
+            this.createPersonAccount = t.Create_Person_Account__c === true;
+            this.personAccountMap = t.Person_Account_Map_JSON__c || '';
             this._editExternalId = t.External_Id__c;
             let parsed = [];
             try { parsed = JSON.parse(t.Schema_JSON__c || '[]'); } catch (e) { parsed = []; }
@@ -723,6 +730,8 @@ export default class FormBuilder extends LightningElement {
     handleAiCheckAttachments(e) { this.aiCheckAttachments = e.target.checked; }
     handleAiContactApplicant(e) { this.aiContactApplicant = e.target.checked; }
     handleIdentityMode(e) { this.identityMode = e.target.value; }
+    handleCreatePersonAccount(e) { this.createPersonAccount = e.target.checked; }
+    handlePersonAccountMap(e) { this.personAccountMap = e.target.value; }
     handleGalleryShared(e) { this.sharedToGallery = e.target.checked; }
     get identityModeOptions() {
         return [
@@ -845,6 +854,13 @@ export default class FormBuilder extends LightningElement {
                 } catch (e) { /* non-fatal */ }
                 try {
                     await setGalleryShared({ recordId: saved.Id, shared: this.sharedToGallery });
+                } catch (e) { /* non-fatal */ }
+                try {
+                    await setPersonAccountConfig({
+                        recordId: saved.Id,
+                        enabled: this.createPersonAccount,
+                        mapJson: this.personAccountMap
+                    });
                 } catch (e) { /* non-fatal */ }
             }
             try { this.savedUrl = await getPublicUrl({ externalId: this.savedExternalId }); } catch (e) { /* ignore */ }

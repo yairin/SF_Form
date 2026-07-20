@@ -107,7 +107,7 @@ public with sharing class FormBuilderController {
                    AI_Review_Enabled__c, AI_Review_Instructions__c,
                    AI_Check_Attachments__c, AI_Contact_Applicant__c,
                    Tasks_JSON__c, Appearance_JSON__c, Identity_Mode__c, Shared_To_Gallery__c,
-                   Authority_Code__c
+                   Authority_Code__c, Create_Person_Account__c, Person_Account_Map_JSON__c
             FROM Form_Template__c
             WHERE Id = :recordId
             WITH USER_MODE
@@ -174,6 +174,15 @@ public with sharing class FormBuilderController {
             throw new AuraHandledException(
                 'העלאת המדיה נכשלה. ודא ש"Content Deliveries" מופעל בארגון, או הדבק כתובת URL של תמונה/סרטון. (' + e.getMessage() + ')');
         }
+    }
+
+    /** Enable/disable Person Account creation for this form + optional field mapping (JSON). */
+    @AuraEnabled
+    public static void setPersonAccountConfig(Id recordId, Boolean enabled, String mapJson) {
+        Form_Template__c f = [SELECT Id FROM Form_Template__c WHERE Id = :recordId WITH USER_MODE LIMIT 1];
+        f.Create_Person_Account__c = enabled == true;
+        f.Person_Account_Map_JSON__c = mapJson;
+        update as user f;
     }
 
     /** Save the AI-review expectations defined by the form creator. */
