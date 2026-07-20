@@ -13,31 +13,13 @@ if ([SELECT COUNT() FROM Department__c] == 0) {
     System.debug('SEED skipped departments (data already exists)');
 }
 
-// Idempotent public form template so the Experience Cloud Guest page has a real,
-// active, routable form to render (dynamicForm externalId = 'event-registration').
-// Linked to the 'רישום לאירוע' service type so submissions route to תרבות with a 48h SLA.
-if ([SELECT COUNT() FROM Form_Template__c WHERE External_Id__c = 'event-registration'] == 0) {
-    List<Service_Type__c> st = [SELECT Id FROM Service_Type__c WHERE Name = 'רישום לאירוע' LIMIT 1];
-    String schema = '['
-        + '{"key":"fullName","label":"שם מלא","type":"text","required":true,"mapTo":"respondentName"},'
-        + '{"key":"email","label":"אימייל","type":"email","required":true,"mapTo":"email"},'
-        + '{"key":"phone","label":"טלפון","type":"phone","mapTo":"phone"},'
-        + '{"key":"participants","label":"מספר משתתפים","type":"number"},'
-        + '{"key":"transport","label":"נדרשת הסעה?","type":"radio","options":["כן","לא"]},'
-        + '{"key":"notes","label":"הערות נוספות","type":"textarea"}'
-        + ']';
-    Form_Template__c tpl = new Form_Template__c(
-        Name            = 'טופס רישום לאירוע',
-        External_Id__c  = 'event-registration',
-        Active__c       = true,
-        Description__c  = 'טופס ציבורי אנונימי לרישום לאירוע — נשלח דרך Experience Cloud.',
-        Schema_JSON__c  = schema
-    );
-    if (!st.isEmpty()) {
-        tpl.Service_Type__c = st[0].Id;
-    }
-    insert tpl;
-    System.debug('SEED created public form template event-registration');
+// The old 'event-registration' sample template was retired in favour of the richer
+// 'masham-demo' showcase (seeded by scripts/seed-demo-form.apex). Remove it if present.
+// Idempotent; responses are referenced by external-id text (no cascade), so they remain.
+List<Form_Template__c> legacy = [SELECT Id FROM Form_Template__c WHERE External_Id__c = 'event-registration'];
+if (!legacy.isEmpty()) {
+    delete legacy;
+    System.debug('SEED removed legacy public template event-registration (' + legacy.size() + ')');
 } else {
-    System.debug('SEED skipped public template (already exists)');
+    System.debug('SEED legacy public template already absent');
 }

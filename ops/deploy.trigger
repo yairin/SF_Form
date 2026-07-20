@@ -1,1 +1,1 @@
-Per-field validation on blur (validateOne on change) 20260720T150000Z
+Remove legacy event-registration form; repoint publicForm default 20260720T151500Z

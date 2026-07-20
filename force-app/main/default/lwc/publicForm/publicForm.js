@@ -3,7 +3,7 @@ import submitResponse from '@salesforce/apex/FormResponseController.submitRespon
 
 export default class PublicForm extends LightningElement {
     @api formName = 'טופס רישום לאירוע';
-    @api externalId = 'event-registration';
+    @api externalId = 'masham-demo';
 
     fullName = '';
     email = '';
