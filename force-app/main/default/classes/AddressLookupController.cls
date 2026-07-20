@@ -32,28 +32,58 @@ public without sharing class AddressLookupController {
     public static List<String> searchCities(String prefix) {
         if (String.isBlank(prefix) || prefix.trim().length() < 2) return new List<String>();
         Gov_Data_Config__mdt c = cfg();
-        String url = base(c) + '&fields=' + enc(c.City_Field__c) + '&q=' + enc(prefix.trim());
-        return distinctValues(callHttp(url), c.City_Field__c);
+        String p = prefix.trim();
+        // Primary: SQL LIKE so a typed PREFIX matches (full-text q only matches whole tokens,
+        // which is why short Hebrew prefixes returned nothing). Fallback: datastore_search.
+        String sql = 'SELECT DISTINCT "' + c.City_Field__c + '" FROM "' + c.Streets_Resource_Id__c + '"'
+            + ' WHERE "' + c.City_Field__c + '" LIKE \'' + sqlEsc(p) + '%\''
+            + ' ORDER BY "' + c.City_Field__c + '" LIMIT 15';
+        List<Object> recs = callHttp(sqlUrl(c, sql));
+        if (recs.isEmpty()) {
+            recs = callHttp(base(c) + '&fields=' + enc(c.City_Field__c) + '&q=' + enc(p));
+        }
+        return distinctValues(recs, c.City_Field__c);
     }
 
     @AuraEnabled(cacheable=true)
     public static List<String> searchStreets(String city, String prefix) {
         if (String.isBlank(city) || String.isBlank(prefix) || prefix.trim().length() < 2) return new List<String>();
         Gov_Data_Config__mdt c = cfg();
-        String filters = '{"' + c.City_Field__c + '":"' + city.trim() + '"}';
-        String url = base(c) + '&fields=' + enc(c.Street_Field__c) + '&q=' + enc(prefix.trim())
-            + '&filters=' + enc(filters);
-        return distinctValues(callHttp(url), c.Street_Field__c);
+        String p = prefix.trim();
+        String sql = 'SELECT DISTINCT "' + c.Street_Field__c + '" FROM "' + c.Streets_Resource_Id__c + '"'
+            + ' WHERE "' + c.City_Field__c + '" = \'' + sqlEsc(city.trim()) + '\''
+            + ' AND "' + c.Street_Field__c + '" LIKE \'' + sqlEsc(p) + '%\''
+            + ' ORDER BY "' + c.Street_Field__c + '" LIMIT 15';
+        List<Object> recs = callHttp(sqlUrl(c, sql));
+        if (recs.isEmpty()) {
+            String filters = '{"' + c.City_Field__c + '":"' + city.trim() + '"}';
+            recs = callHttp(base(c) + '&fields=' + enc(c.Street_Field__c) + '&q=' + enc(p) + '&filters=' + enc(filters));
+        }
+        return distinctValues(recs, c.Street_Field__c);
     }
 
+    private static String host(Gov_Data_Config__mdt c) {
+        return String.isBlank(c.Base_Url__c) ? 'https://data.gov.il' : c.Base_Url__c.removeEnd('/');
+    }
+
+    // datastore_search_sql endpoint (proper prefix matching via SQL LIKE).
+    private static String sqlUrl(Gov_Data_Config__mdt c, String sql) {
+        return host(c) + '/api/3/action/datastore_search_sql?sql=' + enc(sql);
+    }
+
+    // datastore_search endpoint (full-text fallback).
     private static String base(Gov_Data_Config__mdt c) {
-        String host = String.isBlank(c.Base_Url__c) ? 'https://data.gov.il' : c.Base_Url__c.removeEnd('/');
-        return host + c.Base_Path__c
+        return host(c) + c.Base_Path__c
             + '?resource_id=' + enc(c.Streets_Resource_Id__c) + '&limit=100&distinct=true';
     }
 
     private static String enc(String s) {
         return EncodingUtil.urlEncode(s == null ? '' : s, 'UTF-8');
+    }
+
+    // Escape single quotes for safe embedding in the SQL string literal.
+    private static String sqlEsc(String s) {
+        return s == null ? '' : s.replace('\'', '\'\'');
     }
 
     private static List<Object> callHttp(String url) {
