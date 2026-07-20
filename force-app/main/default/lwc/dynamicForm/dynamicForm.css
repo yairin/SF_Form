@@ -453,3 +453,24 @@ a:focus {
 }
 .form-repeater__remove:hover { background: #fdecea; border-color: #c23934; }
 .form-repeater__add { align-self: flex-start; }
+
+/* ---- Single (yes/no) consent checkbox — always visible & clickable ---- */
+.form-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+.form-consent__box {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    margin-top: 3px;
+    cursor: pointer;
+    accent-color: var(--sf-brand, #0b5cab);
+    -webkit-appearance: auto;
+    appearance: auto;   /* counter any global appearance:none reset */
+    opacity: 1;
+    position: static;
+}
+.form-consent__label { line-height: 1.35; }

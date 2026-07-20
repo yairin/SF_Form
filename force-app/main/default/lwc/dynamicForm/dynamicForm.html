@@ -126,10 +126,11 @@
             <template for:each={currentFieldsView} for:item="f">
                 <div key={f.key} class="slds-form-element slds-p-vertical_xx-small">
                     <template lwc:if={f.isCheckbox}>
-                        <label class="slds-checkbox_standalone" for={f.key}>
-                            <input type="checkbox" id={f.key} data-key={f.key} aria-required={f.ariaRequired}
-                                aria-invalid={f.ariaInvalid} aria-describedby={f.describedBy} onchange={handleChange} /> {f.label}
-                            <template lwc:if={f.required}> <abbr class="slds-required" title="חובה">*</abbr></template>
+                        <label class="form-consent">
+                            <input type="checkbox" class="form-consent__box" id={f.key} data-key={f.key}
+                                aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid}
+                                aria-describedby={f.describedBy} onchange={handleChange} />
+                            <span class="form-consent__label">{f.label}<template lwc:if={f.required}> <abbr class="slds-required" title="חובה">*</abbr></template></span>
                         </label>
                     </template>
                     <template lwc:elseif={f.isGroup}>

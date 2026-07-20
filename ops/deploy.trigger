@@ -1,1 +1,1 @@
-Address autocomplete: SQL LIKE prefix search (fixes empty city/street results) 20260720T153000Z
+Consent checkbox clickable + AI verifies ID doc matches entered name/ID 20260720T154500Z
