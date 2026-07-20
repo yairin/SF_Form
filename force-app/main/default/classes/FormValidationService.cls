@@ -80,7 +80,10 @@ public without sharing class FormValidationService {
             if (!isValidIsraeliId(s)) return 'תעודת זהות לא תקינה: ' + label;
         } else if (type == 'age') {
             if (!s.isNumeric()) return 'גיל לא תקין: ' + label;
-            Integer a = Integer.valueOf(s);
+            // Use Decimal, not Integer.valueOf: a long numeric string ("99999999999") is
+            // isNumeric()==true but overflows Integer and throws a TypeException.
+            Decimal a;
+            try { a = Decimal.valueOf(s); } catch (Exception e) { return 'גיל לא תקין: ' + label; }
             if (a < 0 || a > 120) return 'גיל לא תקין: ' + label;
         } else if (type == 'date') {
             try { Date.valueOf(s); } catch (Exception e) { return 'תאריך לא תקין: ' + label; }

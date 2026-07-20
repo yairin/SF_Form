@@ -272,7 +272,7 @@ export default class DynamicForm extends LightningElement {
                 isCity,
                 isStreet,
                 isAutocomplete,
-                currentValue: this.values[f.key] || '',
+                currentValue: this.values[f.key] == null ? '' : this.values[f.key],
                 suggestionItems: sugg,
                 showSuggest: sugg.length > 0,
                 suggestExpanded: sugg.length > 0 ? 'true' : 'false',
@@ -622,7 +622,11 @@ export default class DynamicForm extends LightningElement {
             const raw = window.localStorage.getItem(this.draftKey);
             if (!raw) return;
             const d = JSON.parse(raw);
-            if (d && d.values && Object.keys(d.values).length) {
+            // Only offer to resume if the draft actually holds values for THIS form's fields,
+            // so a stale/foreign draft never surfaces a misleading "resume draft" prompt.
+            const keys = new Set(this.fields.map((f) => f.key));
+            const hasOwn = d && d.values && Object.keys(d.values).some((k) => keys.has(k));
+            if (hasOwn) {
                 this.draftFound = true;
                 try { this.draftDate = new Date(d.ts).toLocaleString('he-IL'); } catch (e) { this.draftDate = ''; }
             }
@@ -1020,7 +1024,12 @@ export default class DynamicForm extends LightningElement {
             if (vis[f.key] === false) continue; // never submit values for hidden fields
             let v = this.values[f.key];
             if (this.isEmpty(v)) continue;
-            if (Array.isArray(v)) v = v.join('; ');
+            if (f.isRepeater) {
+                // array of row objects — keep the structure, don't stringify to "[object Object]"
+                v = JSON.stringify(v);
+            } else if (Array.isArray(v)) {
+                v = v.join('; ');
+            }
             payload[f.key] = v;
             if (f.mapTo) mapped[f.mapTo] = v;
         }

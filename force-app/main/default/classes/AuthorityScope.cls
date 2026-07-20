@@ -63,12 +63,22 @@ public with sharing class AuthorityScope {
      * Tenant_Code__c). Callers bind :authorityScopeCode when the clause is non-empty.
      */
     public static String clause(String fieldApiName) {
-        return isScoped() ? (' AND ' + fieldApiName + ' = :authorityScopeCode') : '';
+        if (!isScoped()) return '';
+        // A scoped user with a blank code must see NOTHING. Binding :authorityScopeCode = null
+        // would instead match every record whose code is also null/blank (SOQL `field = null`),
+        // leaking un-stamped data — so emit an unsatisfiable predicate in that case.
+        if (String.isBlank(currentCode())) {
+            return ' AND ' + fieldApiName + ' = null AND ' + fieldApiName + ' != null';
+        }
+        return ' AND ' + fieldApiName + ' = :authorityScopeCode';
     }
 
     /** Guard a single record reached by id/external id: block cross-authority access. */
     public static void assertOwn(String recordAuthorityCode) {
-        if (isScoped() && recordAuthorityCode != currentCode()) {
+        if (!isScoped()) return;
+        // Blank-code scoped user: deny outright (null != null is false in Apex, which would
+        // otherwise let a blank-code user through to blank-code records).
+        if (String.isBlank(currentCode()) || recordAuthorityCode != currentCode()) {
             throw new AuraHandledException('אין לך הרשאה לצפות בנתונים של רשות אחרת.');
         }
     }

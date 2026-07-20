@@ -47,7 +47,11 @@ public without sharing class FormRoutingService {
             // Authority_Code__c is a formula off Authority__r.Code__c (read-only), so we set the
             // writeable Authority__c lookup and let the formula derive the isolation key.
             Id authId = t.Authority__c;
-            String authCode = t.Authority__r.Code__c;
+            // Guard the parent-relationship read: templates built in the LWC (and both seed
+            // scripts) carry only the flat Authority_Code__c with a null Authority__c lookup,
+            // so t.Authority__r is null — dereferencing it unguarded threw an NPE that aborted
+            // the whole submission transaction.
+            String authCode = (authId != null && t.Authority__r != null) ? t.Authority__r.Code__c : null;
             if (authId == null && String.isNotBlank(t.Authority_Code__c)
                     && authorityByCode.containsKey(t.Authority_Code__c)) {
                 authId = authorityByCode.get(t.Authority_Code__c);

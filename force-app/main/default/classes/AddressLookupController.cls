@@ -56,7 +56,9 @@ public without sharing class AddressLookupController {
             + ' ORDER BY "' + c.Street_Field__c + '" LIMIT 15';
         List<Object> recs = callHttp(sqlUrl(c, sql));
         if (recs.isEmpty()) {
-            String filters = '{"' + c.City_Field__c + '":"' + city.trim() + '"}';
+            // Build the filters object via JSON.serialize so a city containing a quote or
+            // backslash can't break out of the JSON literal (proper escaping, not string glue).
+            String filters = JSON.serialize(new Map<String, Object>{ c.City_Field__c => city.trim() });
             recs = callHttp(base(c) + '&fields=' + enc(c.Street_Field__c) + '&q=' + enc(p) + '&filters=' + enc(filters));
         }
         return distinctValues(recs, c.Street_Field__c);

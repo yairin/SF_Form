@@ -14,16 +14,27 @@ private class AuthorityScopeTest {
         AuthorityScope.assertOwn('anything'); // unscoped guard never throws
     }
 
-    // Fail-closed: a non-admin without an authority code is still scoped, and binds a null
-    // code that matches no stamped record (so they see nothing rather than everything).
+    // Fail-closed: a non-admin without an authority code is still scoped, and gets an
+    // UNSATISFIABLE predicate so they see nothing — not the null-code records that a plain
+    // `field = :bind` (bind = null) would have matched (SOQL `field = null` matches nulls).
     @isTest
     static void scopedUserWithBlankCodeSeesNothing() {
         AuthorityScope.loaded = true;
         AuthorityScope.code = null;
         AuthorityScope.scoped = true;
-        System.assertEquals(' AND Tenant_Code__c = :authorityScopeCode',
-            AuthorityScope.clause('Tenant_Code__c'), 'scoped even with a blank code');
-        System.assertEquals(null, AuthorityScope.currentCode(), 'blank code binds null => matches nothing');
+        System.assertEquals(' AND Tenant_Code__c = null AND Tenant_Code__c != null',
+            AuthorityScope.clause('Tenant_Code__c'), 'blank-code scoped user => unsatisfiable predicate');
+        System.assertEquals(null, AuthorityScope.currentCode(), 'blank code => matches nothing');
+
+        // And the single-record guard denies a blank-code scoped user outright, even against
+        // a record whose code is also blank (null != null would otherwise be false → leak).
+        Boolean threw = false;
+        try {
+            AuthorityScope.assertOwn(null);
+        } catch (AuraHandledException e) {
+            threw = true;
+        }
+        System.assert(threw, 'blank-code scoped user is denied by the single-record guard');
     }
 
     @isTest

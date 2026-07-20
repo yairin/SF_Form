@@ -29,12 +29,22 @@ function colKey(label, i) {
 }
 // Parse the columns textarea ("label" | "label|type" | "label|select|a;b;c" per line).
 function parseColumns(text) {
+    // Track used keys so two columns with the same (or empty) label don't collapse to one
+    // key — a collision would make their cells overwrite each other in every repeater row.
+    const used = new Set();
     return String(text || '').split('\n').map((line) => line.trim()).filter(Boolean).map((line, i) => {
         const parts = line.split('|').map((p) => p.trim());
         const label = parts[0];
         let type = (parts[1] || 'text').toLowerCase();
         if (!REPEATER_COL_TYPES.has(type)) type = 'text';
-        const col = { key: colKey(label, i), label, type };
+        let key = colKey(label, i);
+        if (used.has(key)) {
+            let n = 2;
+            while (used.has(key + '_' + n)) n += 1;
+            key = key + '_' + n;
+        }
+        used.add(key);
+        const col = { key, label, type };
         if (type === 'select' && parts[2]) {
             col.options = parts[2].split(';').map((o) => o.trim()).filter(Boolean);
         }
