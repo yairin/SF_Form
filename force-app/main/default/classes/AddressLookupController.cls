@@ -31,10 +31,18 @@ public without sharing class AddressLookupController {
     @AuraEnabled(cacheable=true)
     public static List<String> searchCities(String prefix) {
         if (String.isBlank(prefix) || prefix.trim().length() < 2) return new List<String>();
-        Gov_Data_Config__mdt c = cfg();
         String p = prefix.trim();
-        // Primary: SQL LIKE so a typed PREFIX matches (full-text q only matches whole tokens,
-        // which is why short Hebrew prefixes returned nothing). Fallback: datastore_search.
+        // Primary: the bundled locality list — instant and resilient to data.gov.il
+        // outages / SQL-API changes (which previously left the city field blank).
+        List<String> bundled = IsraeliLocalities.startingWith(p, 15);
+        if (!bundled.isEmpty()) return bundled;
+        // Fallback: the live open dataset, for a locality not in the bundled list.
+        return apiCities(p);
+    }
+
+    // Live data.gov.il lookup (SQL LIKE prefix match, with a full-text fallback).
+    private static List<String> apiCities(String p) {
+        Gov_Data_Config__mdt c = cfg();
         String sql = 'SELECT DISTINCT "' + c.City_Field__c + '" FROM "' + c.Streets_Resource_Id__c + '"'
             + ' WHERE "' + c.City_Field__c + '" LIKE \'' + sqlEsc(p) + '%\''
             + ' ORDER BY "' + c.City_Field__c + '" LIMIT 15';

@@ -334,6 +334,24 @@ a:focus {
     border-color: #1c5aa8;
 }
 
+/* ---- Optional multi-column field layout (author-chosen per field) ----
+   Fields default to full width (stacked). The builder can mark a field half or
+   third width so simple fields sit side by side (e.g. first name | last name).
+   Flex-wrap keeps it responsive, and a full-width field always breaks to a new row. */
+.form-grid {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 16px;
+    align-items: flex-start;
+}
+.form-col { flex: 1 1 100%; box-sizing: border-box; }
+.form-col_full { flex-basis: 100%; }
+.form-col_half { flex-basis: calc(50% - 8px); }
+.form-col_third { flex-basis: calc(33.333% - 11px); }
+@media (max-width: 560px) {
+    .form-col_half, .form-col_third { flex-basis: 100%; }
+}
+
 /* ---- Horizontal numbered step tracker (wizard) ---- */
 .form-steps {
     list-style: none;

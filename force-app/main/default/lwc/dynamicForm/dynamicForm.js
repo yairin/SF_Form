@@ -253,8 +253,13 @@ export default class DynamicForm extends LightningElement {
                 selected: curStr === String(o.value),
                 checked: f.isCheckboxGroup ? curArr.includes(String(o.value)) : curStr === String(o.value)
             }));
+            // Optional side-by-side layout: the builder can mark a field half/third width
+            // so simple fields sit in the same row (e.g. first name | last name).
+            const width = (f.width === 'half' || f.width === 'third') ? f.width : 'full';
+            const wrapClass = 'slds-form-element slds-p-vertical_xx-small form-col form-col_' + width;
             return {
                 ...f,
+                wrapClass,
                 repeaterRows,
                 viewOptions,
                 isChecked: curStr === 'כן',

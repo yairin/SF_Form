@@ -123,8 +123,9 @@
                 </ol>
             </template>
 
+            <div class="form-grid">
             <template for:each={currentFieldsView} for:item="f">
-                <div key={f.key} class="slds-form-element slds-p-vertical_xx-small">
+                <div key={f.key} class={f.wrapClass}>
                     <template lwc:if={f.isCheckbox}>
                         <label class="form-consent">
                             <input type="checkbox" class="form-consent__box" id={f.key} data-key={f.key}
@@ -295,6 +296,7 @@
                     </template>
                 </div>
             </template>
+            </div>
 
             <template lwc:if={isReviewStep}>
                 <div class="form-review">

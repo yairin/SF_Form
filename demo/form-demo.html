@@ -92,6 +92,11 @@
   @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
   .ai__body{font-size:.85rem;color:#3a4a5f;margin-top:6px;line-height:1.5}
   .ai__body b{color:#2e844a}
+  .ai__body b.bad{color:#c23934}
+  .ai.warn{border-color:#e6a23c;background:#fff8ec}
+  .ai.warn .ai__dot{background:#c23934;animation:none}
+  .ai.warn .ai__head{color:#a15c00}
+  .chip.removing{opacity:0;transform:translateX(24px);transition:opacity .45s ease,transform .45s ease}
 
   .nav{display:flex;justify-content:space-between;gap:12px;margin-top:22px}
   .btn{font:inherit;font-weight:600;border-radius:10px;padding:.6rem 1.4rem;cursor:pointer;border:1px solid transparent;transition:transform .1s,filter .15s}
@@ -313,12 +318,24 @@ async function run(){
   // upload 1: business plan
   const dz1=$('#dz1');dz1.classList.add('active');await moveTo(dz1);await sleep(400);dz1.classList.remove('active');
   $('#dz1-chips').innerHTML='<div class="chip"><span class="chip__ic">📄</span><span class="chip__nm">תוכנית-עסק-גרמושקה.pdf</span><span class="chip__sz">1.8MB</span></div>';await sleep(500);
-  // upload 2: id scan -> triggers AI
-  const dz2=$('#dz2');dz2.classList.add('active');await moveTo(dz2);await sleep(400);dz2.classList.remove('active');
-  $('#dz2-chips').innerHTML='<div class="chip"><span class="chip__ic">🪪</span><span class="chip__nm">תעודת-זהות.jpg</span><span class="chip__sz">640KB</span></div>';await sleep(400);
-  window.__STAGE__='ai';const ai=$('#ai');ai.classList.add('show');toast('בינה מלאכותית בודקת מסמכים…');await sleep(2600);
+  // upload 2: id scan — a WRONG file first, so the AI flags a name mismatch
+  const dz2=$('#dz2');const setIdChip=(name)=>{$('#dz2-chips').innerHTML='<div class="chip"><span class="chip__ic">🪪</span><span class="chip__nm">'+name+'</span><span class="chip__sz">640KB</span></div>';};
+  dz2.classList.add('active');await moveTo(dz2);await sleep(400);dz2.classList.remove('active');
+  setIdChip('תעודת-זהות.jpg');await sleep(400);
+  window.__STAGE__='ai';const ai=$('#ai');ai.classList.add('show');toast('בינה מלאכותית בודקת מסמכים…');await sleep(2500);
+  // AI discovers the document does not match the applicant and comments on it
+  ai.classList.add('warn');$('#ai-title').textContent='נמצאה אי-התאמה במסמך';
+  $('#ai-body').innerHTML='⚠ השם שחולץ מצילום תעודת הזהות — <b class="bad">רון מזרחי</b> — אינו תואם לשם שהוזן בפרטי המבקש/ת (<b>דנה לוי</b>).<br>נא להעלות צילום תעודת זהות של המבקש/ת עצמו/ה.';
+  toast('⚠ אי-התאמה זוהתה — נדרשת החלפת קובץ');await sleep(3600);
+  // the file is replaced with the correct one
+  toast('מחליף/ה את הקובץ…');
+  const oldChip=$('#dz2-chips .chip');if(oldChip)oldChip.classList.add('removing');await sleep(520);$('#dz2-chips').innerHTML='';await sleep(300);
+  dz2.classList.add('active');await moveTo(dz2);await sleep(400);dz2.classList.remove('active');
+  setIdChip('תעודת-זהות-דנה-לוי.jpg');await sleep(400);
+  // AI re-checks the replacement — now it matches, and the process advances
+  ai.classList.remove('warn');$('#ai-title').textContent='בינה מלאכותית בודקת מחדש…';$('#ai-body').innerHTML='מנתח/ת את צילום תעודת הזהות החדש…';toast('בדיקה חוזרת של המסמך…');await sleep(2300);
   ai.classList.add('ok');$('#ai-title').textContent='בדיקת בינה מלאכותית הושלמה';
-  $('#ai-body').innerHTML='✓ צילום תעודת הזהות קריא. השם שחולץ מהמסמך — <b>דנה לוי</b> — תואם לפרטים שהוזנו.<br>✓ תוכנית העסק צורפה. <b>כל המסמכים הנדרשים קיימים.</b>';await sleep(2600);
+  $('#ai-body').innerHTML='✓ צילום תעודת הזהות קריא. השם שחולץ מהמסמך — <b>דנה לוי</b> — תואם כעת לפרטים שהוזנו.<br>✓ תוכנית העסק צורפה. <b>כל המסמכים הנדרשים קיימים.</b>';await sleep(2600);
   await click($('#consent'));$('#consent').checked=true;await sleep(500);
   await click($('#next'));
   // submit -> success

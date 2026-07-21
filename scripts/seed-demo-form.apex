@@ -19,15 +19,15 @@ Map<String, Object> appearance = new Map<String, Object>{
 };
 
 List<Object> step1 = new List<Object>{
-    new Map<String, Object>{ 'key' => 'firstName', 'label' => 'שם פרטי', 'type' => 'firstName', 'required' => true, 'mapTo' => 'respondentName' },
-    new Map<String, Object>{ 'key' => 'lastName', 'label' => 'שם משפחה', 'type' => 'lastName', 'required' => true },
+    new Map<String, Object>{ 'key' => 'firstName', 'label' => 'שם פרטי', 'type' => 'firstName', 'required' => true, 'mapTo' => 'respondentName', 'width' => 'half' },
+    new Map<String, Object>{ 'key' => 'lastName', 'label' => 'שם משפחה', 'type' => 'lastName', 'required' => true, 'width' => 'half' },
     new Map<String, Object>{ 'key' => 'idNumber', 'label' => 'תעודת זהות', 'type' => 'idNumber', 'required' => true },
-    new Map<String, Object>{ 'key' => 'email', 'label' => 'דוא"ל', 'type' => 'email', 'required' => true, 'mapTo' => 'email' },
-    new Map<String, Object>{ 'key' => 'phone', 'label' => 'טלפון נייד', 'type' => 'phone', 'required' => true, 'mapTo' => 'phone' },
-    new Map<String, Object>{ 'key' => 'city', 'label' => 'עיר', 'type' => 'city', 'required' => true },
-    new Map<String, Object>{ 'key' => 'street', 'label' => 'רחוב', 'type' => 'street', 'required' => true },
-    new Map<String, Object>{ 'key' => 'houseNumber', 'label' => 'מספר בית', 'type' => 'houseNumber', 'required' => true },
-    new Map<String, Object>{ 'key' => 'apartment', 'label' => 'דירה', 'type' => 'apartment' },
+    new Map<String, Object>{ 'key' => 'email', 'label' => 'דוא"ל', 'type' => 'email', 'required' => true, 'mapTo' => 'email', 'width' => 'half' },
+    new Map<String, Object>{ 'key' => 'phone', 'label' => 'טלפון נייד', 'type' => 'phone', 'required' => true, 'mapTo' => 'phone', 'width' => 'half' },
+    new Map<String, Object>{ 'key' => 'city', 'label' => 'עיר', 'type' => 'city', 'required' => true, 'width' => 'half' },
+    new Map<String, Object>{ 'key' => 'street', 'label' => 'רחוב', 'type' => 'street', 'required' => true, 'width' => 'half' },
+    new Map<String, Object>{ 'key' => 'houseNumber', 'label' => 'מספר בית', 'type' => 'houseNumber', 'required' => true, 'width' => 'half' },
+    new Map<String, Object>{ 'key' => 'apartment', 'label' => 'דירה', 'type' => 'apartment', 'width' => 'half' },
     new Map<String, Object>{ 'key' => 'payerNumber', 'label' => 'מספר משלם/ת בארנונה (5–10 ספרות, ללא רווחים)',
         'type' => 'text', 'required' => true, 'minLen' => 5, 'maxLen' => 10, 'allowSpaces' => false, 'allowSpecial' => false },
     new Map<String, Object>{ 'key' => 'monthlyIncome', 'label' => 'הכנסה חודשית ברוטו למשק הבית (₪)',

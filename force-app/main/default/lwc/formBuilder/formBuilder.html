@@ -331,6 +331,17 @@
                                         </div>
                                     </template>
                                 </div>
+                                <!-- field layout width (side-by-side columns) -->
+                                <div class="slds-grid slds-gutters_xx-small slds-wrap slds-p-top_xx-small">
+                                    <div class="slds-col slds-size_6-of-12">
+                                        <label class="slds-form-element__label">פריסת השדה (רוחב)</label>
+                                        <select class="slds-select" data-s={f.s} data-i={f.i} data-p="width" aria-label="פריסת השדה — רוחב" onchange={handleField}>
+                                            <template for:each={f.widthOptions} for:item="w">
+                                                <option key={w.value} value={w.value} selected={w.selected}>{w.label}</option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </div>
                                 <!-- repeater columns (table / repeating rows) -->
                                 <template lwc:if={f.showColumns}>
                                     <div class="slds-p-top_xx-small">

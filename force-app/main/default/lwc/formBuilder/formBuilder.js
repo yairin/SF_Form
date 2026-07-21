@@ -131,7 +131,9 @@ const PERSONAL_DETAILS_FIELDS = [
 const MAP_OPTIONS = [
     ['', '— ללא מיפוי —'], ['respondentName', 'שם'], ['email', 'אימייל'], ['phone', 'טלפון'], ['subject', 'נושא']
 ];
-const newField = () => ({ type: 'text', label: '', required: false, options: '', mapTo: '', cond: null });
+// Field layout width (side-by-side columns). 'full' = its own row (default).
+const WIDTH_OPTIONS = [['full', 'רוחב מלא (שורה)'], ['half', 'חצי רוחב'], ['third', 'שליש רוחב']];
+const newField = () => ({ type: 'text', label: '', required: false, options: '', mapTo: '', width: 'full', cond: null });
 const newStep = () => ({ title: '', fields: [newField()] });
 const COND_OPS = [
     ['equals', 'שווה ל'], ['notEquals', 'שונה מ'], ['contains', 'מכיל'],
@@ -278,6 +280,7 @@ export default class FormBuilder extends LightningElement {
                     options: (f.options || []).join('\n'),
                     columnsText: columnsToText(f.columns),
                     mapTo: f.mapTo || '',
+                    width: f.width || 'full',   // layout: full | half | third
                     // validation config (optional)
                     min: f.min == null ? '' : String(f.min),
                     max: f.max == null ? '' : String(f.max),
@@ -355,6 +358,7 @@ export default class FormBuilder extends LightningElement {
                     allowSpecial: f.allowSpecial !== false,
                     typeOptions: TYPE_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === f.type })),
                     mapOptions: MAP_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === (f.mapTo || '') })),
+                    widthOptions: WIDTH_OPTIONS.map(([v, l]) => ({ value: v, label: l, selected: v === (f.width || 'full') })),
                     // conditional-visibility rule editor
                     condEnabled: !!f.cond,
                     condCtrl: f.cond ? f.cond.ctrlId : '',
@@ -396,7 +400,7 @@ export default class FormBuilder extends LightningElement {
     addPersonalDetails(event) {
         const s = Number(event.target.dataset.s);
         const group = PERSONAL_DETAILS_FIELDS.map((f) => ({
-            type: f.type, label: f.label, required: !!f.required, options: '', mapTo: f.mapTo || '', cond: null
+            type: f.type, label: f.label, required: !!f.required, options: '', mapTo: f.mapTo || '', width: 'full', cond: null
         }));
         this.steps = this.steps.map((st, idx) => (idx === s ? { ...st, fields: [...st.fields, ...group] } : st));
         this.ensureIds();
@@ -784,7 +788,9 @@ export default class FormBuilder extends LightningElement {
                         options: CHOICE.has(f.type)
                             ? String(f.options || '').split('\n').map((x) => x.trim()).filter(Boolean)
                             : undefined,
-                        columns: f.type === 'repeater' ? parseColumns(f.columnsText) : undefined
+                        columns: f.type === 'repeater' ? parseColumns(f.columnsText) : undefined,
+                        // layout width; omit the default so schemas stay clean
+                        width: (f.width && f.width !== 'full') ? f.width : undefined
                     };
                     // Optional per-field validation (emit only what was set / restricted).
                     const numV = (x) => (x === '' || x == null || isNaN(Number(x)) ? undefined : Number(x));

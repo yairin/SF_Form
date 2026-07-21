@@ -24,21 +24,21 @@ Map<String, Object> appearance = new Map<String, Object>{
 
 // ---- Step 1: applicant details (person) ----
 List<Object> step1 = new List<Object>{
-    new Map<String, Object>{ 'key' => 'firstName', 'label' => 'שם פרטי', 'type' => 'firstName', 'required' => true, 'mapTo' => 'respondentName' },
-    new Map<String, Object>{ 'key' => 'lastName', 'label' => 'שם משפחה', 'type' => 'lastName', 'required' => true },
+    new Map<String, Object>{ 'key' => 'firstName', 'label' => 'שם פרטי', 'type' => 'firstName', 'required' => true, 'mapTo' => 'respondentName', 'width' => 'half' },
+    new Map<String, Object>{ 'key' => 'lastName', 'label' => 'שם משפחה', 'type' => 'lastName', 'required' => true, 'width' => 'half' },
     new Map<String, Object>{ 'key' => 'idNumber', 'label' => 'תעודת זהות', 'type' => 'idNumber', 'required' => true },
-    new Map<String, Object>{ 'key' => 'email', 'label' => 'דוא"ל', 'type' => 'email', 'required' => true, 'mapTo' => 'email' },
-    new Map<String, Object>{ 'key' => 'phone', 'label' => 'טלפון נייד', 'type' => 'phone', 'required' => true, 'mapTo' => 'phone' }
+    new Map<String, Object>{ 'key' => 'email', 'label' => 'דוא"ל', 'type' => 'email', 'required' => true, 'mapTo' => 'email', 'width' => 'half' },
+    new Map<String, Object>{ 'key' => 'phone', 'label' => 'טלפון נייד', 'type' => 'phone', 'required' => true, 'mapTo' => 'phone', 'width' => 'half' }
 };
 
 // ---- Step 2: business address ----
 List<Object> step2 = new List<Object>{
     new Map<String, Object>{ 'key' => 'businessName', 'label' => 'שם העסק', 'type' => 'text',
         'required' => true, 'minLen' => 2, 'maxLen' => 60 },
-    new Map<String, Object>{ 'key' => 'city', 'label' => 'עיר', 'type' => 'city', 'required' => true },
-    new Map<String, Object>{ 'key' => 'street', 'label' => 'רחוב', 'type' => 'street', 'required' => true },
-    new Map<String, Object>{ 'key' => 'houseNumber', 'label' => 'מספר בית', 'type' => 'houseNumber', 'required' => true },
-    new Map<String, Object>{ 'key' => 'businessPhone', 'label' => 'טלפון העסק', 'type' => 'phone' }
+    new Map<String, Object>{ 'key' => 'city', 'label' => 'עיר', 'type' => 'city', 'required' => true, 'width' => 'half' },
+    new Map<String, Object>{ 'key' => 'street', 'label' => 'רחוב', 'type' => 'street', 'required' => true, 'width' => 'half' },
+    new Map<String, Object>{ 'key' => 'houseNumber', 'label' => 'מספר בית', 'type' => 'houseNumber', 'required' => true, 'width' => 'half' },
+    new Map<String, Object>{ 'key' => 'businessPhone', 'label' => 'טלפון העסק', 'type' => 'phone', 'width' => 'half' }
 };
 
 // ---- Step 3: business details + owners repeater ----
@@ -55,9 +55,9 @@ List<Object> step3 = new List<Object>{
     new Map<String, Object>{ 'key' => 'foodHandling', 'label' => 'האם העסק כולל הכנה או הגשה של מזון?', 'type' => 'radio', 'required' => true,
         'options' => new List<String>{ 'כן', 'לא' } },
     new Map<String, Object>{ 'key' => 'areaSqm', 'label' => 'שטח העסק (מ"ר)', 'type' => 'number',
-        'required' => true, 'min' => 1, 'max' => 100000 },
+        'required' => true, 'min' => 1, 'max' => 100000, 'width' => 'half' },
     new Map<String, Object>{ 'key' => 'employees', 'label' => 'מספר עובדים', 'type' => 'number',
-        'required' => true, 'min' => 0, 'max' => 5000 },
+        'required' => true, 'min' => 0, 'max' => 5000, 'width' => 'half' },
     new Map<String, Object>{ 'key' => 'openDate', 'label' => 'מועד פתיחה מתוכנן', 'type' => 'date' },
     new Map<String, Object>{ 'key' => 'owners', 'label' => 'בעלי זכויות בעסק', 'type' => 'repeater',
         'required' => true, 'columns' => ownerCols }
