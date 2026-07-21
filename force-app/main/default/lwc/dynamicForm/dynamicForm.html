@@ -156,6 +156,22 @@
                             </template>
                         </fieldset>
                     </template>
+                    <template lwc:elseif={f.isSignature}>
+                        <span class="slds-form-element__label">
+                            <template lwc:if={f.required}><abbr class="slds-required" title="חובה">* </abbr></template>{f.label}
+                        </span>
+                        <div class="form-sign">
+                            <canvas class="form-sign__pad" data-key={f.key} width="500" height="170"
+                                role="img" aria-label={f.label}
+                                onpointerdown={handleSigDown} onpointermove={handleSigMove}
+                                onpointerup={handleSigUp} onpointerleave={handleSigUp}></canvas>
+                            <div class="form-sign__bar">
+                                <span class="form-sign__hint">חתמו בתוך המסגרת באמצעות העכבר או המגע</span>
+                                <button type="button" class="slds-button slds-button_neutral form-sign__clear"
+                                    data-key={f.key} onclick={clearSignature}>ניקוי חתימה</button>
+                            </div>
+                        </div>
+                    </template>
                     <template lwc:else>
                         <label class="slds-form-element__label" for={f.key}>
                             <template lwc:if={f.required}><abbr class="slds-required" title="חובה">* </abbr></template>{f.label}

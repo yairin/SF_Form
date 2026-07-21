@@ -106,7 +106,7 @@ const newTask = () => ({ subject: '', priority: 'Normal', offsetDays: 0, descrip
 const TYPE_OPTIONS = [
     ['text', 'טקסט קצר'], ['textarea', 'טקסט ארוך'], ['email', 'אימייל'], ['phone', 'טלפון'],
     ['number', 'מספר'], ['currency', 'סכום (₪)'], ['idNumber', 'תעודת זהות'], ['date', 'תאריך'],
-    ['file', 'העלאת קובץ'],
+    ['file', 'העלאת קובץ'], ['signature', 'חתימה גרפית'],
     ['select', 'בחירה מרשימה'], ['radio', 'בחירה יחידה'],
     ['checkbox', 'תיבת סימון'], ['checkboxGroup', 'בחירה מרובה'],
     ['repeater', 'טבלה / שורות חוזרות'],

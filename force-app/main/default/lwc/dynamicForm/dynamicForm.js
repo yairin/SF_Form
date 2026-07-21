@@ -278,6 +278,8 @@ export default class DynamicForm extends LightningElement {
                 isStreet,
                 isAutocomplete,
                 currentValue: this.values[f.key] == null ? '' : this.values[f.key],
+                signatureValue: (f.isSignature && this.values[f.key]) ? this.values[f.key] : '',
+                hasSignature: !!(f.isSignature && this.values[f.key]),
                 suggestionItems: sugg,
                 showSuggest: sugg.length > 0,
                 suggestExpanded: sugg.length > 0 ? 'true' : 'false',
@@ -351,7 +353,9 @@ export default class DynamicForm extends LightningElement {
         return this.stepTitles.map((title, si) => {
             const flds = this.fields.filter((f) => f.step === si && vis[f.key] !== false).map((f) => {
                 let display;
-                if (f.isFile) {
+                if (f.isSignature) {
+                    display = this.isEmpty(this.values[f.key]) ? '—' : 'נחתם ✓';
+                } else if (f.isFile) {
                     const items = this.files[f.key] || [];
                     display = items.length ? items.map((x) => x.name).join(', ') : '—';
                 } else if (f.isRepeater) {
@@ -484,6 +488,7 @@ export default class DynamicForm extends LightningElement {
     // Focus management: after a render triggered by validation failure or a
     // successful submit, move keyboard focus to the relevant landmark.
     renderedCallback() {
+        this.repaintSignatures();
         if (!this._pendingFocus) return;
         const target = this._pendingFocus;
         this._pendingFocus = null;
@@ -557,6 +562,7 @@ export default class DynamicForm extends LightningElement {
                     key: f.key,
                     label: f.label,
                     type: f.type,
+                    width: f.width || 'full',
                     step: si,
                     required: !!f.required,
                     mapTo: f.mapTo,
@@ -572,6 +578,7 @@ export default class DynamicForm extends LightningElement {
                     isCheckbox: f.type === 'checkbox',
                     isCheckboxGroup: f.type === 'checkboxGroup',
                     isFile: f.type === 'file',
+                    isSignature: f.type === 'signature',
                     isRepeater: f.type === 'repeater',
                     columns: (f.columns || []).map((c) => ({
                         key: c.key,
@@ -842,6 +849,85 @@ export default class DynamicForm extends LightningElement {
             event.preventDefault();
             this.pickSuggestion(event);
         }
+    }
+
+    // ---- Graphical signature pad (pointer + touch) ----
+    _sig = {};       // key -> { drawing, lastX, lastY }
+    _sigPaint = {};  // key -> value last painted onto the canvas (repaint guard)
+
+    // Map a pointer event to canvas pixel coordinates (canvas is CSS-scaled to 100%).
+    sigPos(canvas, e) {
+        const r = canvas.getBoundingClientRect();
+        return {
+            x: (e.clientX - r.left) * (canvas.width / r.width),
+            y: (e.clientY - r.top) * (canvas.height / r.height)
+        };
+    }
+    handleSigDown(event) {
+        const c = event.currentTarget;
+        const k = c.dataset.key;
+        try { c.setPointerCapture(event.pointerId); } catch (e) { /* older browsers */ }
+        const p = this.sigPos(c, event);
+        this._sig[k] = { drawing: true, lastX: p.x, lastY: p.y };
+    }
+    handleSigMove(event) {
+        const c = event.currentTarget;
+        const s = this._sig[c.dataset.key];
+        if (!s || !s.drawing) return;
+        event.preventDefault();
+        const p = this.sigPos(c, event);
+        const ctx = c.getContext('2d');
+        ctx.strokeStyle = '#123f78';
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(s.lastX, s.lastY);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        s.lastX = p.x;
+        s.lastY = p.y;
+    }
+    handleSigUp(event) {
+        const c = event.currentTarget;
+        const k = c.dataset.key;
+        const s = this._sig[k];
+        if (!s || !s.drawing) return;
+        s.drawing = false;
+        let data = '';
+        try { data = c.toDataURL('image/png'); } catch (e) { data = ''; }
+        this._sigPaint[k] = data; // we already have it painted; skip the renderedCallback repaint
+        this.values = { ...this.values, [k]: data };
+        if (this.fieldErrors[k]) { const errs = { ...this.fieldErrors }; delete errs[k]; this.fieldErrors = errs; }
+        this.scheduleDraftSave();
+    }
+    clearSignature(event) {
+        const k = event.currentTarget.dataset.key;
+        const c = this.template.querySelector('canvas.form-sign__pad[data-key="' + k + '"]');
+        if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
+        this._sigPaint[k] = '';
+        const v = { ...this.values };
+        delete v[k];
+        this.values = v;
+        this.scheduleDraftSave();
+    }
+    // Repaint a stored signature after step navigation / draft restore recreated the canvas.
+    repaintSignatures() {
+        const pads = this.template.querySelectorAll('canvas.form-sign__pad');
+        pads.forEach((c) => {
+            const k = c.dataset.key;
+            if (this._sig[k] && this._sig[k].drawing) return;
+            const v = this.values[k] || '';
+            if (this._sigPaint[k] === v) return;
+            const ctx = c.getContext('2d');
+            ctx.clearRect(0, 0, c.width, c.height);
+            if (v) {
+                const img = new Image();
+                img.onload = () => { try { ctx.drawImage(img, 0, 0, c.width, c.height); } catch (e) { /* ignore */ } };
+                img.src = v;
+            }
+            this._sigPaint[k] = v;
+        });
     }
 
     handleFileChange(event) {

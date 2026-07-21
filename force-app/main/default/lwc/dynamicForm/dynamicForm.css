@@ -493,3 +493,24 @@ a:focus {
     position: static;
 }
 .form-consent__label { line-height: 1.35; }
+
+/* ---- Graphical signature pad ---- */
+.form-sign { display: flex; flex-direction: column; gap: 0.4rem; }
+.form-sign__pad {
+    width: 100%;
+    max-width: 520px;
+    height: 170px;
+    display: block;
+    background: #fff;
+    border: 2px dashed #b0adab;
+    border-radius: 8px;
+    touch-action: none;          /* draw on touch instead of scrolling */
+    cursor: crosshair;
+}
+.form-sign__pad:hover { border-color: var(--sf-brand, #1c5aa8); }
+.form-sign__pad:focus-visible { outline: 2px solid var(--sf-focus, #1c5aa8); outline-offset: 2px; }
+.form-sign__bar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 0.5rem; flex-wrap: wrap; max-width: 520px;
+}
+.form-sign__hint { font-size: 0.75rem; opacity: 0.7; }

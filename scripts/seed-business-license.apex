@@ -69,7 +69,8 @@ List<Object> step4 = new List<Object>{
         'options' => new List<String>{ 'תרשים סביבה', 'תוכנית עסק (גרמושקה)', 'חוזה שכירות / נסח טאבו', 'אישור כיבוי אש', 'תעודת עוסק מורשה' } },
     new Map<String, Object>{ 'key' => 'businessPlan', 'label' => 'תוכנית העסק (גרמושקה)', 'type' => 'file', 'required' => true },
     new Map<String, Object>{ 'key' => 'idScan', 'label' => 'צילום תעודת זהות של המבקש/ת', 'type' => 'file', 'required' => true },
-    new Map<String, Object>{ 'key' => 'consent', 'label' => 'אני מצהיר/ה כי הפרטים נכונים ומאשר/ת את תנאי הגשת הבקשה לרישוי עסק', 'type' => 'checkbox', 'required' => true }
+    new Map<String, Object>{ 'key' => 'consent', 'label' => 'אני מצהיר/ה כי הפרטים נכונים ומאשר/ת את תנאי הגשת הבקשה לרישוי עסק', 'type' => 'checkbox', 'required' => true },
+    new Map<String, Object>{ 'key' => 'signature', 'label' => 'חתימת המבקש/ת', 'type' => 'signature', 'required' => true }
 };
 
 Map<String, Object> schema = new Map<String, Object>{
