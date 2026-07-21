@@ -853,7 +853,6 @@ export default class DynamicForm extends LightningElement {
 
     // ---- Graphical signature pad (pointer + touch) ----
     _sig = {};       // key -> { drawing, lastX, lastY }
-    _sigPaint = {};  // key -> value last painted onto the canvas (repaint guard)
 
     // Map a pointer event to canvas pixel coordinates (canvas is CSS-scaled to 100%).
     sigPos(canvas, e) {
@@ -896,7 +895,7 @@ export default class DynamicForm extends LightningElement {
         s.drawing = false;
         let data = '';
         try { data = c.toDataURL('image/png'); } catch (e) { data = ''; }
-        this._sigPaint[k] = data; // we already have it painted; skip the renderedCallback repaint
+        c.dataset.painted = '1'; // already on screen; keep renderedCallback from repainting
         this.values = { ...this.values, [k]: data };
         if (this.fieldErrors[k]) { const errs = { ...this.fieldErrors }; delete errs[k]; this.fieldErrors = errs; }
         this.scheduleDraftSave();
@@ -904,21 +903,23 @@ export default class DynamicForm extends LightningElement {
     clearSignature(event) {
         const k = event.currentTarget.dataset.key;
         const c = this.template.querySelector('canvas.form-sign__pad[data-key="' + k + '"]');
-        if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
-        this._sigPaint[k] = '';
+        if (c) { c.getContext('2d').clearRect(0, 0, c.width, c.height); c.dataset.painted = '0'; }
         const v = { ...this.values };
         delete v[k];
         this.values = v;
         this.scheduleDraftSave();
     }
     // Repaint a stored signature after step navigation / draft restore recreated the canvas.
+    // The paint marker lives on the canvas ELEMENT (data-painted), so a freshly recreated
+    // canvas (which has no marker) is repainted from the stored value rather than left blank.
     repaintSignatures() {
         const pads = this.template.querySelectorAll('canvas.form-sign__pad');
         pads.forEach((c) => {
             const k = c.dataset.key;
             if (this._sig[k] && this._sig[k].drawing) return;
             const v = this.values[k] || '';
-            if (this._sigPaint[k] === v) return;
+            const want = v ? '1' : '0';
+            if (c.dataset.painted === want) return;
             const ctx = c.getContext('2d');
             ctx.clearRect(0, 0, c.width, c.height);
             if (v) {
@@ -926,7 +927,7 @@ export default class DynamicForm extends LightningElement {
                 img.onload = () => { try { ctx.drawImage(img, 0, 0, c.width, c.height); } catch (e) { /* ignore */ } };
                 img.src = v;
             }
-            this._sigPaint[k] = v;
+            c.dataset.painted = want;
         });
     }
 
