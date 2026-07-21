@@ -56,17 +56,27 @@ public without sharing class AddressLookupController {
     @AuraEnabled(cacheable=true)
     public static List<String> searchStreets(String city, String prefix) {
         if (String.isBlank(city) || String.isBlank(prefix) || prefix.trim().length() < 2) return new List<String>();
-        Gov_Data_Config__mdt c = cfg();
         String p = prefix.trim();
+        // Primary: bundled common street names — instant and resilient to the same
+        // data.gov.il API issues that affected cities. The field stays free-text, so any
+        // exact street can still be typed. Fallback: the live, city-specific dataset.
+        List<String> bundled = IsraeliLocalities.streetsStartingWith(p, 15);
+        if (!bundled.isEmpty()) return bundled;
+        return apiStreets(city.trim(), p);
+    }
+
+    // Live data.gov.il street lookup, filtered to the selected city.
+    private static List<String> apiStreets(String city, String p) {
+        Gov_Data_Config__mdt c = cfg();
         String sql = 'SELECT DISTINCT "' + c.Street_Field__c + '" FROM "' + c.Streets_Resource_Id__c + '"'
-            + ' WHERE "' + c.City_Field__c + '" = \'' + sqlEsc(city.trim()) + '\''
+            + ' WHERE "' + c.City_Field__c + '" = \'' + sqlEsc(city) + '\''
             + ' AND "' + c.Street_Field__c + '" LIKE \'' + sqlEsc(p) + '%\''
             + ' ORDER BY "' + c.Street_Field__c + '" LIMIT 15';
         List<Object> recs = callHttp(sqlUrl(c, sql));
         if (recs.isEmpty()) {
             // Build the filters object via JSON.serialize so a city containing a quote or
             // backslash can't break out of the JSON literal (proper escaping, not string glue).
-            String filters = JSON.serialize(new Map<String, Object>{ c.City_Field__c => city.trim() });
+            String filters = JSON.serialize(new Map<String, Object>{ c.City_Field__c => city });
             recs = callHttp(base(c) + '&fields=' + enc(c.Street_Field__c) + '&q=' + enc(p) + '&filters=' + enc(filters));
         }
         return distinctValues(recs, c.Street_Field__c);

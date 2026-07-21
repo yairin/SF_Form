@@ -53,12 +53,25 @@ private class AddressLookupControllerTest {
     }
 
     @isTest
-    static void streetsFilteredByCity() {
-        Test.setMock(HttpCalloutMock.class, new CkanMock('שם_רחוב'));
+    static void streetsFromBundledList() {
+        // A common street prefix resolves from the bundled list with no callout.
         Test.startTest();
         List<String> streets = AddressLookupController.searchStreets('תל אביב - יפו', 'הרצ');
         Test.stopTest();
-        System.assert(!streets.isEmpty(), 'streets returned for the selected city');
+        System.assert(!streets.isEmpty(), 'bundled streets returned for a common prefix');
+        for (String s : streets) {
+            System.assert(s.startsWith('הרצ'), 'every result matches the prefix: ' + s);
+        }
+    }
+
+    @isTest
+    static void streetsApiFallbackForUnbundledPrefix() {
+        // A prefix not covered by the bundled list falls back to the live dataset.
+        Test.setMock(HttpCalloutMock.class, new CkanMock('שם_רחוב'));
+        Test.startTest();
+        List<String> streets = AddressLookupController.searchStreets('תל אביב - יפו', 'זז');
+        Test.stopTest();
+        System.assert(!streets.isEmpty(), 'API fallback used for the selected city');
     }
 
     @isTest
