@@ -457,16 +457,6 @@
                 </template>
             </div>
 
-            <template lwc:if={notEmbedded}>
-                <div class="slds-box slds-m-top_small">
-                    <h2 class="slds-text-title_bold slds-p-bottom_x-small">טפסים קיימים</h2>
-                    <template for:each={existing} for:item="e">
-                        <div key={e.Id} class="slds-p-vertical_xxx-small">
-                            {e.Name} <span class="slds-text-body_small slds-text-color_weak">· {e.External_Id__c}</span>
-                        </div>
-                    </template>
-                </div>
-            </template>
         </div>
 
         <!-- Live test of the saved form -->

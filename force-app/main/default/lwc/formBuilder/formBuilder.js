@@ -1,6 +1,5 @@
 import { LightningElement, api } from 'lwc';
 import saveForm from '@salesforce/apex/FormBuilderController.saveForm';
-import listForms from '@salesforce/apex/FormBuilderController.listForms';
 import listServiceTypes from '@salesforce/apex/FormBuilderController.listServiceTypes';
 import getTemplate from '@salesforce/apex/FormBuilderController.getTemplate';
 import getPublicUrl from '@salesforce/apex/FormBuilderController.getPublicUrl';
@@ -172,7 +171,6 @@ export default class FormBuilder extends LightningElement {
     savedUrl;
     savedMsg;
     error;
-    existing = [];
     showLivePreview = true; // toggled off/on to remount the live preview after a save
 
     @api embedded = false;
@@ -305,7 +303,6 @@ export default class FormBuilder extends LightningElement {
     }
 
     async refresh() {
-        try { this.existing = await listForms(); } catch (e) { /* ignore */ }
         try {
             const sts = await listServiceTypes();
             this.serviceTypes = [{ value: '', label: '— ללא —' }].concat(
@@ -318,7 +315,6 @@ export default class FormBuilder extends LightningElement {
 
     get isEdit() { return !!this._recordId; }
     get saveLabel() { return this.isEdit ? 'שמור שינויים' : 'שמור ופרסם'; }
-    get notEmbedded() { return !this.embedded; }
 
     get stepRows() {
         const total = this.steps.length;
