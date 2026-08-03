@@ -75,6 +75,24 @@
     background:var(--surface); color:var(--ink-2); cursor:pointer; display:grid; place-items:center; transition:.2s}
   .themebtn:hover{color:var(--ink); border-color:var(--brand)}
   .themebtn svg{width:18px;height:18px}
+  .demobtn{flex:none; display:inline-flex; align-items:center; gap:7px; height:36px; padding:0 13px;
+    border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink-2);
+    cursor:pointer; font-family:inherit; font-size:13px; font-weight:700; transition:.2s}
+  .demobtn svg{width:15px;height:15px}
+  .demobtn:hover{color:var(--ink); border-color:var(--brand)}
+  .demobtn[aria-pressed="true"]{background:var(--brand-tint); color:var(--brand-ink); border-color:transparent}
+  @media(max-width:520px){ .demobtn .dlabel{display:none} }
+  /* live-demo playback states */
+  .thread.playing .msg, .thread.playing .divider{opacity:0; transform:translateY(8px); transition:opacity .35s ease, transform .35s ease}
+  .thread.playing .msg.show, .thread.playing .divider.show{opacity:1; transform:none}
+  .typing{align-self:flex-start; display:inline-flex; gap:4px; padding:12px 14px; border-radius:15px;
+    background:var(--brand-tint); border-bottom-right-radius:5px}
+  .typing.wa{background:var(--wa-tint)}
+  .typing span{width:7px;height:7px;border-radius:50%; background:var(--brand-ink); opacity:.5; animation:blink 1.2s infinite}
+  .typing.wa span{background:var(--wa)}
+  .typing span:nth-child(2){animation-delay:.2s} .typing span:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,60%,100%{opacity:.3; transform:translateY(0)}30%{opacity:1; transform:translateY(-3px)}}
+  @media(prefers-reduced-motion:reduce){ .typing span{animation:none} }
   @media(max-width:760px){ .nav{display:none} }
 
   /* ============ Section scaffolding ============ */
@@ -265,10 +283,15 @@
         <a href="#collect">גבייה קולי</a>
         <a href="#info">מוקד מידע</a>
         <a href="#committee">ועדות ובקשות</a>
+        <a href="#arabic">ערבית</a>
         <a href="#askonce">Ask-Once</a>
         <a href="#kpi">מדדים</a>
         <a href="#security">אבטחה</a>
       </nav>
+      <button class="demobtn" id="demo" aria-pressed="true" title="הפעלה/כיבוי של הדגמת השיחות">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 5l12 7-12 7z"/></svg>
+        <span class="dlabel">הדגמה חיה</span>
+      </button>
       <button class="themebtn" id="theme" aria-label="החלפת ערכת צבעים" title="החלפת מצב תצוגה">
         <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
       </button>
@@ -487,6 +510,41 @@
     </div>
   </section>
 
+  <!-- ===== Multilingual: Arabic ===== -->
+  <section id="arabic">
+    <div class="wrap">
+      <span class="eyebrow reveal">שיח רב-לשוני</span>
+      <h2 class="sec reveal">אותו מנוע — גם בערבית</h2>
+      <p class="lead reveal">הליבה מזהה את שפת התושב אוטומטית ועונה בה. אותו תהליך, אותו תיק 360°, אותן בקרות — בעברית, בערבית, ברוסית ובאנגלית. להלן אותה פנייה מהמוקד, בערבית.</p>
+      <div class="uc reveal">
+        <div class="device">
+          <div class="dhead"><span class="av" style="background:var(--wa)"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15l-1.4 5 5.2-1.4A10 10 0 1 0 12 2z"/></svg></span>
+            <div><div class="t">المركز البلدي · WhatsApp</div><div class="s"><span class="dot-live"></span> متصل · رد فوري</div></div>
+          </div>
+          <div class="thread" dir="rtl" lang="ar">
+            <div class="msg user"><div class="who">مقيم</div>متى يتم جمع الأغصان في شارع بياليك؟</div>
+            <div class="msg wa agent"><div class="who">مركز AI</div>يتم جمع الأغصان في شارع بياليك أيام <b>الثلاثاء</b>. الموعد القادم: 5.8.
+              <span class="src"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13H6z"/><path d="M14 3v5h5"/></svg> المصدر: إجراء جمع الأغصان، بلدية حولون</span></div>
+            <div class="msg wa agent"><div class="who">مركز AI</div>هل تريد أن أفتح بلاغًا عن كومة أغصان اليوم؟</div>
+            <div class="msg user"><div class="who">مقيم</div>نعم</div>
+            <div class="msg wa agent"><div class="who">مركز AI</div><span class="tag ok">بلاغ #MO-48213</span> تم فتحه. المعالجة خلال 48 ساعة — سأحدّثك هنا عند الإغلاق.</div>
+            <div class="msg user"><div class="who">مقيم</div>وكم هي مستحقات الأرنونا عليّ؟</div>
+            <div class="msg wa agent"><div class="who">مركز AI</div><span class="tag lock">🔒 معلومات شخصية</span> يلزم التحقق من الهوية. أرسل رابطًا آمنًا عبر منظومة الهوية الرقمية — بعد التحقق سأعرض لك الرصيد هنا.</div>
+          </div>
+        </div>
+        <div class="uc-meta">
+          <div class="role">זיהוי שפה אוטומטי · מענה בשפת התושב</div>
+          <p>הדוגמה זהה בתוכן לתרחיש המוקד — אך מתנהלת כולה בערבית. אין "בוט נפרד": זו אותה ליבה, עם שכבת שפה. הבקרות (הזדהות למידע אישי, ציטוט מקור, הסלמה לנציג) זהות בכל השפות.</p>
+          <div class="facts">
+            <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h10M4 19h7"/><path d="M15 15l3 4 3-8"/></svg><div><b>שפות:</b> עברית · ערבית · רוסית · אנגלית — זיהוי אוטומטי</div></div>
+            <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg><div><b>רלוונטי לרשויות</b> עם אוכלוסייה מגוונת (למשל שותפות כפר קאסם)</div></div>
+            <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 6v6c0 4.4 3 7.4 8 8 5-.6 8-3.6 8-8V6z"/></svg><div><b>בקרות זהות</b> בכל השפות — פרטיות ותיקון 13</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== Omni-channel radial ===== -->
   <section id="omni">
     <div class="wrap">
@@ -630,6 +688,84 @@
       },{threshold:.12, rootMargin:'0px 0px -8% 0px'});
       els.forEach(function(el){io.observe(el);});
     } else { els.forEach(function(el){el.classList.add('in');}); }
+    // ===== live demo playback =====
+    var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var demoOn=!reduce;
+    var demoBtn=document.getElementById('demo');
+    var threads=[].slice.call(document.querySelectorAll('.thread'));
+    var timers=[];
+    function clearTimers(){ timers.forEach(clearTimeout); timers=[]; }
+
+    function showAll(th){
+      th.classList.remove('playing');
+      [].forEach.call(th.children,function(c){ if(c.classList.contains('typing')) c.remove(); else c.classList.add('show'); });
+    }
+    function resetHidden(th){
+      // remove any typing bubbles, hide real items
+      [].slice.call(th.querySelectorAll('.typing')).forEach(function(t){t.remove();});
+      th.classList.add('playing');
+      [].forEach.call(th.children,function(c){ c.classList.remove('show'); });
+    }
+    function playThread(th){
+      if(th.dataset.done==='playing') return;
+      th.dataset.done='playing';
+      resetHidden(th);
+      var items=[].slice.call(th.children);
+      var wa=th.querySelector('.msg.wa')?true:false;
+      var i=0;
+      function next(){
+        if(i>=items.length){ th.dataset.done='1'; return; }
+        var el=items[i];
+        var isAgent=el.classList && el.classList.contains('agent');
+        var isDivider=el.classList && el.classList.contains('divider');
+        var delay=isDivider?420:(isAgent?520:360);
+        if(isAgent){
+          // show typing bubble first
+          var typing=document.createElement('div');
+          typing.className='typing'+(wa?' wa':'');
+          typing.innerHTML='<span></span><span></span><span></span>';
+          th.insertBefore(typing, el);
+          typing.classList.add('show');
+          timers.push(setTimeout(function(){
+            typing.remove(); el.classList.add('show'); i++;
+            timers.push(setTimeout(next, 260));
+          }, 720));
+        } else {
+          timers.push(setTimeout(function(){
+            el.classList.add('show'); i++;
+            timers.push(setTimeout(next, delay));
+          }, 120));
+        }
+      }
+      next();
+    }
+    // observe threads to auto-play when in view
+    if('IntersectionObserver' in window){
+      var tio=new IntersectionObserver(function(en){
+        en.forEach(function(e){ if(e.isIntersecting && demoOn){ playThread(e.target); } });
+      },{threshold:.35});
+      threads.forEach(function(th){ tio.observe(th); });
+    }
+    function applyDemoState(){
+      demoBtn.setAttribute('aria-pressed', demoOn?'true':'false');
+      demoBtn.querySelector('.dlabel').textContent = demoOn?'הדגמה חיה':'הצג הכול';
+      clearTimers();
+      threads.forEach(function(th){
+        th.dataset.done='';
+        if(demoOn){ resetHidden(th); } else { showAll(th); }
+      });
+      if(demoOn){
+        // replay any currently-visible threads
+        threads.forEach(function(th){
+          var r=th.getBoundingClientRect();
+          if(r.top < window.innerHeight*0.75 && r.bottom>0){ playThread(th); }
+        });
+      }
+    }
+    demoBtn.addEventListener('click',function(){ demoOn=!demoOn; applyDemoState(); });
+    // initial
+    if(demoOn){ threads.forEach(resetHidden); } else { demoBtn.setAttribute('aria-pressed','false'); demoBtn.querySelector('.dlabel').textContent='הצג הכול'; }
+
     // active nav highlight
     var links=[].slice.call(document.querySelectorAll('.nav a'));
     var map={}; links.forEach(function(a){ map[a.getAttribute('href').slice(1)]=a; });
