@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="MUNI FORCE — אפיון יכולות פלטפורמת AI רב-רשותית לרשויות מקומיות: תסריטי שיחה, שרטוטים ואינפוגרפיקה.">
+<title>MUNI FORCE — יכולות פלטפורמת ה-AI</title>
+</head>
+<body>
+<style>
+  /* ============ Tokens ============ */
+  :root{
+    --bg:#EEF2F7; --surface:#FFFFFF; --surface-2:#E6ECF3; --surface-3:#F6F9FC;
+    --ink:#0F2036; --ink-2:#47586F; --ink-3:#6E7E93;
+    --line:#D6DFEA; --line-2:#E9EFF5;
+    --brand:#0E7C86; --brand-2:#12A3AB; --brand-ink:#0A5960; --brand-tint:#E1F3F4;
+    --gold:#A9761A; --gold-tint:#F6ECD7;
+    --good:#2E9E6B; --warn:#B9822A; --crit:#BE4A39;
+    --wa:#1F8A5B; --wa-tint:#E4F4EC;
+    --shadow:0 1px 2px rgba(15,32,54,.05), 0 8px 30px rgba(15,32,54,.07);
+    --radius:16px; --radius-sm:10px;
+    --maxw:1080px;
+    --f-sans:"Heebo","Assistant","Rubik","Segoe UI","Arial",sans-serif;
+    --f-mono:"SF Mono","JetBrains Mono","Menlo","Consolas",monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0A111E; --surface:#111C2E; --surface-2:#182740; --surface-3:#0E1828;
+      --ink:#E8EFF7; --ink-2:#A6B7CD; --ink-3:#7C8EA6;
+      --line:#26374F; --line-2:#1D2C43;
+      --brand:#2CBAC1; --brand-2:#54D6DB; --brand-ink:#8DE7EA; --brand-tint:#0E2E33;
+      --gold:#D9AE5B; --gold-tint:#2A2413;
+      --good:#3FB57E; --warn:#D6A24C; --crit:#DC6B58;
+      --wa:#3AB278; --wa-tint:#12261C;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 34px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#EEF2F7; --surface:#FFFFFF; --surface-2:#E6ECF3; --surface-3:#F6F9FC;
+    --ink:#0F2036; --ink-2:#47586F; --ink-3:#6E7E93;
+    --line:#D6DFEA; --line-2:#E9EFF5;
+    --brand:#0E7C86; --brand-2:#12A3AB; --brand-ink:#0A5960; --brand-tint:#E1F3F4;
+    --gold:#A9761A; --gold-tint:#F6ECD7;
+    --good:#2E9E6B; --warn:#B9822A; --crit:#BE4A39;
+    --wa:#1F8A5B; --wa-tint:#E4F4EC;
+    --shadow:0 1px 2px rgba(15,32,54,.05), 0 8px 30px rgba(15,32,54,.07);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0A111E; --surface:#111C2E; --surface-2:#182740; --surface-3:#0E1828;
+    --ink:#E8EFF7; --ink-2:#A6B7CD; --ink-3:#7C8EA6;
+    --line:#26374F; --line-2:#1D2C43;
+    --brand:#2CBAC1; --brand-2:#54D6DB; --brand-ink:#8DE7EA; --brand-tint:#0E2E33;
+    --gold:#D9AE5B; --gold-tint:#2A2413;
+    --good:#3FB57E; --warn:#D6A24C; --crit:#DC6B58;
+    --wa:#3AB278; --wa-tint:#12261C;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 34px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  .page{direction:rtl; background:var(--bg); color:var(--ink);
+    font-family:var(--f-sans); line-height:1.65; -webkit-font-smoothing:antialiased;
+    font-feature-settings:"tnum" 0; overflow-x:hidden;}
+  .page{padding-bottom:64px}
+  h1,h2,h3,h4{margin:0; line-height:1.18; text-wrap:balance; font-weight:800; letter-spacing:-.01em}
+  p{margin:0}
+  a{color:var(--brand-ink); text-decoration:none}
+  .wrap{max-width:var(--maxw); margin-inline:auto; padding-inline:22px}
+
+  /* ============ Header ============ */
+  .topbar{position:sticky; top:0; z-index:50; backdrop-filter:blur(10px);
+    background:color-mix(in srgb, var(--bg) 82%, transparent);
+    border-bottom:1px solid var(--line)}
+  .topbar .row{display:flex; align-items:center; gap:14px; padding:11px 22px; max-width:var(--maxw); margin-inline:auto}
+  .brandmark{display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:-.02em; font-size:16px}
+  .logo{width:30px;height:30px;border-radius:8px;background:
+    linear-gradient(135deg,var(--brand),var(--brand-2)); display:grid; place-items:center; color:#fff; flex:none}
+  .logo svg{width:17px;height:17px}
+  .nav{display:flex; gap:6px; margin-inline-start:auto; flex-wrap:wrap}
+  .nav a{font-size:13px; color:var(--ink-2); padding:6px 11px; border-radius:999px; white-space:nowrap; transition:.2s}
+  .nav a:hover{color:var(--ink); background:var(--surface-2)}
+  .nav a.on{color:var(--brand-ink); background:var(--brand-tint); font-weight:700}
+  .themebtn{flex:none; width:36px;height:36px;border-radius:10px;border:1px solid var(--line);
+    background:var(--surface); color:var(--ink-2); cursor:pointer; display:grid; place-items:center; transition:.2s}
+  .themebtn:hover{color:var(--ink); border-color:var(--brand)}
+  .themebtn svg{width:18px;height:18px}
+  .demobtn{flex:none; display:inline-flex; align-items:center; gap:7px; height:36px; padding:0 13px;
+    border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink-2);
+    cursor:pointer; font-family:inherit; font-size:13px; font-weight:700; transition:.2s}
+  .demobtn svg{width:15px;height:15px}
+  .demobtn:hover{color:var(--ink); border-color:var(--brand)}
+  .demobtn[aria-pressed="true"]{background:var(--brand-tint); color:var(--brand-ink); border-color:transparent}
+  @media(max-width:520px){ .demobtn .dlabel{display:none} }
+  /* live-demo playback states */
+  .thread.playing .msg, .thread.playing .divider{opacity:0; transform:translateY(8px); transition:opacity .35s ease, transform .35s ease}
+  .thread.playing .msg.show, .thread.playing .divider.show{opacity:1; transform:none}
+  .typing{align-self:flex-start; display:inline-flex; gap:4px; padding:12px 14px; border-radius:15px;
+    background:var(--brand-tint); border-bottom-right-radius:5px}
+  .typing.wa{background:var(--wa-tint)}
+  .typing span{width:7px;height:7px;border-radius:50%; background:var(--brand-ink); opacity:.5; animation:blink 1.2s infinite}
+  .typing.wa span{background:var(--wa)}
+  .typing span:nth-child(2){animation-delay:.2s} .typing span:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,60%,100%{opacity:.3; transform:translateY(0)}30%{opacity:1; transform:translateY(-3px)}}
+  @media(prefers-reduced-motion:reduce){ .typing span{animation:none} }
+  @media(max-width:760px){ .nav{display:none} }
+
+  /* ============ Section scaffolding ============ */
+  section{padding:66px 0}
+  .band{background:var(--surface-3); border-block:1px solid var(--line-2)}
+  .eyebrow{display:inline-flex; align-items:center; gap:9px; font-size:12.5px; font-weight:800;
+    letter-spacing:.14em; color:var(--brand-ink); margin-bottom:16px}
+  .eyebrow::before{content:""; width:26px; height:2px; background:var(--brand); border-radius:2px}
+  h2.sec{font-size:clamp(26px,3.4vw,38px); margin-bottom:14px}
+  .lead{color:var(--ink-2); font-size:clamp(16px,1.7vw,18.5px); max-width:64ch}
+  .reveal{opacity:0; transform:translateY(16px); transition:opacity .6s ease, transform .6s ease}
+  .reveal.in{opacity:1; transform:none}
+  @media(prefers-reduced-motion:reduce){ .reveal{opacity:1; transform:none; transition:none} }
+
+  /* ============ Hero ============ */
+  .hero{position:relative; padding:74px 0 40px; overflow:hidden}
+  .hero::before{content:""; position:absolute; inset:-40% 30% auto -30%; height:520px;
+    background:radial-gradient(60% 60% at 70% 30%, color-mix(in srgb,var(--brand) 26%, transparent), transparent 70%);
+    filter:blur(10px); z-index:0; pointer-events:none}
+  .hero .wrap{position:relative; z-index:1}
+  .kicker{display:inline-flex; align-items:center; gap:8px; padding:6px 13px; border-radius:999px;
+    background:var(--surface); border:1px solid var(--line); color:var(--ink-2); font-size:13px; font-weight:700; margin-bottom:22px}
+  .kicker b{color:var(--brand-ink)}
+  .hero h1{font-size:clamp(30px,5.2vw,58px); letter-spacing:-.025em; margin-bottom:20px}
+  .hero h1 .hl{color:var(--brand-ink); position:relative; white-space:nowrap}
+  .hero h1 .hl::after{content:""; position:absolute; inset-inline:0; bottom:.06em; height:.34em;
+    background:color-mix(in srgb,var(--brand) 26%, transparent); z-index:-1; border-radius:3px}
+  .hero .sub{font-size:clamp(17px,2vw,21px); color:var(--ink-2); max-width:60ch; margin-bottom:30px}
+  .hero .sub b{color:var(--ink); font-weight:700}
+  .pills{display:flex; flex-wrap:wrap; gap:10px}
+  .pill{display:inline-flex; align-items:center; gap:8px; padding:9px 15px; border-radius:999px;
+    background:var(--surface); border:1px solid var(--line); font-size:14px; font-weight:600; color:var(--ink); box-shadow:var(--shadow)}
+  .pill svg{width:16px;height:16px; color:var(--brand)}
+
+  /* ============ Cards / grids ============ */
+  .grid{display:grid; gap:18px}
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow)}
+  .pad{padding:24px}
+
+  /* ============ Architecture stack ============ */
+  .stack{display:grid; gap:12px; margin-top:30px}
+  .layer{border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); overflow:hidden}
+  .layer .lhead{display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid var(--line-2)}
+  .layer .lhead .ic{width:34px;height:34px;border-radius:9px; display:grid; place-items:center; flex:none; color:#fff}
+  .layer .lhead .ic svg{width:19px;height:19px}
+  .layer .lhead h4{font-size:16px}
+  .layer .lhead span{font-size:12.5px; color:var(--ink-3); font-weight:600}
+  .chiprow{display:flex; flex-wrap:wrap; gap:8px; padding:16px 18px}
+  .chip{font-size:13px; font-weight:600; padding:8px 12px; border-radius:9px; background:var(--surface-2); color:var(--ink); border:1px solid var(--line-2)}
+  .chip.k{background:var(--brand-tint); color:var(--brand-ink); border-color:transparent}
+  .layer.core{border-color:color-mix(in srgb,var(--brand) 40%, var(--line))}
+  .layer.core .lhead{background:var(--brand-tint)}
+  .arrowdown{display:grid; place-items:center; color:var(--ink-3)}
+  .arrowdown svg{width:22px;height:22px}
+  .ic.c-ch{background:#3E77C9}.ic.c-core{background:var(--brand)}.ic.c-bus{background:#7A5AC2}.ic.c-sor{background:#4B5B72}
+
+  /* ============ Lifecycle stepper ============ */
+  .flow-scroll{overflow-x:auto; padding-bottom:8px; margin-top:28px}
+  .flow{display:flex; gap:0; min-width:760px; align-items:stretch}
+  .step{flex:1; min-width:96px; text-align:center; position:relative; padding:0 4px}
+  .step .dot{width:44px;height:44px;border-radius:12px; margin:0 auto 10px; display:grid; place-items:center;
+    background:var(--surface); border:1.5px solid var(--brand); color:var(--brand-ink); font-weight:800; box-shadow:var(--shadow)}
+  .step .dot svg{width:20px;height:20px}
+  .step .lbl{font-size:12.5px; font-weight:700; color:var(--ink); line-height:1.35}
+  .step .sub{font-size:11px; color:var(--ink-3)}
+  .step:not(:last-child)::after{content:""; position:absolute; top:22px; left:-50%; width:100%; height:2px;
+    background:linear-gradient(90deg,var(--brand),color-mix(in srgb,var(--brand) 30%,transparent)); z-index:-0}
+  .step.acc .dot{background:var(--brand); color:#fff}
+
+  /* ============ Chat / device mockups ============ */
+  .uc{display:grid; grid-template-columns:1fr; gap:22px}
+  @media(min-width:900px){ .uc{grid-template-columns:1fr 1fr; align-items:start} }
+  .device{background:var(--surface); border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow); overflow:hidden}
+  .dhead{display:flex; align-items:center; gap:11px; padding:13px 16px; border-bottom:1px solid var(--line-2)}
+  .dhead .av{width:36px;height:36px;border-radius:10px; display:grid; place-items:center; color:#fff; flex:none}
+  .dhead .t{font-weight:800; font-size:14.5px; line-height:1.2}
+  .dhead .s{font-size:12px; color:var(--ink-3); display:flex; align-items:center; gap:6px}
+  .dot-live{width:7px;height:7px;border-radius:50%; background:var(--good); box-shadow:0 0 0 0 color-mix(in srgb,var(--good) 60%,transparent); animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--good) 55%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  @media(prefers-reduced-motion:reduce){.dot-live{animation:none}}
+  .thread{padding:16px; display:flex; flex-direction:column; gap:11px; background:var(--surface-3)}
+  .msg{max-width:82%; padding:10px 13px; border-radius:15px; font-size:14px; line-height:1.5; position:relative}
+  .msg .who{font-size:11px; font-weight:800; letter-spacing:.02em; margin-bottom:3px; opacity:.72}
+  .msg.agent{align-self:flex-start; background:var(--brand-tint); color:var(--ink); border-bottom-right-radius:5px}
+  .msg.agent .who{color:var(--brand-ink)}
+  .msg.user{align-self:flex-end; background:var(--surface); border:1px solid var(--line); border-bottom-left-radius:5px}
+  .msg.wa.agent{background:var(--wa-tint)} .msg.wa.agent .who{color:var(--wa)}
+  .msg .src{display:inline-flex; align-items:center; gap:5px; margin-top:6px; font-size:11.5px; color:var(--ink-3); font-weight:600}
+  .msg .src svg{width:13px;height:13px}
+  .divider{align-self:center; font-size:11.5px; font-weight:700; color:var(--ink-3); background:var(--surface-2);
+    padding:5px 12px; border-radius:999px; margin:3px 0; border:1px solid var(--line-2)}
+  .tag{display:inline-flex;align-items:center;gap:5px; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px}
+  .tag.ok{background:color-mix(in srgb,var(--good) 16%,transparent); color:var(--good)}
+  .tag.lock{background:var(--gold-tint); color:var(--gold)}
+  .tag.warn{background:color-mix(in srgb,var(--warn) 16%,transparent); color:var(--warn)}
+  /* voice waveform */
+  .wave{display:flex; align-items:center; gap:3px; height:22px}
+  .wave span{width:3px; background:#fff; border-radius:2px; opacity:.9; animation:wv 1s ease-in-out infinite}
+  .wave span:nth-child(1){height:8px;animation-delay:0s}.wave span:nth-child(2){height:16px;animation-delay:.1s}
+  .wave span:nth-child(3){height:22px;animation-delay:.2s}.wave span:nth-child(4){height:12px;animation-delay:.3s}
+  .wave span:nth-child(5){height:18px;animation-delay:.4s}.wave span:nth-child(6){height:9px;animation-delay:.5s}
+  @keyframes wv{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+  @media(prefers-reduced-motion:reduce){.wave span{animation:none}}
+
+  .guard{margin-top:14px; border:1px dashed color-mix(in srgb,var(--gold) 55%,var(--line)); background:var(--gold-tint);
+    border-radius:12px; padding:13px 15px}
+  .guard h4{font-size:13px; color:var(--gold); display:flex; align-items:center; gap:7px; margin-bottom:6px}
+  .guard h4 svg{width:15px;height:15px}
+  .guard ul{margin:0; padding-inline-start:18px; font-size:13px; color:var(--ink-2)} .guard li{margin:3px 0}
+
+  /* resolution summary card */
+  .summary{align-self:stretch; background:var(--surface); border:1.5px solid var(--brand); border-radius:14px; padding:14px 16px; margin-top:6px}
+  .summary .sh{display:flex; align-items:center; gap:8px; font-weight:800; color:var(--brand-ink); font-size:14px; margin-bottom:11px}
+  .summary .sh svg{width:18px;height:18px}
+  .summary ul{margin:0; padding:0; list-style:none; display:grid; gap:7px}
+  .summary li{display:flex; gap:8px; align-items:flex-start; font-size:13px; color:var(--ink-2)}
+  .summary li svg{width:15px;height:15px; color:var(--good); flex:none; margin-top:2px}
+  .summary li b{color:var(--ink)}
+  .summary .sfoot{margin-top:12px; padding-top:11px; border-top:1px dashed var(--line-2); display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:12px; color:var(--ink-3)}
+  .summary .badge{background:var(--brand-tint); color:var(--brand-ink); font-weight:800; padding:3px 9px; border-radius:6px; font-size:11.5px}
+  .summary .badge.auto{background:color-mix(in srgb,var(--good) 16%,transparent); color:var(--good)}
+  .summary .badge.human{background:var(--gold-tint); color:var(--gold)}
+  .summary .stars{color:var(--gold); letter-spacing:1px}
+  /* end-to-end scenarios layout */
+  .e2e{display:grid; gap:28px; margin-top:28px}
+  .e2e-card{width:100%; max-width:640px; margin-inline:auto}
+  .e2e-role{display:flex; align-items:center; gap:9px; font-weight:800; color:var(--brand-ink); font-size:15px; margin-bottom:11px}
+  .e2e-role .ric{width:30px;height:30px;border-radius:9px; background:var(--brand-tint); display:grid; place-items:center; flex:none}
+  .e2e-role .ric svg{width:17px;height:17px; color:var(--brand-ink)}
+  .e2e-role small{font-weight:600; color:var(--ink-3); font-size:12.5px}
+
+  .uc-meta h3{font-size:22px; margin-bottom:8px}
+  .uc-meta .role{font-size:13px; font-weight:800; color:var(--brand-ink); margin-bottom:12px}
+  .uc-meta p{color:var(--ink-2); font-size:14.5px; margin-bottom:14px}
+  .facts{display:grid; gap:8px}
+  .fact{display:flex; gap:10px; font-size:13.5px; align-items:flex-start}
+  .fact svg{width:16px;height:16px;color:var(--brand); flex:none; margin-top:3px}
+  .fact b{color:var(--ink)}
+
+  /* ============ Omni-channel radial ============ */
+  .radial{display:grid; place-items:center; margin-top:26px}
+  .radial svg{max-width:100%; height:auto}
+
+  /* ============ KPI tiles ============ */
+  .kpis{display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-top:28px}
+  @media(min-width:720px){ .kpis{grid-template-columns:repeat(3,1fr)} }
+  .kpi{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow)}
+  .kpi .n{font-size:40px; font-weight:800; letter-spacing:-.03em; color:var(--brand-ink); font-variant-numeric:tabular-nums; line-height:1}
+  .kpi .n .u{font-size:20px; color:var(--ink-3)}
+  .kpi .dir{font-size:13px; font-weight:800; display:inline-flex; align-items:center; gap:3px; margin-inline-start:6px}
+  .kpi .dir.up{color:var(--good)} .kpi .dir.down{color:var(--good)}
+  .kpi .k{margin-top:9px; font-size:14px; font-weight:700; color:var(--ink)}
+  .kpi .d{font-size:12.5px; color:var(--ink-3); margin-top:2px}
+
+  /* ============ Ask-Once infographic ============ */
+  .ask{display:grid; gap:16px; margin-top:26px}
+  @media(min-width:820px){ .ask{grid-template-columns:1fr auto 1fr; align-items:center} }
+  .askbox{border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); padding:20px; box-shadow:var(--shadow)}
+  .askbox h4{font-size:15px; margin-bottom:12px; display:flex; align-items:center; gap:8px}
+  .askbox.no h4{color:var(--crit)} .askbox.yes h4{color:var(--good)}
+  .askline{display:flex; align-items:center; gap:9px; font-size:13.5px; padding:7px 0; color:var(--ink-2); border-bottom:1px dashed var(--line-2)}
+  .askline:last-child{border-bottom:0}
+  .askline svg{width:16px;height:16px;flex:none}
+  .askline.strike{color:var(--ink-3)} .askline.strike b{text-decoration:line-through}
+  .askmid{display:grid;place-items:center; color:var(--brand); font-weight:800}
+  .askmid svg{width:40px;height:40px}
+  @media(max-width:819px){ .askmid{transform:rotate(90deg)} }
+
+  /* ============ Multi-tenant ============ */
+  .mt{margin-top:26px}
+  .mt-core{max-width:520px; margin:0 auto 8px; text-align:center; background:linear-gradient(135deg,var(--brand),var(--brand-2));
+    color:#fff; border-radius:var(--radius); padding:20px; box-shadow:var(--shadow)}
+  .mt-core h4{font-size:18px} .mt-core p{opacity:.92; font-size:13.5px; margin-top:5px}
+  .mt-fan{display:grid; place-items:center; color:var(--ink-3)}
+  .mt-fan svg{width:30px;height:30px}
+  .tenants{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:8px}
+  @media(min-width:720px){ .tenants{grid-template-columns:repeat(4,1fr)} }
+  .tenant{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:15px; text-align:center; box-shadow:var(--shadow)}
+  .tenant .nm{font-weight:800; font-size:15px}
+  .tenant .cfg{font-size:11.5px; color:var(--ink-3); margin-top:4px}
+  .tenant.ghost{border-style:dashed; color:var(--ink-3)}
+
+  /* ============ Security chips ============ */
+  .sec-grid{display:flex; flex-wrap:wrap; gap:10px; margin-top:24px}
+  .sec-chip{display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:11px;
+    background:var(--surface); border:1px solid var(--line); font-size:13.5px; font-weight:700; box-shadow:var(--shadow)}
+  .sec-chip svg{width:16px;height:16px; color:var(--brand)}
+
+  /* ============ Footer ============ */
+  .foot{margin-top:20px; padding:30px 0; border-top:1px solid var(--line); color:var(--ink-3); font-size:13px}
+  .foot .wrap{display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center}
+
+  .note{font-size:12.5px; color:var(--ink-3); margin-top:16px; font-style:italic}
+</style>
+
+<div class="page" dir="rtl" id="top">
+
+  <!-- ===== Top bar ===== -->
+  <header class="topbar">
+    <div class="row">
+      <div class="brandmark">
+        <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7v6c0 5 3.5 8 9 9 5.5-1 9-4 9-9V7z"/><path d="M9 12l2 2 4-4"/></svg></span>
+        MUNI&nbsp;FORCE
+      </div>
+      <nav class="nav" aria-label="ניווט">
+        <a href="#idea">הרעיון</a>
+        <a href="#arch">ארכיטקטורה</a>
+        <a href="#flow">מחזור בקשה</a>
+        <a href="#collect">גבייה קולי</a>
+        <a href="#info">מוקד מידע</a>
+        <a href="#committee">ועדות ובקשות</a>
+        <a href="#endtoend">טיפול עד סגירה</a>
+        <a href="#arabic">ערבית</a>
+        <a href="#askonce">Ask-Once</a>
+        <a href="#kpi">מדדים</a>
+        <a href="#security">אבטחה</a>
+      </nav>
+      <button class="demobtn" id="demo" aria-pressed="true" title="הפעלה/כיבוי של הדגמת השיחות">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 5l12 7-12 7z"/></svg>
+        <span class="dlabel">הדגמה חיה</span>
+      </button>
+      <button class="themebtn" id="theme" aria-label="החלפת ערכת צבעים" title="החלפת מצב תצוגה">
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== Hero ===== -->
+  <section class="hero" id="idea">
+    <div class="wrap">
+      <span class="kicker reveal">פלטפורמת AI לרשויות מקומיות · <b>אגנוסטית · רב-רשותית</b></span>
+      <h1 class="reveal">לא שלושה בוטים. <span class="hl">יכולת ליבה אחת.</span></h1>
+      <p class="sub reveal">לנהל שיח טבעי עם התושב בכל ערוץ — ולנהל את <b>תהליך הטיפול בבקשתו מקצה ועד להחלטה</b>, תוך עדכון יזום לאורך כל הדרך. גבייה קולית, מוקד מידע וליווי ועדות הם שלושה תרחישים של אותו מנוע.</p>
+      <div class="pills reveal">
+        <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v12H5.2L4 17.2z"/></svg> Omni-channel</span>
+        <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18"/></svg> Ask-Once · תיק 360°</span>
+        <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 6v6c0 4.4 3 7.4 8 8 5-0.6 8-3.6 8-8V6z"/></svg> תיקון 13 · ISO/SOC2</span>
+        <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg> עברית · ערבית ילידית</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Architecture ===== -->
+  <section class="band" id="arch">
+    <div class="wrap">
+      <span class="eyebrow reveal">ארכיטקטורת-על</span>
+      <h2 class="sec reveal">שכבת AI עצמאית מעל מערכות הרשות</h2>
+      <p class="lead reveal">הליבה מנותקת ממערכת-הרשומה. היא מתממשקת ל-Salesforce ולמקורות מידע על התושב דרך ה-Integration Bus — כך שהחלפת מערכת אינה משנה את חוויית התושב, ורשות ללא Salesforce מתחברת דרך connector אחר.</p>
+
+      <div class="stack reveal">
+        <div class="layer">
+          <div class="lhead"><span class="ic c-ch" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v10H6l-2 3z"/></svg></span><h4>ערוצי אינטראקציה</h4><span>Omni-channel · המשכיות שיח בין הערוצים</span></div>
+          <div class="chiprow"><span class="chip">📞 קול / IVR</span><span class="chip">WhatsApp</span><span class="chip">צ'אט אתר / אפליקציה</span><span class="chip">אימייל / SMS</span></div>
+        </div>
+        <div class="arrowdown" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M6 14l6 6 6-6"/></svg></div>
+
+        <div class="layer core">
+          <div class="lhead"><span class="ic c-core" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></span><h4>ליבת ה-AI האגנוסטית</h4><span>Tenant-aware</span></div>
+          <div class="chiprow">
+            <span class="chip k">NLU עברית · Intent · Sentiment</span>
+            <span class="chip k">Dialog Orchestrator</span>
+            <span class="chip k">RAG + בסיס ידע לכל רשות</span>
+            <span class="chip k">Case / BPM-AI · SLA</span>
+            <span class="chip k">Ask-Once · תיק 360°</span>
+            <span class="chip k">Identity (אנונימי / לאומי)</span>
+            <span class="chip k">Action / Tool Layer</span>
+            <span class="chip k">Proactive Engine</span>
+            <span class="chip k">Guardrails · Human-in-loop</span>
+            <span class="chip k">Learning · Predictive</span>
+          </div>
+        </div>
+        <div class="arrowdown" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M6 14l6 6 6-6"/></svg></div>
+
+        <div class="layer">
+          <div class="lhead"><span class="ic c-bus" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="8" cy="7" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/><circle cx="10" cy="17" r="1.6" fill="currentColor"/></svg></span><h4>שכבת אינטגרציה</h4><span>Mulesoft / Workato</span></div>
+          <div class="chiprow"><span class="chip">REST / SOAP API</span><span class="chip">Webhooks</span><span class="chip">OAuth 2.0</span><span class="chip">Batch / Export</span><span class="chip">Audit Trail מלא</span></div>
+        </div>
+        <div class="arrowdown" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M6 14l6 6 6-6"/></svg></div>
+
+        <div class="layer">
+          <div class="lhead"><span class="ic c-sor" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span><h4>מערכות רשומה</h4><span>Systems of Record</span></div>
+          <div class="chiprow"><span class="chip">Salesforce Service Cloud / PSS</span><span class="chip">Data Cloud</span><span class="chip">מערכת גבייה / ERP</span><span class="chip">GIS / הנדסה</span><span class="chip">חינוך / רווחה</span><span class="chip">DMS</span><span class="chip">הזדהות לאומית</span></div>
+        </div>
+      </div>
+      <p class="note reveal">מימוש מומלץ לרשות עם Salesforce: AgentForce · Einstein Automate · Data Cloud · Tableau/PowerBI · Salesforce Shield. ליבת ה-AI חושפת ממשק פנימי אחיד — ה-connector הוא מודול מוחלף.</p>
+    </div>
+  </section>
+
+  <!-- ===== Lifecycle ===== -->
+  <section id="flow">
+    <div class="wrap">
+      <span class="eyebrow reveal">מחזור חיי בקשה</span>
+      <h2 class="sec reveal">מפנייה — ועד החלטה</h2>
+      <p class="lead reveal">אותו מסלול לכל תרחיש. הסוכן לא רק עונה: הוא פותח תיק, אוסף רק את מה שחסר, מניע את התהליך לפי SLA, ומעדכן את התושב ביוזמתו עד לסגירה.</p>
+      <div class="flow-scroll reveal">
+        <div class="flow">
+          <div class="step"><div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v10H6l-2 3z"/></svg></div><div class="lbl">פנייה / יוזמה</div><div class="sub">כל ערוץ</div></div>
+          <div class="step"><div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h10M4 12h16M4 17h7"/></svg></div><div class="lbl">זיהוי כוונה</div><div class="sub">NLU עברית</div></div>
+          <div class="step"><div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><div class="lbl">הזדהות</div><div class="sub">לפי רגישות</div></div>
+          <div class="step"><div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h11l5 5v9H4z"/><path d="M14 5v5h5"/></svg></div><div class="lbl">פתיחת Case</div></div>
+          <div class="step acc"><div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18"/></svg></div><div class="lbl">איסוף מידע</div><div class="sub">Ask-Once</div></div>
+          <div class="step"><div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v18M6 7h9l-2 3 2 3H6"/></svg></div><div class="lbl">ניתוב / ביצוע</div><div class="sub">BPM-AI</div></div>
+          <div class="step"><div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="8" cy="6" r="1.6" fill="currentColor"/><circle cx="16" cy="12" r="1.6" fill="currentColor"/></svg></div><div class="lbl">ועדות · SLA</div></div>
+          <div class="step"><div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5 9-11"/></svg></div><div class="lbl">החלטה</div><div class="sub">אישור אנושי</div></div>
+          <div class="step"><div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M20 8a8 8 0 0 0-14-3M4 16a8 8 0 0 0 14 3"/></svg></div><div class="lbl">עדכון + למידה</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Use case 1: Voice collection ===== -->
+  <section class="band" id="collect">
+    <div class="wrap">
+      <span class="eyebrow reveal">תרחיש דגל · א'</span>
+      <h2 class="sec reveal">סוכן גבייה קולי</h2>
+      <div class="uc reveal">
+        <div class="device">
+          <div class="dhead"><span class="av" style="background:var(--brand)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 4h4l2 5-3 2a12 12 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 2 6a2 2 0 0 1 2-2z"/></svg></span>
+            <div><div class="t">שיחה יוצאת · עיריית חולון</div><div class="s"><span class="dot-live"></span> מאובטח ומוקלט</div></div>
+            <div class="wave" aria-hidden="true" style="margin-inline-start:auto"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          </div>
+          <div class="thread">
+            <div class="msg agent"><div class="who">סוכן דיגיטלי</div>שלום, מדובר בשירות הדיגיטלי של עיריית חולון — אני סוכן.ת AI. הפנייה בנוגע ליתרת ארנונה בנכס שלך.</div>
+            <div class="msg user"><div class="who">תושב</div>כן, במה מדובר?</div>
+            <div class="msg agent"><div class="who">סוכן דיגיטלי</div>לפני שאמסור פרטים נאמת זהות. שלחתי קוד חד-פעמי ל-SMS שמסתיים ב-**87. תוכל.י להקריא?</div>
+            <div class="msg user"><div class="who">תושב</div>4 9 2 1</div>
+            <div class="msg agent"><div class="who">סוכן דיגיטלי</div><span class="tag ok">✔ זוהה</span> הזהות אומתה דרך מערך הדיגיטל הלאומי. קיימת יתרה של <b>₪1,240</b> לנכס ברח' סוקולוב 12 (2025). ניתן לפרוס עד 6 תשלומים ללא ריבית.</div>
+            <div class="msg user"><div class="who">תושב</div>ב-4 תשלומים בבקשה</div>
+            <div class="msg agent"><div class="who">סוכן דיגיטלי</div>מצוין — 4 × ₪310. שולח קישור תשלום מאובטח ל-WhatsApp. הסליקה דרך ספק מורשה (PCI); איני שומר.ת פרטי אשראי. ההסדר ייכנס לתוקף אוטומטית אחרי התשלום הראשון.
+              <span class="src"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> תשלום מאובטח · PCI-DSS</span></div>
+          </div>
+        </div>
+        <div class="uc-meta">
+          <div class="role">שיחות יזומות ונכנסות · צמצום פיגורים והפחתת עומס אנושי</div>
+          <p>הסוכן מזהה חוב, מאמת זהות לפני חשיפת פרטים, מציע הסדר לפי מדיניות הרשות, ומבצע סליקה — עד לסגירת ההסדר, כולל תזכורות יזומות לפני כל חיוב.</p>
+          <div class="facts">
+            <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h4l2 5-3 2a12 12 0 0 0 6 6l2-3 5 2v4"/></svg><div><b>ערוצים:</b> קול (עיקרי) · WhatsApp/SMS להמשך והתראות</div></div>
+            <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16v12H4z"/><path d="M4 11h16"/></svg><div><b>אינטגרציות:</b> מערכת גבייה/ERP · סליקה PCI · הזדהות לאומית</div></div>
+            <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><div><b>Ask-Once:</b> הנכס, היתרה וההיסטוריה כבר ידועים — לא נשאלים</div></div>
+          </div>
+          <div class="guard">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 6v6c0 4.4 3 7.4 8 8 5-.6 8-3.6 8-8V6z"/></svg> בקרות ובטיחות</h4>
+            <ul>
+              <li>אין חשיפת פרטי חוב ללא הזדהות מאומתת</li>
+              <li>ללא לחץ / הטעיה; שקיפות מלאה ("אני סוכן AI")</li>
+              <li>מחלוקת או הליך משפטי → העברה מיידית לגובה אנושי</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Use case 2: Info desk (WhatsApp) ===== -->
+  <section id="info">
+    <div class="wrap">
+      <span class="eyebrow reveal">תרחיש דגל · ב'</span>
+      <h2 class="sec reveal">סוכן שירות מידע במוקד</h2>
+      <div class="uc reveal">
+        <div class="uc-meta">
+          <div class="role">מענה מיידי 24/7 · ומעבר ממידע לפעולה</div>
+          <p>עונה מבוסס-מקור (RAG) על נהלים וזכאויות, פותח קריאות וקובע תורים, ומסלים לנציג עם הקשר מלא. מידע כללי — ללא הזדהות; תיק אישי — דורש אימות.</p>
+          <div class="facts">
+            <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v10H6l-2 3z"/></svg><div><b>ערוצים:</b> WhatsApp · צ'אט אתר/אפליקציה · קול · מייל</div></div>
+            <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/></svg><div><b>ידע:</b> בסיס ידע עירוני נפרד לכל רשות · מענה עם מקור</div></div>
+            <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><div><b>פעולות:</b> פתיחת קריאת מוקד · תור · מעקב סטטוס</div></div>
+          </div>
+          <div class="guard">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 6v6c0 4.4 3 7.4 8 8 5-.6 8-3.6 8-8V6z"/></svg> בקרות ובטיחות</h4>
+            <ul>
+              <li>תשובות מעוגנות במקור בלבד — הימנעות מהזיות</li>
+              <li>"לא בטוח" → הסלמה לנציג עם תמלול והקשר</li>
+              <li>ללא ייעוץ משפטי / רפואי מחייב</li>
+            </ul>
+          </div>
+        </div>
+        <div class="device">
+          <div class="dhead"><span class="av" style="background:var(--wa)"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15l-1.4 5 5.2-1.4A10 10 0 1 0 12 2z"/></svg></span>
+            <div><div class="t">מוקד עירוני · WhatsApp</div><div class="s"><span class="dot-live"></span> מקוון · מענה מיידי</div></div>
+          </div>
+          <div class="thread">
+            <div class="msg user"><div class="who">תושב</div>מתי פינוי גזם ברחוב ביאליק?</div>
+            <div class="msg wa agent"><div class="who">מוקד AI</div>פינוי גזם ברח' ביאליק מתבצע בימי <b>שלישי</b>. המועד הבא: 5.8.
+              <span class="src"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13H6z"/><path d="M14 3v5h5"/></svg> מקור: נוהל פינוי גזם, עיריית חולון</span></div>
+            <div class="msg wa agent"><div class="who">מוקד AI</div>רוצה שאפתח דיווח על ערימת גזם להיום?</div>
+            <div class="msg user"><div class="who">תושב</div>כן</div>
+            <div class="msg wa agent"><div class="who">מוקד AI</div><span class="tag ok">קריאה #MO-48213</span> נפתחה. טיפול תוך 48 שעות — אעדכן אותך כאן כשתיסגר.</div>
+            <div class="msg user"><div class="who">תושב</div>ומה יתרת הארנונה שלי?</div>
+            <div class="msg wa agent"><div class="who">מוקד AI</div><span class="tag lock">🔒 מידע אישי</span> נדרשת הזדהות. שולח קישור מאובטח דרך מערך הדיגיטל — לאחר הזיהוי אציג לך את היתרה כאן.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Use case 3: Committee companion ===== -->
+  <section class="band" id="committee">
+    <div class="wrap">
+      <span class="eyebrow reveal">תרחיש דגל · ג'</span>
+      <h2 class="sec reveal">סוכן מלווה לוועדות ובקשות</h2>
+      <div class="uc reveal">
+        <div class="device">
+          <div class="dhead"><span class="av" style="background:#3E77C9"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 5h11l5 5v9H4z"/><path d="M14 5v5h5"/></svg></span>
+            <div><div class="t">בקשת היתר · #PB-1092</div><div class="s"><span class="dot-live"></span> תיק פעיל · מלווה עד החלטה</div></div>
+          </div>
+          <div class="thread">
+            <div class="msg user"><div class="who">תושב</div>אני רוצה להגיש בקשה להיתר לסטיו (פרגולה) בחצר.</div>
+            <div class="msg agent"><div class="who">סוכן מלווה</div>בשמחה. עד 50 מ"ר נדרשים: תכנית מדידה, נסח טאבו וחתימת שכנים. <span class="tag ok">Ask-Once</span> נסח הטאבו כבר קיים אצלנו — לא צריך להעלות. חסרים: תכנית מדידה + חתימות.</div>
+            <div class="msg user"><div class="who">תושב</div>📎 תכנית מדידה.pdf</div>
+            <div class="msg agent"><div class="who">סוכן מלווה</div>התקבל ✔. פתחתי בקשה <b>#PB-1092</b>. השלב הבא: בדיקת מהנדס. אלווה אותך עד ההחלטה.</div>
+            <div class="divider">📌 עדכון יזום · יומיים אחר כך</div>
+            <div class="msg agent"><div class="who">סוכן מלווה</div>בקשתך עברה למחלקת הנדסה. מועד דיון ועדה משוער: <b>24.8</b>.</div>
+            <div class="msg agent"><div class="who">סוכן מלווה</div><span class="tag warn">⚠ חוסם</span> נדרש אישור כיבוי אש להשלמת התיק — זהו הפריט היחיד שחסר לפני הדיון. אפשר להעלות כאן.</div>
+            <div class="msg user"><div class="who">תושב</div>📎 אישור כיבוי אש.pdf</div>
+            <div class="divider">✅ החלטה · 24.8</div>
+            <div class="msg agent"><div class="who">סוכן מלווה</div>הבקשה <b>אושרה</b> בוועדה. מצורף מסמך ההחלטה + תנאים. ההיתר יופק תוך 5 ימי עבודה.</div>
+          </div>
+        </div>
+        <div class="uc-meta">
+          <div class="role">ליווי בקשות מרובות-מחלקות — מהגשה ועד החלטה</div>
+          <p>מלווה תהליכים מורכבים (היתר בנייה, רישוי עסק, טאבו, מלגות, רווחה) העוברים ועדות ואישורים. אוסף מסמכים, מנתב בין מחלקות לפי תבנית תהליך, אוכף SLA, מזהה חוסמים ומעדכן יזום בכל שלב.</p>
+          <div class="facts">
+            <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v18M6 7h9l-2 3 2 3H6"/></svg><div><b>ניתוב:</b> הנדסה → גבייה → משפטית, לפי Flow Template</div></div>
+            <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div><b>SLA:</b> זמן לכל שלב · זיהוי חריגה · תזכורות אוטומטיות</div></div>
+            <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M4 9h16"/></svg><div><b>שקיפות:</b> סטטוס התיק זמין לתושב בכל רגע</div></div>
+          </div>
+          <div class="guard">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 6v6c0 4.4 3 7.4 8 8 5-.6 8-3.6 8-8V6z"/></svg> בקרות ובטיחות</h4>
+            <ul>
+              <li>החלטות מהותיות = <b>אישור אנושי בלבד</b> — הסוכן מכין, הוועדה מחליטה</li>
+              <li>תיעוד מלא של כל מעבר בין שלבים</li>
+              <li>שקיפות בסטטוס ובנימוקי ההחלטה</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== End-to-end handling to closure ===== -->
+  <section id="endtoend">
+    <div class="wrap">
+      <span class="eyebrow reveal">טיפול מקצה-לקצה</span>
+      <h2 class="sec reveal">עד סיכום וסגירת הבקשה</h2>
+      <p class="lead reveal">הסוכן לא רק פותח ומנתב — הוא מטפל בבקשה עד הסוף, כולל <b>סיכום טיפול וסגירה</b>. פעולות מבוססות-כללים נסגרות אוטומטית; החלטות רגישות עוברות אישור אנושי, אך הסוכן מלווה, מסכם וסוגר את התיק ומעדכן את התושב.</p>
+
+      <div class="e2e reveal">
+
+        <!-- Arnona discount: fully autonomous closure -->
+        <div class="e2e-card">
+          <div class="e2e-role"><span class="ric"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span> הנחה בארנונה <small>· נסגר אוטומטית ע"י ה-AI</small></div>
+          <div class="device" id="dev-arnona">
+            <div class="dhead"><span class="av" style="background:var(--brand)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 5h16v10H6l-2 3z"/></svg></span>
+              <div><div class="t">בקשת הנחה · אזור אישי</div><div class="s"><span class="dot-live"></span> מקוון</div></div></div>
+            <div class="thread">
+              <div class="msg user"><div class="who">תושב</div>אני רוצה לבדוק זכאות להנחה בארנונה.</div>
+              <div class="msg agent"><div class="who">סוכן</div>בשמחה. תחילה אימות זהות <span class="tag lock">🔒</span> דרך מערך הדיגיטל.</div>
+              <div class="msg agent"><div class="who">סוכן</div><span class="tag ok">✔ זוהה</span> לפי הנתונים שלנו (Ask-Once): גיל 68, מקבל.ת גמלת אזרח ותיק, נכס יחיד 72 מ"ר. זוהתה זכאות ל<b>הנחת אזרח ותיק — 25%</b>. לאשר ולהחיל על חשבון הארנונה?</div>
+              <div class="msg user"><div class="who">תושב</div>כן, לאשר</div>
+              <div class="msg agent"><div class="who">סוכן</div>בוצע ✔. עדכנתי את החיוב: יתרה חדשה <b>₪930</b> (במקום ₪1,240). אישור ההנחה נשלח לאזור האישי.</div>
+              <div class="summary">
+                <div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5 9-11"/></svg> סיכום טיפול · בקשה #AR-3381 — נסגרה</div>
+                <ul>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> זהות אומתה (מערך הדיגיטל)</li>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> זכאות נבדקה אוטומטית מול תיק 360°</li>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> <b>הנחת 25%</b> אושרה והוחלה על החיוב</li>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> אישור נשלח לאזור האישי</li>
+                </ul>
+                <div class="sfoot"><span class="badge">נסגר</span> <span class="badge auto">טופל אוטומטית</span> זמן טיפול: 2 דק' · <span class="stars">★★★★★</span> דרג/י את השירות</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Welfare: human decision, AI manages + closes -->
+        <div class="e2e-card">
+          <div class="e2e-role"><span class="ric"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.5-9-9a4.5 4.5 0 0 1 8-3 4.5 4.5 0 0 1 8 3c-2 4.5-9 9-9 9z"/></svg></span> בקשת סיוע רווחה <small>· אישור אנושי · ליווי וסגירה ע"י ה-AI</small></div>
+          <div class="device" id="dev-welfare">
+            <div class="dhead"><span class="av" style="background:#3E77C9"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 21s-7-4.5-9-9a4.5 4.5 0 0 1 8-3 4.5 4.5 0 0 1 8 3c-2 4.5-9 9-9 9z"/></svg></span>
+              <div><div class="t">בקשת סיוע · תיק #WF-207</div><div class="s"><span class="dot-live"></span> תיק פעיל · חסוי</div></div></div>
+            <div class="thread">
+              <div class="msg user"><div class="who">תושב</div>אני במצוקה כלכלית ורוצה לבקש סיוע.</div>
+              <div class="msg agent"><div class="who">סוכן</div>אני כאן כדי לעזור ולנהל את הבקשה עד הסוף. תחילה אימות זהות <span class="tag lock">🔒</span>.</div>
+              <div class="msg agent"><div class="who">סוכן</div><span class="tag ok">✔ זוהה</span> לפי המידע הקיים (Ask-Once) אין צורך למלא טפסים מחדש. פתחתי בקשת סיוע <b>#WF-207</b>. חסר: אישור הכנסה אחרון.</div>
+              <div class="msg user"><div class="who">תושב</div>📎 אישור הכנסה.pdf</div>
+              <div class="msg agent"><div class="who">סוכן</div>התקבל ✔. תיאמתי פגישה עם עו"ס ליום ג' 10:00. <span class="tag warn">⚠ החלטה אנושית</span> ההחלטה על הסיוע מתקבלת ע"י העו"ס — אני מכין את התיק ומלווה.</div>
+              <div class="divider">✅ החלטה · לאחר הפגישה</div>
+              <div class="msg agent"><div class="who">סוכן</div>עודכן: אושר <b>סיוע חד-פעמי</b>. שלחתי לך הודעה עם הפרטים והמשך התהליך.</div>
+              <div class="summary">
+                <div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5 9-11"/></svg> סיכום טיפול · בקשה #WF-207 — נסגרה</div>
+                <ul>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> זהות אומתה · טופל בחיסיון</li>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> תיק הוכן אוטומטית ללא מילוי טפסים (Ask-Once)</li>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> פגישת עו"ס תואמה</li>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> החלטה: <b>אושר סיוע</b> (ע"י עו"ס)</li>
+                </ul>
+                <div class="sfoot"><span class="badge">נסגר</span> <span class="badge human">אישור אנושי</span> עמידה ב-SLA: 3 ימים · המערכת סיכמה וסגרה את התיק</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Education registration: autonomous -->
+        <div class="e2e-card">
+          <div class="e2e-role"><span class="ric"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4 2 9l10 5 10-5z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg></span> רישום לגן / חינוך <small>· נסגר אוטומטית ע"י ה-AI</small></div>
+          <div class="device" id="dev-education">
+            <div class="dhead"><span class="av" style="background:var(--wa)"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15l-1.4 5 5.2-1.4A10 10 0 1 0 12 2z"/></svg></span>
+              <div><div class="t">רישום מוסדות חינוך · WhatsApp</div><div class="s"><span class="dot-live"></span> מקוון</div></div></div>
+            <div class="thread">
+              <div class="msg user"><div class="who">תושב</div>אני רוצה לרשום את הבן שלי לגן טרום-חובה.</div>
+              <div class="msg wa agent"><div class="who">מוקד AI</div>אימות זהות <span class="tag lock">🔒</span> ואבדוק. לפי כתובת המגורים שלך (Ask-Once + GIS) אזור הרישום הוא גני סוקולוב. יש מקום פנוי בגן <b>"רימון"</b>.</div>
+              <div class="msg wa agent"><div class="who">מוקד AI</div>לרשום את הילד (בן 4) לגן רימון לשנה"ל הבאה?</div>
+              <div class="msg user"><div class="who">תושב</div>כן</div>
+              <div class="msg wa agent"><div class="who">מוקד AI</div>נרשם ✔. אישור רישום ושיבוץ נשלחו לאזור האישי ולמייל.</div>
+              <div class="summary">
+                <div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5 9-11"/></svg> סיכום טיפול · בקשה #ED-5540 — נסגרה</div>
+                <ul>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> זהות אומתה · אזור רישום זוהה מ-GIS</li>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> זמינות מקום נבדקה בזמן אמת</li>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> הילד <b>שובץ לגן רימון</b></li>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> אישור רישום נשלח</li>
+                </ul>
+                <div class="sfoot"><span class="badge">נסגר</span> <span class="badge auto">טופל אוטומטית</span> זמן טיפול: 3 דק' · <span class="stars">★★★★★</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Multilingual: Arabic ===== -->
+  <section class="band" id="arabic">
+    <div class="wrap">
+      <span class="eyebrow reveal">שיח רב-לשוני</span>
+      <h2 class="sec reveal">אותו מנוע — גם בערבית</h2>
+      <p class="lead reveal">הליבה מזהה את שפת התושב אוטומטית ועונה בה. אותו תהליך, אותו תיק 360°, אותן בקרות — בעברית, בערבית, ברוסית ובאנגלית. להלן אותה פנייה מהמוקד, בערבית.</p>
+      <div class="uc reveal">
+        <div class="device">
+          <div class="dhead"><span class="av" style="background:var(--wa)"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15l-1.4 5 5.2-1.4A10 10 0 1 0 12 2z"/></svg></span>
+            <div><div class="t">المركز البلدي · WhatsApp</div><div class="s"><span class="dot-live"></span> متصل · رد فوري</div></div>
+          </div>
+          <div class="thread" dir="rtl" lang="ar">
+            <div class="msg user"><div class="who">مقيم</div>متى يتم جمع الأغصان في شارع بياليك؟</div>
+            <div class="msg wa agent"><div class="who">مركز AI</div>يتم جمع الأغصان في شارع بياليك أيام <b>الثلاثاء</b>. الموعد القادم: 5.8.
+              <span class="src"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13H6z"/><path d="M14 3v5h5"/></svg> المصدر: إجراء جمع الأغصان، بلدية حولون</span></div>
+            <div class="msg wa agent"><div class="who">مركز AI</div>هل تريد أن أفتح بلاغًا عن كومة أغصان اليوم؟</div>
+            <div class="msg user"><div class="who">مقيم</div>نعم</div>
+            <div class="msg wa agent"><div class="who">مركز AI</div><span class="tag ok">بلاغ #MO-48213</span> تم فتحه. المعالجة خلال 48 ساعة — سأحدّثك هنا عند الإغلاق.</div>
+            <div class="msg user"><div class="who">مقيم</div>وكم هي مستحقات الأرنونا عليّ؟</div>
+            <div class="msg wa agent"><div class="who">مركز AI</div><span class="tag lock">🔒 معلومات شخصية</span> يلزم التحقق من الهوية. أرسل رابطًا آمنًا عبر منظومة الهوية الرقمية — بعد التحقق سأعرض لك الرصيد هنا.</div>
+          </div>
+        </div>
+        <div class="uc-meta">
+          <div class="role">זיהוי שפה אוטומטי · מענה בשפת התושב</div>
+          <p>הדוגמה זהה בתוכן לתרחיש המוקד — אך מתנהלת כולה בערבית. אין "בוט נפרד": זו אותה ליבה, עם שכבת שפה. הבקרות (הזדהות למידע אישי, ציטוט מקור, הסלמה לנציג) זהות בכל השפות.</p>
+          <div class="facts">
+            <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h10M4 19h7"/><path d="M15 15l3 4 3-8"/></svg><div><b>שפות:</b> עברית · ערבית · רוסית · אנגלית — זיהוי אוטומטי</div></div>
+            <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg><div><b>רלוונטי לרשויות</b> עם אוכלוסייה מגוונת (למשל שותפות כפר קאסם)</div></div>
+            <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 6v6c0 4.4 3 7.4 8 8 5-.6 8-3.6 8-8V6z"/></svg><div><b>בקרות זהות</b> בכל השפות — פרטיות ותיקון 13</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Omni-channel radial ===== -->
+  <section id="omni">
+    <div class="wrap">
+      <span class="eyebrow reveal">Omni-channel</span>
+      <h2 class="sec reveal">ערוץ אחד לתושב — מנוע אחד מאחור</h2>
+      <p class="lead reveal">התושב עובר בין ערוצים והשיח נמשך. אותה הבנה, אותו תיק, אותו תהליך — בכל נקודת מגע.</p>
+      <div class="radial reveal">
+        <svg viewBox="0 0 620 300" role="img" aria-label="דיאגרמה: ליבת AI מרכזית המחוברת לארבעה ערוצים">
+          <defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--brand)"/><stop offset="1" stop-color="var(--brand-2)"/></linearGradient></defs>
+          <!-- links -->
+          <g stroke="var(--line)" stroke-width="2">
+            <line x1="310" y1="150" x2="120" y2="70"/><line x1="310" y1="150" x2="500" y2="70"/>
+            <line x1="310" y1="150" x2="120" y2="230"/><line x1="310" y1="150" x2="500" y2="230"/>
+          </g>
+          <!-- channel nodes -->
+          <g font-family="var(--f-sans)" font-size="14" font-weight="700" text-anchor="middle">
+            <g><rect x="40" y="44" width="160" height="52" rx="12" fill="var(--surface)" stroke="var(--line)"/><text x="120" y="75" fill="var(--ink)">📞 קול / IVR</text></g>
+            <g><rect x="420" y="44" width="160" height="52" rx="12" fill="var(--surface)" stroke="var(--line)"/><text x="500" y="75" fill="var(--ink)">WhatsApp</text></g>
+            <g><rect x="40" y="204" width="160" height="52" rx="12" fill="var(--surface)" stroke="var(--line)"/><text x="120" y="235" fill="var(--ink)">צ'אט אתר / אפליקציה</text></g>
+            <g><rect x="420" y="204" width="160" height="52" rx="12" fill="var(--surface)" stroke="var(--line)"/><text x="500" y="235" fill="var(--ink)">אימייל / SMS</text></g>
+          </g>
+          <!-- core -->
+          <circle cx="310" cy="150" r="62" fill="url(#cg)"/>
+          <text x="310" y="145" text-anchor="middle" font-family="var(--f-sans)" font-size="16" font-weight="800" fill="#fff">ליבת AI</text>
+          <text x="310" y="167" text-anchor="middle" font-family="var(--f-sans)" font-size="11.5" fill="#eafcfd">שיח + תהליך</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Ask-Once ===== -->
+  <section class="band" id="askonce">
+    <div class="wrap">
+      <span class="eyebrow reveal">עיקרון Ask-Once</span>
+      <h2 class="sec reveal">לא לבקש מהתושב מה שכבר ידוע</h2>
+      <p class="lead reveal">לפני כל שאלה — הליבה בודקת בתיק התושב 360°. מה שקיים, נשלף; רק מה שחסר, נשאל.</p>
+      <div class="ask reveal">
+        <div class="askbox no">
+          <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg> בלי Ask-Once</h4>
+          <div class="askline"><svg viewBox="0 0 24 24" fill="none" stroke="var(--crit)" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg> "מה מספר הנכס שלך?"</div>
+          <div class="askline"><svg viewBox="0 0 24 24" fill="none" stroke="var(--crit)" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg> "העלה נסח טאבו"</div>
+          <div class="askline"><svg viewBox="0 0 24 24" fill="none" stroke="var(--crit)" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg> "מה כתובת ההתכתבות?"</div>
+          <div class="askline"><svg viewBox="0 0 24 24" fill="none" stroke="var(--crit)" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg> "מה היתרה הקודמת?"</div>
+        </div>
+        <div class="askmid" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 12H4M12 4l-8 8 8 8"/></svg></div>
+        <div class="askbox yes">
+          <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg> עם Ask-Once (תיק 360°)</h4>
+          <div class="askline strike"><svg viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> <b>מספר נכס</b> — נשלף אוטומטית</div>
+          <div class="askline strike"><svg viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> <b>נסח טאבו</b> — קיים במערכת</div>
+          <div class="askline strike"><svg viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> <b>כתובת</b> — ידועה</div>
+          <div class="askline"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> נשאל רק מה שבאמת חסר</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== KPIs ===== -->
+  <section id="kpi">
+    <div class="wrap">
+      <span class="eyebrow reveal">מדדי הצלחה</span>
+      <h2 class="sec reveal">יעדים מדידים</h2>
+      <p class="lead reveal">היעדים המרכזיים של הפרויקט, כפי שהוגדרו בבקשת התמיכה.</p>
+      <div class="kpis reveal">
+        <div class="kpi"><div class="n">80<span class="u">%</span></div><div class="k">שירות עצמי</div><div class="d">מהפניות מטופלות ללא נציג</div></div>
+        <div class="kpi"><div class="n">30<span class="u">%</span> <span class="dir down">↓</span></div><div class="k">פחות פניות טלפוניות</div><div class="d">הפחתת עומס על המוקד</div></div>
+        <div class="kpi"><div class="n">20<span class="u">%</span> <span class="dir up">↑</span></div><div class="k">שביעות רצון תושבים</div><div class="d">שיפור חוויית השירות</div></div>
+        <div class="kpi"><div class="n">85<span class="u">%</span></div><div class="k">דיוק זיהוי כוונה</div><div class="d">NLU בעברית</div></div>
+        <div class="kpi"><div class="n">90<span class="u">%</span></div><div class="k">מידע בתיק אחד</div><div class="d">תצוגת 360° נגישה</div></div>
+        <div class="kpi"><div class="n">10<span class="u">+</span></div><div class="k">תהליכי שירות</div><div class="d">באוטומציה מלאה</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Multi-tenant ===== -->
+  <section class="band" id="tenant">
+    <div class="wrap">
+      <span class="eyebrow reveal">רב-רשותיות</span>
+      <h2 class="sec reveal">פלטפורמה אחת · רשויות רבות</h2>
+      <p class="lead reveal">רשות חדשה עולה דרך <b>קונפיגורציה — לא פיתוח מחדש</b>. בידוד נתונים מלא, בסיס ידע נפרד ומיתוג משלה לכל רשות.</p>
+      <div class="mt reveal">
+        <div class="mt-core"><h4>MUNI FORCE — ליבה משותפת</h4><p>שיח · תהליכים · Ask-Once · אבטחה · אנליטיקה</p></div>
+        <div class="mt-fan" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v6M12 9L5 15M12 9l7 6M5 15v3M19 15v3M12 15v3"/></svg></div>
+        <div class="tenants">
+          <div class="tenant"><div class="nm">חולון</div><div class="cfg">גבייה · הנדסה · מוקד</div></div>
+          <div class="tenant"><div class="nm">חיפה</div><div class="cfg">רישוי · רווחה · חינוך</div></div>
+          <div class="tenant"><div class="nm">גני תקווה</div><div class="cfg">מוקד · ועדות</div></div>
+          <div class="tenant ghost"><div class="nm">רשות X</div><div class="cfg">config בלבד →</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Security ===== -->
+  <section id="security">
+    <div class="wrap">
+      <span class="eyebrow reveal">אבטחה · פרטיות · רגולציה</span>
+      <h2 class="sec reveal">Security &amp; Privacy by design</h2>
+      <p class="lead reveal">תאימות מהיסוד, לא כתוספת — כולל ליווי DPO ותאימות מלאה לתיקון 13 לחוק הגנת הפרטיות.</p>
+      <div class="sec-grid reveal">
+        <span class="sec-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 6v6c0 4.4 3 7.4 8 8 5-.6 8-3.6 8-8V6z"/></svg> תיקון 13 · הגנת הפרטיות</span>
+        <span class="sec-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> ISO 27001 / 27701</span>
+        <span class="sec-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> SOC 2 Type II</span>
+        <span class="sec-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> RBAC · הרשאות לפי תפקיד</span>
+        <span class="sec-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 3-3 3-3-3zM12 22v-8"/><circle cx="12" cy="12" r="2"/></svg> MFA + SSO</span>
+        <span class="sec-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h6"/></svg> Audit Trail מלא</span>
+        <span class="sec-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg> הצפנה (Rest &amp; Transit)</span>
+        <span class="sec-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg> Data Retention לפי חוק</span>
+        <span class="sec-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3v4M15 3v4M4 8h16M4 8v11h16V8"/></svg> Human-in-the-loop</span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="wrap">
+      <div><b style="color:var(--ink)">MUNI FORCE</b> · אפיון יכולות פלטפורמת ה-AI · עיריית חולון</div>
+      <div>מסלול תמיכה ב' · משרד החדשנות, המדע והטכנולוגיה</div>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  (function(){
+    var root=document.documentElement;
+    // theme toggle (overrides prefers-color-scheme in both directions)
+    function current(){
+      var attr=root.getAttribute('data-theme');
+      if(attr) return attr;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+    }
+    var btn=document.getElementById('theme');
+    btn.addEventListener('click',function(){
+      var next=current()==='dark'?'light':'dark';
+      root.setAttribute('data-theme',next);
+    });
+    // scroll reveal
+    var els=[].slice.call(document.querySelectorAll('.reveal'));
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(en){
+        en.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+      },{threshold:.12, rootMargin:'0px 0px -8% 0px'});
+      els.forEach(function(el){io.observe(el);});
+    } else { els.forEach(function(el){el.classList.add('in');}); }
+    // ===== live demo playback =====
+    var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var demoOn=!reduce;
+    var demoBtn=document.getElementById('demo');
+    var threads=[].slice.call(document.querySelectorAll('.thread'));
+    var timers=[];
+    function clearTimers(){ timers.forEach(clearTimeout); timers=[]; }
+
+    function showAll(th){
+      th.classList.remove('playing');
+      [].forEach.call(th.children,function(c){ if(c.classList.contains('typing')) c.remove(); else c.classList.add('show'); });
+    }
+    function resetHidden(th){
+      // remove any typing bubbles, hide real items
+      [].slice.call(th.querySelectorAll('.typing')).forEach(function(t){t.remove();});
+      th.classList.add('playing');
+      [].forEach.call(th.children,function(c){ c.classList.remove('show'); });
+    }
+    function playThread(th){
+      if(th.dataset.done==='playing') return;
+      th.dataset.done='playing';
+      resetHidden(th);
+      var items=[].slice.call(th.children);
+      var wa=th.querySelector('.msg.wa')?true:false;
+      var i=0;
+      function next(){
+        if(i>=items.length){ th.dataset.done='1'; return; }
+        var el=items[i];
+        var isAgent=el.classList && el.classList.contains('agent');
+        var isDivider=el.classList && el.classList.contains('divider');
+        var delay=isDivider?420:(isAgent?520:360);
+        if(isAgent){
+          // show typing bubble first
+          var typing=document.createElement('div');
+          typing.className='typing'+(wa?' wa':'');
+          typing.innerHTML='<span></span><span></span><span></span>';
+          th.insertBefore(typing, el);
+          typing.classList.add('show');
+          timers.push(setTimeout(function(){
+            typing.remove(); el.classList.add('show'); i++;
+            timers.push(setTimeout(next, 260));
+          }, 720));
+        } else {
+          timers.push(setTimeout(function(){
+            el.classList.add('show'); i++;
+            timers.push(setTimeout(next, delay));
+          }, 120));
+        }
+      }
+      next();
+    }
+    // observe threads to auto-play when in view
+    if('IntersectionObserver' in window){
+      var tio=new IntersectionObserver(function(en){
+        en.forEach(function(e){ if(e.isIntersecting && demoOn){ playThread(e.target); } });
+      },{threshold:.35});
+      threads.forEach(function(th){ tio.observe(th); });
+    }
+    function applyDemoState(){
+      demoBtn.setAttribute('aria-pressed', demoOn?'true':'false');
+      demoBtn.querySelector('.dlabel').textContent = demoOn?'הדגמה חיה':'הצג הכול';
+      clearTimers();
+      threads.forEach(function(th){
+        th.dataset.done='';
+        if(demoOn){ resetHidden(th); } else { showAll(th); }
+      });
+      if(demoOn){
+        // replay any currently-visible threads
+        threads.forEach(function(th){
+          var r=th.getBoundingClientRect();
+          if(r.top < window.innerHeight*0.75 && r.bottom>0){ playThread(th); }
+        });
+      }
+    }
+    demoBtn.addEventListener('click',function(){ demoOn=!demoOn; applyDemoState(); });
+    // initial
+    if(demoOn){ threads.forEach(resetHidden); } else { demoBtn.setAttribute('aria-pressed','false'); demoBtn.querySelector('.dlabel').textContent='הצג הכול'; }
+
+    // active nav highlight
+    var links=[].slice.call(document.querySelectorAll('.nav a'));
+    var map={}; links.forEach(function(a){ map[a.getAttribute('href').slice(1)]=a; });
+    var secs=links.map(function(a){return document.getElementById(a.getAttribute('href').slice(1));}).filter(Boolean);
+    if('IntersectionObserver' in window){
+      var io2=new IntersectionObserver(function(en){
+        en.forEach(function(e){
+          if(e.isIntersecting){ links.forEach(function(l){l.classList.remove('on');});
+            var a=map[e.target.id]; if(a)a.classList.add('on'); }
+        });
+      },{rootMargin:'-45% 0px -50% 0px'});
+      secs.forEach(function(s){io2.observe(s);});
+    }
+  })();
+</script>
+
+</body>
+</html>
