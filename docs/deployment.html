@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MUNI FORCE — ארכיטקטורת פריסה</title>
+<style>
+  :root{
+    --bg:#EEF2F7; --surface:#FFFFFF; --surface-2:#E6ECF3; --surface-3:#F6F9FC;
+    --ink:#0F2036; --ink-2:#47586F; --ink-3:#6E7E93; --line:#D6DFEA; --line-2:#E9EFF5;
+    --brand:#0E7C86; --brand-2:#12A3AB; --brand-ink:#0A5960; --brand-tint:#E1F3F4;
+    --gold:#A9761A; --gold-tint:#F6ECD7; --good:#2E9E6B;
+    --z-edge:#3E77C9; --z-gate:#7A5AC2; --z-core:#0E7C86; --z-int:#A9761A; --z-sor:#4B5B72; --z-sec:#B85C7A;
+    --shadow:0 1px 2px rgba(15,32,54,.05), 0 8px 30px rgba(15,32,54,.07);
+    --f:"Heebo","Assistant","Segoe UI","Arial",sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0A111E; --surface:#111C2E; --surface-2:#182740; --surface-3:#0E1828;
+    --ink:#E8EFF7; --ink-2:#A6B7CD; --ink-3:#7C8EA6; --line:#26374F; --line-2:#1D2C43;
+    --brand:#2CBAC1; --brand-2:#54D6DB; --brand-ink:#8DE7EA; --brand-tint:#0E2E33;
+    --gold:#D9AE5B; --gold-tint:#2A2413; --good:#3FB57E;
+    --z-edge:#5B90E0; --z-gate:#9E82E0; --z-core:#2CBAC1; --z-int:#D9AE5B; --z-sor:#7889A2; --z-sec:#D983A0;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 34px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="light"]{--bg:#EEF2F7;--surface:#FFFFFF;--surface-2:#E6ECF3;--surface-3:#F6F9FC;--ink:#0F2036;--ink-2:#47586F;--ink-3:#6E7E93;--line:#D6DFEA;--line-2:#E9EFF5;--brand:#0E7C86;--brand-ink:#0A5960;--brand-tint:#E1F3F4;--gold:#A9761A;--gold-tint:#F6ECD7;--good:#2E9E6B;--z-edge:#3E77C9;--z-gate:#7A5AC2;--z-core:#0E7C86;--z-int:#A9761A;--z-sor:#4B5B72;--z-sec:#B85C7A;}
+  :root[data-theme="dark"]{--bg:#0A111E;--surface:#111C2E;--surface-2:#182740;--surface-3:#0E1828;--ink:#E8EFF7;--ink-2:#A6B7CD;--ink-3:#7C8EA6;--line:#26374F;--line-2:#1D2C43;--brand:#2CBAC1;--brand-ink:#8DE7EA;--brand-tint:#0E2E33;--gold:#D9AE5B;--gold-tint:#2A2413;--good:#3FB57E;--z-edge:#5B90E0;--z-gate:#9E82E0;--z-core:#2CBAC1;--z-int:#D9AE5B;--z-sor:#7889A2;--z-sec:#D983A0;}
+
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--f); line-height:1.55; -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px; margin-inline:auto; padding:40px 22px 30px}
+  .eyebrow{display:inline-flex; align-items:center; gap:9px; font-size:12.5px; font-weight:800; letter-spacing:.14em; color:var(--brand-ink); margin-bottom:12px}
+  .eyebrow::before{content:""; width:26px; height:2px; background:var(--brand); border-radius:2px}
+  h1{font-size:clamp(25px,3.2vw,36px); letter-spacing:-.02em; margin:0 0 10px}
+  .lead{color:var(--ink-2); max-width:74ch; margin:0 0 24px; font-size:15.5px}
+
+  .board{background:var(--surface-3); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:20px; overflow-x:auto}
+  .diagram{min-width:1120px}
+  .zones{display:flex; align-items:stretch; gap:0}
+  .arrow{flex:0 0 40px; display:flex; align-items:center; justify-content:center; color:var(--ink-3)}
+  .arrow svg{width:30px;height:30px}
+  .zone{flex:1 1 0; background:var(--surface); border:1.5px solid var(--line); border-radius:14px; padding:0 0 12px;
+    display:flex; flex-direction:column; min-width:170px}
+  .zone.core{flex:1.5 1 0; border-color:color-mix(in srgb,var(--z-core) 55%, var(--line)); box-shadow:0 0 0 3px var(--brand-tint)}
+  .zhead{padding:11px 13px; border-bottom:1px solid var(--line-2); border-radius:12px 12px 0 0; display:flex; align-items:center; gap:9px}
+  .zhead .zi{width:28px;height:28px;border-radius:8px; display:grid; place-items:center; color:#fff; flex:none}
+  .zhead .zi svg{width:16px;height:16px}
+  .zhead h3{font-size:14px; margin:0; line-height:1.15}
+  .zhead small{display:block; font-size:11px; color:var(--ink-3); font-weight:600}
+  .z-edge .zhead{background:color-mix(in srgb,var(--z-edge) 12%,transparent)} .z-edge .zi{background:var(--z-edge)}
+  .z-gate .zhead{background:color-mix(in srgb,var(--z-gate) 12%,transparent)} .z-gate .zi{background:var(--z-gate)}
+  .z-core .zhead{background:var(--brand-tint)} .z-core .zi{background:var(--z-core)}
+  .z-int .zhead{background:color-mix(in srgb,var(--z-int) 14%,transparent)} .z-int .zi{background:var(--z-int)}
+  .z-sor .zhead{background:color-mix(in srgb,var(--z-sor) 14%,transparent)} .z-sor .zi{background:var(--z-sor)}
+
+  .nodes{display:flex; flex-direction:column; gap:7px; padding:12px 12px 0}
+  .node{background:var(--surface-2); border:1px solid var(--line-2); border-radius:9px; padding:8px 10px; font-size:12.5px; font-weight:600; color:var(--ink); display:flex; align-items:center; gap:7px}
+  .node .ni{width:15px;height:15px; flex:none; color:var(--ink-3)}
+  .node.k{background:var(--brand-tint); border-color:transparent; color:var(--brand-ink)}
+  .subgroup{margin:10px 12px 0}
+  .subgroup .st{font-size:10.5px; font-weight:800; letter-spacing:.08em; color:var(--ink-3); margin:0 2px 6px}
+  .tenants{display:flex; flex-wrap:wrap; gap:6px; padding:0 12px; margin-top:10px}
+  .ten{font-size:11px; font-weight:700; padding:4px 9px; border-radius:999px; background:var(--surface-2); border:1px solid var(--line-2)}
+  .ten.ghost{border-style:dashed; color:var(--ink-3)}
+  .isobadge{margin:10px 12px 0; font-size:11px; color:var(--good); font-weight:700; display:flex; align-items:center; gap:6px}
+  .isobadge svg{width:14px;height:14px}
+
+  /* overlay bands */
+  .band{margin-top:14px; border-radius:14px; padding:12px 14px; display:flex; flex-wrap:wrap; align-items:center; gap:9px}
+  .band .bt{font-size:12.5px; font-weight:800; display:flex; align-items:center; gap:8px; margin-inline-end:6px}
+  .band .bt svg{width:17px;height:17px}
+  .sec-band{background:color-mix(in srgb,var(--z-sec) 12%,transparent); border:1px solid color-mix(in srgb,var(--z-sec) 40%,var(--line))}
+  .sec-band .bt{color:var(--z-sec)}
+  .chip{font-size:12px; font-weight:600; padding:6px 11px; border-radius:8px; background:var(--surface); border:1px solid var(--line)}
+  .env-band{background:var(--surface); border:1px solid var(--line); margin-top:10px}
+  .env-band .bt{color:var(--brand-ink)}
+  .envflow{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  .envstep{font-size:12px; font-weight:700; padding:6px 12px; border-radius:8px; background:var(--brand-tint); color:var(--brand-ink)}
+  .env-band .ar{color:var(--ink-3); font-weight:800}
+  .env-note{font-size:11.5px; color:var(--ink-3); margin-inline-start:auto}
+
+  .legend{display:flex; flex-wrap:wrap; gap:14px; margin-top:16px; font-size:12px; color:var(--ink-2)}
+  .legend span{display:inline-flex; align-items:center; gap:6px}
+  .legend .b{width:22px;height:9px;border-radius:3px}
+  .flowkey{display:inline-flex;align-items:center;gap:6px}
+  .note{color:var(--ink-3); font-size:12.5px; margin-top:14px; font-style:italic}
+  footer{max-width:1180px; margin-inline:auto; padding:18px 22px 40px; color:var(--ink-3); font-size:13px; border-top:1px solid var(--line)}
+  footer b{color:var(--ink)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <span class="eyebrow">ארכיטקטורת פריסה · Deployment / Topology</span>
+    <h1>ארכיטקטורת פריסה ואזורי אבטחה</h1>
+    <p class="lead">זרימת הבקשה מימין (התושב) לשמאל (מערכות הרשומה), דרך שער מאובטח, ליבת פלטפורמה רב-שוכרת בענן, ושכבת אינטגרציה. שכבת אבטחה וממשל חוצה את כל האזורים, וכל שינוי מקודם דרך סביבות מבודדות.</p>
+
+    <div class="board">
+      <div class="diagram">
+        <div class="zones">
+
+          <!-- Edge / residents -->
+          <div class="zone z-edge">
+            <div class="zhead"><span class="zi"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></span><h3>קצה ותושבים<small>מכשירי קצה</small></h3></div>
+            <div class="nodes">
+              <div class="node"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h4l2 5-3 2a12 12 0 0 0 6 6l2-3 5 2v4"/></svg> טלפון / IVR</div>
+              <div class="node"><svg class="ni" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15l-1.4 5 5.2-1.4A10 10 0 1 0 12 2z"/></svg> WhatsApp</div>
+              <div class="node"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8"/></svg> אתר / אפליקציה</div>
+              <div class="node"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg> אימייל / SMS</div>
+            </div>
+          </div>
+
+          <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12H4M10 6l-6 6 6 6"/></svg></div>
+
+          <!-- Secure gateway / identity -->
+          <div class="zone z-gate">
+            <div class="zhead"><span class="zi"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2 4 6v6c0 4.4 3 7.4 8 8 5-.6 8-3.6 8-8V6z"/></svg></span><h3>שער מאובטח<small>Edge · Identity</small></h3></div>
+            <div class="nodes">
+              <div class="node"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 6v6c0 4.4 3 7.4 8 8 5-.6 8-3.6 8-8V6z"/></svg> API Gateway + WAF</div>
+              <div class="node"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 6V4h8v2"/></svg> CTI / SBC (קול)</div>
+              <div class="node"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16M4 7h16M4 17h10"/></svg> WhatsApp Business API</div>
+              <div class="node k"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> SSO + MFA + OTP</div>
+              <div class="node k"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg> מערך הדיגיטל הלאומי</div>
+            </div>
+          </div>
+
+          <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12H4M10 6l-6 6 6 6"/></svg></div>
+
+          <!-- Platform cloud (multi-tenant) -->
+          <div class="zone core z-core">
+            <div class="zhead"><span class="zi"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 16a4 4 0 0 1 .5-8 5 5 0 0 1 9.7-1.5A4 4 0 0 1 18 16z"/></svg></span><h3>ענן הפלטפורמה — רב-שוכר<small>Salesforce PSS / AgentForce · SaaS</small></h3></div>
+            <div class="subgroup"><div class="st">שכבת AI (Runtime)</div>
+              <div class="nodes" style="padding:0">
+                <div class="node k">AgentForce — סוכן שיח</div>
+                <div class="node k">NLU עברית/ערבית · RAG · Guardrails</div>
+                <div class="node k">Dialog Orchestrator · Ask-Once</div>
+              </div>
+            </div>
+            <div class="subgroup"><div class="st">תהליכים · נתונים · אנליטיקה</div>
+              <div class="nodes" style="padding:0">
+                <div class="node">Case / BPM — Einstein Automate + Flow · SLA</div>
+                <div class="node">Data Cloud — תיק תושב 360°</div>
+                <div class="node">Tableau / PowerBI — Dashboards</div>
+              </div>
+            </div>
+            <div class="subgroup"><div class="st">בידוד רב-שוכר (Tenant Isolation)</div></div>
+            <div class="tenants">
+              <span class="ten">חולון</span><span class="ten">חיפה</span><span class="ten">גני תקווה</span><span class="ten ghost">רשות X</span>
+            </div>
+            <div class="isobadge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> נתונים בישראל · ISO 27001/27701 · SOC 2</div>
+          </div>
+
+          <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12H4M10 6l-6 6 6 6M4 12l6-6M4 12l6 6" opacity="0"/><path d="M4 9h16M4 15h16M8 5l-4 4 4 4M16 11l4 4-4 4"/></svg></div>
+
+          <!-- Integration tier -->
+          <div class="zone z-int">
+            <div class="zhead"><span class="zi"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="8" cy="7" r="1.6" fill="#fff"/><circle cx="16" cy="12" r="1.6" fill="#fff"/><circle cx="10" cy="17" r="1.6" fill="#fff"/></svg></span><h3>שכבת אינטגרציה<small>iPaaS · מאובטח</small></h3></div>
+            <div class="nodes">
+              <div class="node">Mulesoft / Workato</div>
+              <div class="node"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> OAuth 2.0 · Token</div>
+              <div class="node">REST / SOAP · Webhooks</div>
+              <div class="node">Batch / Export</div>
+              <div class="node">Audit Trail</div>
+            </div>
+          </div>
+
+          <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12H4M10 6l-6 6 6 6"/></svg></div>
+
+          <!-- Systems of record -->
+          <div class="zone z-sor">
+            <div class="zhead"><span class="zi"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span><h3>מערכות רשומה ומקורות<small>מקומי / חיצוני</small></h3></div>
+            <div class="nodes">
+              <div class="node">מערכת גבייה / ERP</div>
+              <div class="node">GIS / הנדסה</div>
+              <div class="node">חינוך / רווחה</div>
+              <div class="node">DMS — ניהול מסמכים</div>
+            </div>
+            <div class="subgroup"><div class="st">שירותים חיצוניים</div>
+              <div class="nodes" style="padding:0">
+                <div class="node"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg> ספק סליקה — PCI-DSS</div>
+                <div class="node">מערך הדיגיטל (מקור זהות)</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Security & governance overlay -->
+        <div class="band sec-band">
+          <span class="bt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 6v6c0 4.4 3 7.4 8 8 5-.6 8-3.6 8-8V6z"/></svg> אבטחה, פרטיות וממשל · חוצה כל האזורים</span>
+          <span class="chip">Salesforce Shield</span>
+          <span class="chip">הצפנה — Rest &amp; Transit</span>
+          <span class="chip">RBAC</span>
+          <span class="chip">MFA / SSO</span>
+          <span class="chip">Audit Trail / SIEM</span>
+          <span class="chip">DPO · תיקון 13</span>
+          <span class="chip">ISO 27001/27701 · SOC 2</span>
+        </div>
+
+        <!-- Environments / CI-CD -->
+        <div class="band env-band">
+          <span class="bt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M20 8a8 8 0 0 0-14-3M4 16a8 8 0 0 0 14 3"/></svg> סביבות ו-CI/CD</span>
+          <span class="envflow">
+            <span class="envstep">Dev</span><span class="ar">←</span>
+            <span class="envstep">Test</span><span class="ar">←</span>
+            <span class="envstep">UAT</span><span class="ar">←</span>
+            <span class="envstep">Production</span>
+          </span>
+          <span class="env-note">Salesforce Sandboxes · קונפיגורציה כקוד · בקרת גרסאות · Rollback</span>
+        </div>
+
+        <div class="legend">
+          <span><span class="b" style="background:var(--z-edge)"></span> קצה</span>
+          <span><span class="b" style="background:var(--z-gate)"></span> שער/זהות</span>
+          <span><span class="b" style="background:var(--z-core)"></span> ליבת פלטפורמה</span>
+          <span><span class="b" style="background:var(--z-int)"></span> אינטגרציה</span>
+          <span><span class="b" style="background:var(--z-sor)"></span> מערכות רשומה</span>
+          <span class="flowkey"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--ink-3)" stroke-width="2"><path d="M20 12H4M10 6l-6 6 6 6"/></svg> זרימת בקשה (תשובה חוזרת בכיוון ההפוך)</span>
+        </div>
+      </div>
+    </div>
+    <p class="note">כל האינטראקציה עוברת דרך השער המאובטח והזדהות; פעולות רגישות (גבייה, מסמכים, תיק אישי) דורשות אימות זהות. הפלטפורמה רב-שוכרת עם בידוד נתונים מלא לכל רשות, ונתונים נשמרים בישראל בהתאם לרגולציה.</p>
+  </div>
+  <footer><b>MUNI FORCE</b> · ארכיטקטורת פריסה · עיריית חולון · מסלול תמיכה ב' — משרד החדשנות, המדע והטכנולוגיה</footer>
+</body>
+</html>
