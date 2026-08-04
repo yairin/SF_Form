@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MUNI FORCE — לוח זמנים למימוש</title>
+<style>
+  :root{
+    --bg:#EEF2F7; --surface:#FFFFFF; --surface-2:#E6ECF3; --surface-3:#F6F9FC;
+    --ink:#0F2036; --ink-2:#47586F; --ink-3:#6E7E93; --line:#D6DFEA; --line-2:#E9EFF5;
+    --brand:#0E7C86; --brand-2:#12A3AB; --brand-ink:#0A5960; --brand-tint:#E1F3F4;
+    --gold:#A9761A; --gold-tint:#F6ECD7; --good:#2E9E6B; --good-tint:#E4F3EB;
+    --p1:#0E7C86; --p2:#A9761A; --p3:#2E9E6B;
+    --shadow:0 1px 2px rgba(15,32,54,.05), 0 8px 30px rgba(15,32,54,.07);
+    --f:"Heebo","Assistant","Segoe UI","Arial",sans-serif;
+    --c-a:#0E7C86; --c-b:#3E77C9; --c-c:#7A5AC2; --c-d:#4B5B72; --c-e:#B07A17; --c-f:#2E9E6B; --c-g:#B85C7A;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0A111E; --surface:#111C2E; --surface-2:#182740; --surface-3:#0E1828;
+    --ink:#E8EFF7; --ink-2:#A6B7CD; --ink-3:#7C8EA6; --line:#26374F; --line-2:#1D2C43;
+    --brand:#2CBAC1; --brand-2:#54D6DB; --brand-ink:#8DE7EA; --brand-tint:#0E2E33;
+    --gold:#D9AE5B; --gold-tint:#2A2413; --good:#3FB57E; --good-tint:#12261C;
+    --p1:#2CBAC1; --p2:#D9AE5B; --p3:#3FB57E;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 34px rgba(0,0,0,.35);
+    --c-a:#2CBAC1; --c-b:#5B90E0; --c-c:#9E82E0; --c-d:#7889A2; --c-e:#D9AE5B; --c-f:#3FB57E; --c-g:#D983A0;
+  }}
+  :root[data-theme="light"]{--bg:#EEF2F7;--surface:#FFFFFF;--surface-2:#E6ECF3;--surface-3:#F6F9FC;--ink:#0F2036;--ink-2:#47586F;--ink-3:#6E7E93;--line:#D6DFEA;--line-2:#E9EFF5;--brand:#0E7C86;--brand-ink:#0A5960;--brand-tint:#E1F3F4;--gold:#A9761A;--gold-tint:#F6ECD7;--good:#2E9E6B;--good-tint:#E4F3EB;--p1:#0E7C86;--p2:#A9761A;--p3:#2E9E6B;--c-a:#0E7C86;--c-b:#3E77C9;--c-c:#7A5AC2;--c-d:#4B5B72;--c-e:#B07A17;--c-f:#2E9E6B;--c-g:#B85C7A;}
+  :root[data-theme="dark"]{--bg:#0A111E;--surface:#111C2E;--surface-2:#182740;--surface-3:#0E1828;--ink:#E8EFF7;--ink-2:#A6B7CD;--ink-3:#7C8EA6;--line:#26374F;--line-2:#1D2C43;--brand:#2CBAC1;--brand-ink:#8DE7EA;--brand-tint:#0E2E33;--gold:#D9AE5B;--gold-tint:#2A2413;--good:#3FB57E;--good-tint:#12261C;--p1:#2CBAC1;--p2:#D9AE5B;--p3:#3FB57E;--c-a:#2CBAC1;--c-b:#5B90E0;--c-c:#9E82E0;--c-d:#7889A2;--c-e:#D9AE5B;--c-f:#3FB57E;--c-g:#D983A0;}
+
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--f); line-height:1.6; -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px; margin-inline:auto; padding:40px 22px 60px}
+  .eyebrow{display:inline-flex; align-items:center; gap:9px; font-size:12.5px; font-weight:800; letter-spacing:.14em; color:var(--brand-ink); margin-bottom:12px}
+  .eyebrow::before{content:""; width:26px; height:2px; background:var(--brand); border-radius:2px}
+  h1{font-size:clamp(26px,3.4vw,38px); letter-spacing:-.02em; margin:0 0 10px}
+  .lead{color:var(--ink-2); max-width:70ch; margin:0 0 26px; font-size:16px}
+
+  .legend{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px}
+  .lg{display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:700; padding:6px 12px; border-radius:999px; background:var(--surface); border:1px solid var(--line)}
+  .sw{width:12px;height:12px;border-radius:4px}
+  .sw.p1{background:var(--p1)} .sw.p2{background:var(--p2)} .sw.p3{background:var(--p3)}
+
+  .board{background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:16px; overflow-x:auto}
+  .gantt{min-width:940px}
+  /* label col + 18 months */
+  .grid{display:grid; grid-template-columns:168px repeat(18, 1fr); align-items:center}
+  .phderow .ph{grid-row:1; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:13px; color:#fff; margin:0 2px 8px}
+  .ph.p1{background:var(--p1)} .ph.p2{background:var(--p2)} .ph.p3{background:var(--p3)}
+  .monthrow .m{grid-row:1; text-align:center; font-size:11px; color:var(--ink-3); font-weight:700; font-variant-numeric:tabular-nums; padding-bottom:8px}
+  .lblcell{grid-column:1; font-weight:700; font-size:13px; color:var(--ink); padding:0 8px; white-space:nowrap}
+  .lblcell small{display:block; font-weight:600; color:var(--ink-3); font-size:11px}
+  .track{grid-column:2 / span 18; height:30px; position:relative; border-top:1px dashed var(--line-2)}
+  .row{display:contents}
+  .bar{height:20px; margin:5px 2px; border-radius:6px; display:flex; align-items:center; padding:0 8px;
+    font-size:11px; font-weight:700; color:#fff; overflow:hidden; white-space:nowrap; box-shadow:var(--shadow)}
+  /* vertical month gridlines behind */
+  .gridbg{grid-column:2 / span 18; grid-row:3 / 40; pointer-events:none;
+    background-image:repeating-linear-gradient(to left, var(--line-2) 0 1px, transparent 1px calc(100%/18));
+    opacity:.6}
+
+  .msrow{margin-top:10px}
+  .msrow .ms{grid-row:1; display:flex; flex-direction:column; align-items:center; gap:4px}
+  .diamond{width:13px;height:13px;background:var(--brand); transform:rotate(45deg); border-radius:2px; box-shadow:0 0 0 3px var(--brand-tint)}
+  .mslabel{font-size:10.5px; font-weight:800; color:var(--brand-ink); white-space:nowrap}
+  .mssub{font-size:9.5px; color:var(--ink-3); white-space:nowrap; max-width:80px; text-align:center; line-height:1.2}
+
+  .note{color:var(--ink-3); font-size:12.5px; margin-top:14px; font-style:italic}
+  footer{max-width:1120px; margin-inline:auto; padding:20px 22px 40px; color:var(--ink-3); font-size:13px; border-top:1px solid var(--line)}
+  footer b{color:var(--ink)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <span class="eyebrow">תוכנית מימוש · 18 חודשים</span>
+    <h1>MUNI FORCE — לוח זמנים למימוש</h1>
+    <p class="lead">שלושה שלבים, חבילות עבודה במקביל, ואבני דרך M0–M6 עם שערי Go/No-Go. הזמן זורם מימין (חודש 1) לשמאל (חודש 18).</p>
+
+    <div class="legend">
+      <span class="lg"><span class="sw p1"></span> שלב 1 · אפיון ותשתית (1–4)</span>
+      <span class="lg"><span class="sw p2"></span> שלב 2 · פיתוח והטמעה (5–12)</span>
+      <span class="lg"><span class="sw p3"></span> שלב 3 · הדרכה ו-Production (13–18)</span>
+    </div>
+
+    <div class="board">
+      <div class="gantt">
+        <!-- phase header -->
+        <div class="grid phderow">
+          <div class="lblcell" style="grid-row:1"></div>
+          <div class="ph p1" style="grid-column:2 / span 4">שלב 1 — תשתית</div>
+          <div class="ph p2" style="grid-column:6 / span 8">שלב 2 — פיתוח</div>
+          <div class="ph p3" style="grid-column:14 / span 5">שלב 3 — הטמעה ו-Production</div>
+        </div>
+        <!-- month ticks -->
+        <div class="grid monthrow">
+          <div class="lblcell" style="grid-row:1; color:var(--ink-3); font-size:11px">חבילת עבודה</div>
+          <div class="m" style="grid-column:2">1</div><div class="m" style="grid-column:3">2</div>
+          <div class="m" style="grid-column:4">3</div><div class="m" style="grid-column:5">4</div>
+          <div class="m" style="grid-column:6">5</div><div class="m" style="grid-column:7">6</div>
+          <div class="m" style="grid-column:8">7</div><div class="m" style="grid-column:9">8</div>
+          <div class="m" style="grid-column:10">9</div><div class="m" style="grid-column:11">10</div>
+          <div class="m" style="grid-column:12">11</div><div class="m" style="grid-column:13">12</div>
+          <div class="m" style="grid-column:14">13</div><div class="m" style="grid-column:15">14</div>
+          <div class="m" style="grid-column:16">15</div><div class="m" style="grid-column:17">16</div>
+          <div class="m" style="grid-column:18">17</div><div class="m" style="grid-column:19">18</div>
+        </div>
+
+        <!-- rows -->
+        <div class="grid">
+          <div class="lblcell">WS0 · תוכנית וממשל<small>PMO</small></div>
+          <div class="bar" style="grid-column:2 / span 18; background:var(--c-d)">ניהול · Steering · בקרה לאורך כל הפרויקט</div>
+        </div>
+        <div class="grid">
+          <div class="lblcell">WS4/5 · אינטגרציה ונתונים<small>Data Cloud · iPaaS</small></div>
+          <div class="bar" style="grid-column:2 / span 12; background:var(--c-b)">אפיון ממשקים · תיק 360° · Ask-Once</div>
+        </div>
+        <div class="grid">
+          <div class="lblcell">WS6 · אבטחה ופרטיות<small>תיקון 13 · Shield</small></div>
+          <div class="bar" style="grid-column:2 / span 18; background:var(--c-g)">DPIA · RBAC · הצפנה · Audit · Pen-test</div>
+        </div>
+        <div class="grid">
+          <div class="lblcell">WS1 · ליבת פלטפורמה<small>Orchestrator</small></div>
+          <div class="bar" style="grid-column:3 / span 8; background:var(--c-a)">ליבה אגנוסטית · Case · Canonical API</div>
+        </div>
+        <div class="grid">
+          <div class="lblcell">WS3 · Case &amp; BPM<small>Flow Templates · SLA</small></div>
+          <div class="bar" style="grid-column:4 / span 9; background:var(--c-c)">תבניות תהליך · ניתוב ML · ≥10 תהליכים</div>
+        </div>
+        <div class="grid">
+          <div class="lblcell">WS2 · AI שיחתי<small>NLU · RAG · ערוצים</small></div>
+          <div class="bar" style="grid-column:5 / span 8; background:var(--c-a)">NLU עברית ≥85% · RAG · Voice/WhatsApp/Web</div>
+        </div>
+        <div class="grid">
+          <div class="lblcell">WS7 · אנליטיקה<small>Dashboards</small></div>
+          <div class="bar" style="grid-column:9 / span 4; background:var(--c-e)">מדדים · SLA · חיזוי</div>
+        </div>
+        <div class="grid">
+          <div class="lblcell">WS8 · רב-רשותיות<small>Multi-tenant</small></div>
+          <div class="bar" style="grid-column:10 / span 6; background:var(--c-f)">בידוד · ערכת Onboarding</div>
+        </div>
+        <div class="grid">
+          <div class="lblcell">WS9 · הטמעה והדרכה<small>Change · Rollout</small></div>
+          <div class="bar" style="grid-column:13 / span 6; background:var(--c-b)">200 עובדים · Pilot→Production · Hypercare</div>
+        </div>
+
+        <!-- milestones -->
+        <div class="grid msrow">
+          <div class="lblcell" style="grid-row:1; color:var(--brand-ink); font-weight:800">אבני דרך</div>
+          <div class="ms" style="grid-column:2"><span class="diamond"></span><span class="mslabel">M0</span><span class="mssub">התנעה</span></div>
+          <div class="ms" style="grid-column:5"><span class="diamond"></span><span class="mslabel">M1</span><span class="mssub">תשתית+POC · Gate</span></div>
+          <div class="ms" style="grid-column:8"><span class="diamond"></span><span class="mslabel">M2</span><span class="mssub">מוקד בפיילוט</span></div>
+          <div class="ms" style="grid-column:10"><span class="diamond"></span><span class="mslabel">M3</span><span class="mssub">גבייה+סגירה</span></div>
+          <div class="ms" style="grid-column:13"><span class="diamond"></span><span class="mslabel">M4</span><span class="mssub">כל התרחישים · Gate</span></div>
+          <div class="ms" style="grid-column:16"><span class="diamond"></span><span class="mslabel">M5</span><span class="mssub">Production ×3</span></div>
+          <div class="ms" style="grid-column:19"><span class="diamond"></span><span class="mslabel">M6</span><span class="mssub">KPIs · הרחבה</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="note">שערי Go/No-Go: M1 (מעבר לפיתוח), M4 (מעבר ל-Production), M6 (אישור הרחבה). חבילות העבודה רצות במקביל; הבנייה מאורגנת בפרוסות אנכיות end-to-end לכל תרחיש.</p>
+  </div>
+  <footer>
+    <b>MUNI FORCE</b> · לוח זמנים למימוש · עיריית חולון · מסלול תמיכה ב' — משרד החדשנות, המדע והטכנולוגיה
+  </footer>
+</body>
+</html>
