@@ -21,27 +21,32 @@ public with sharing class NationalIdentityController {
 
     @AuraEnabled(cacheable=true)
     public static Identity getIdentity() {
-        Identity id = new Identity();
         try {
             List<User> us = [
                 SELECT FederationIdentifier, FirstName, LastName, Name, Email
                 FROM User WHERE Id = :UserInfo.getUserId() LIMIT 1
             ];
-            if (us.isEmpty()) return id;
-            User u = us[0];
-            // A national-auth session sets FederationIdentifier to the 9-digit ID.
-            // Guest / non-SSO users have it blank → treated as not identified.
-            if (String.isBlank(u.FederationIdentifier)) return id;
-            id.identified = true;
-            id.idNumber = u.FederationIdentifier;
-            id.firstName = u.FirstName;
-            id.lastName = u.LastName;
-            id.fullName = u.Name;
-            id.email = u.Email;
+            return us.isEmpty() ? new Identity() : toIdentity(us[0]);
         } catch (Exception e) {
             // Never break the form on an identity lookup failure.
             System.debug('NATIONALID|getIdentity failed: ' + e.getMessage());
+            return new Identity();
         }
+    }
+
+    // Pure mapping (no DML/SOQL) so it is deterministically unit-testable.
+    // A national-auth session sets FederationIdentifier to the 9-digit ID; a
+    // guest / non-SSO user has it blank → treated as not identified.
+    @TestVisible
+    private static Identity toIdentity(User u) {
+        Identity id = new Identity();
+        if (u == null || String.isBlank(u.FederationIdentifier)) return id;
+        id.identified = true;
+        id.idNumber = u.FederationIdentifier;
+        id.firstName = u.FirstName;
+        id.lastName = u.LastName;
+        id.fullName = u.Name;
+        id.email = u.Email;
         return id;
     }
 }

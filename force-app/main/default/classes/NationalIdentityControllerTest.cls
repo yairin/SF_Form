@@ -1,29 +1,36 @@
 @isTest
 private class NationalIdentityControllerTest {
 
-    // The CI runner (a real admin User) has no FederationIdentifier, so getIdentity
-    // returns not-identified — proving the guest/anonymous path leaves forms untouched.
+    // Pure mapping — a user carrying a FederationIdentifier is reported identified,
+    // with the national id echoed. No DML/SOQL, so it is deterministic in any org.
     @isTest
-    static void currentUserWithoutFederationIsNotIdentified() {
+    static void toIdentityFederatedUser() {
+        User u = new User(FederationIdentifier = '039573187',
+                          FirstName = 'ישראל', LastName = 'ישראלי', Email = 'x@example.com.invalid');
+        NationalIdentityController.Identity id = NationalIdentityController.toIdentity(u);
+        System.assertEquals(true, id.identified, 'federated user is identified');
+        System.assertEquals('039573187', id.idNumber, 'national id echoed from FederationIdentifier');
+        System.assertEquals('ישראל', id.firstName);
+        System.assertEquals('ישראלי', id.lastName);
+    }
+
+    // No FederationIdentifier (or null) => not identified, so guest/anonymous forms are untouched.
+    @isTest
+    static void toIdentityGuestOrNull() {
+        System.assertEquals(false, NationalIdentityController.toIdentity(new User()).identified,
+            'blank FederationIdentifier => not identified');
+        System.assertEquals(false, NationalIdentityController.toIdentity(null).identified,
+            'null user => not identified');
+    }
+
+    // Exercises the SOQL path for the running user; asserts only that it never throws
+    // and returns a value (the running user's federation state is org-dependent).
+    @isTest
+    static void getIdentityForCurrentUserDoesNotThrow() {
         Test.startTest();
         NationalIdentityController.Identity id = NationalIdentityController.getIdentity();
         Test.stopTest();
-        System.assertEquals(false, id.identified, 'no FederationIdentifier => not identified');
-        System.assertEquals(null, id.idNumber, 'no id number exposed for a non-SSO user');
-    }
-
-    // A user WITH a FederationIdentifier is reported as identified with the ID echoed.
-    @isTest
-    static void userWithFederationIsIdentified() {
-        User u = buildFederatedUser('039573187');
-        if (u == null) return; // org without an available user license for the test — skip gracefully
-        System.runAs(u) {
-            Test.startTest();
-            NationalIdentityController.Identity id = NationalIdentityController.getIdentity();
-            Test.stopTest();
-            System.assertEquals(true, id.identified, 'federated user is identified');
-            System.assertEquals('039573187', id.idNumber, 'national id echoed from FederationIdentifier');
-        }
+        System.assertNotEquals(null, id, 'getIdentity always returns an Identity');
     }
 
     @isTest
@@ -32,22 +39,8 @@ private class NationalIdentityControllerTest {
         System.assert(NationalAuthConfig.metadataUrl().contains('/metadata'), 'metadata url configured');
         System.assert(NationalAuthConfig.sloUrl().contains('/slo'), 'slo url configured');
         System.assertEquals(false, NationalAuthConfig.isProduction(), 'defaults to the test environment');
-        String lo = NationalAuthConfig.logoutUrl('https://example.gov.il/done');
-        System.assert(lo.contains('forwardURL='), 'logout carries a forward url');
-        System.assert(String.isNotBlank(NationalAuthConfig.logoutUrl(null)), 'blank forward url still returns a logout url');
-    }
-
-    private static User buildFederatedUser(String federationId) {
-        Profile p = [SELECT Id FROM Profile WHERE UserType = 'Standard' LIMIT 1];
-        String uniq = 'natid' + String.valueOf(System.currentTimeMillis()).right(7);
-        User u = new User(
-            FirstName = 'ישראל', LastName = 'ישראלי',
-            Alias = 'natid', Email = uniq + '@example.com.invalid',
-            Username = uniq + '@example.com.invalid',
-            FederationIdentifier = federationId,
-            ProfileId = p.Id, TimeZoneSidKey = 'Asia/Jerusalem',
-            LocaleSidKey = 'iw_IL', EmailEncodingKey = 'UTF-8', LanguageLocaleKey = 'iw'
-        );
-        try { insert u; return u; } catch (Exception e) { return null; }
+        System.assert(NationalAuthConfig.logoutUrl('https://example.gov.il/done').contains('forwardURL='),
+            'logout carries a forward url');
+        System.assert(String.isNotBlank(NationalAuthConfig.logoutUrl(null)), 'blank forward url still returns a url');
     }
 }
