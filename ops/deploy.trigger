@@ -7,3 +7,4 @@ Remove existing-forms list from form builder 20260721T053000Z
 Graphical signature field type + fix width propagation to renderer 20260721T054500Z
 Force fresh deploy + Experience republish (signature/width bundles) 20260721T060000Z
 Signature repaint marker on canvas element (fix blank-after-navigation) 20260721T061500Z
+National auth (הזדהות לאומית) backbone: config + identity controller + runbook 20260721T063000Z

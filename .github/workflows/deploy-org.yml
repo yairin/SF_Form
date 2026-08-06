@@ -63,6 +63,7 @@ jobs:
             --tests FormValidationServiceTest \
             --tests AuthorityScopeTest \
             --tests PersonAccountServiceTest \
+            --tests NationalIdentityControllerTest \
             --target-org target \
             --wait 30 \
             --json > deploy.json 2>&1
