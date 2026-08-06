@@ -1,29 +1,74 @@
 # הזדהות לאומית (National Authentication) — SAML 2.0 integration
 
 Integration of the citizen-facing forms with Israel's national authentication
-service (**מערכת ההזדהות הלאומית**, `login.gov.il`) per the מערך הדיגיטל
-technical annex *"נספח טכני ללקוחות — חיבור למערכת ההזדהות הלאומית, SAML 2, v2.4"*.
+service (**מערכת ההזדהות הלאומית**, `login.gov.il`) per the מערך הדיגיטל technical
+annex *"נספח טכני ללקוחות — חיבור למערכת ההזדהות הלאומית, SAML 2, v2.4"*.
 
-## Decisions (agreed for this implementation)
+## Decisions (agreed)
 
 | Topic | Decision |
 |---|---|
-| Environment first | **Test** — `st.login.gov.il` (closed env; requires IP whitelist + registration). Production only after PT + connection approval. |
-| Onboarding status | **Not started** — this repo ships the code backbone + this runbook; onboarding with מערך הדיגיטל is the critical path (see checklist). |
-| Identity model | **Identity for the form only** — after national auth the form pre-fills and **locks** the ID number + name; we do not build a broader identified portal. |
-| Scope | **Per template** — only forms whose `Identity_Mode__c` is `Identified` (mandatory) or `Applicant_Choice` (offered) use national auth. |
+| Environment first | **Test** — `st.login.gov.il` (closed; requires IP whitelist + registration). Production only after PT + approval. |
+| Onboarding status | **Not started** — this repo ships the code backbone + this runbook so onboarding with מערך הדיגיטל (the critical path) can start now. |
+| **Citizen licenses** | **None, and none planned.** The citizen must **not** become a Salesforce user. This rules out Salesforce acting as the SAML SP (SAML login always consumes a licensed user). |
+| **Double authentication** | **Not acceptable** — a single sign-in only. |
+| Identity model | The form stays a **guest (anonymous)** page. National auth happens at an **off-the-shelf SP gateway in front of the form**; the verified national ID is handed to the guest form via a short-lived **signed token**, which the form uses to pre-fill + **lock** the ID/name fields. |
+| Scope | **Per template** — only forms whose `Identity_Mode__c` is `Identified` (mandatory) or `Applicant_Choice` (offered). |
 
-> **Important architectural note.** The annex (§ "אופן מימוש חיבור SAML") states a
-> self-developed SP is **not allowed** — the SP must be an off-the-shelf SAML
-> product. Salesforce's built-in SAML SSO satisfies this. Consequently, even the
-> "identity for the form only" model is delivered by letting Salesforce's SAML SP
-> establish the session; the minimal, compliant vehicle is a lightweight
-> **External Identity** user provisioned Just-In-Time and keyed by the national ID
-> (`FederationIdentifier`). The form then reads that verified identity and locks
-> the identity fields. There is no supported way to obtain the assertion on a pure
-> guest page without a custom SP, which the annex forbids.
+## Why not Salesforce-as-SP (the earlier assumption — now ruled out)
 
-## IdP endpoints (from the annex)
+Salesforce's built-in SAML SSO is an off-the-shelf SP, **but it authenticates a
+user INTO the org** — i.e. it needs a licensed community/External-Identity user
+per citizen. With **no citizen licenses (and none planned)** that path is off the
+table. A pure-Salesforce national-auth login for guests is therefore **not
+achievable**, and the annex forbids a self-developed SP. The resolution below keeps
+the form anonymous, uses a compliant off-the-shelf SP as a **gateway** (not
+Salesforce), and authenticates the citizen **once**.
+
+## Chosen architecture (license-free, single sign-in)
+
+```
+                (1) open form
+  Citizen ───────────────────────────────►  Salesforce guest form (Experience)
+     │                                              │  needs identity? (Identity_Mode)
+     │  (2) redirect to gateway  ◄──────────────────┘
+     ▼
+  Off-the-shelf SAML SP GATEWAY  ──(3) SAML AuthnRequest──►  login.gov.il (IdP)
+  (מערך-הדיגיטל-hosted, or the                              ◄──(4) SAML assertion──
+   authority's identity broker)
+     │  (5) mint short-lived SIGNED token (JWT) with IDNum/HebName/HebLastName/LOA
+     ▼
+  (6) redirect back to the guest form  ?t=<signed token>
+     │
+     ▼
+  Salesforce guest form ──(7) verify token signature (Apex, public key) ──► pre-fill + LOCK id/name
+```
+
+- **The SP is the gateway, not Salesforce.** The gateway is a standard SAML product
+  (so the annex's "no self-developed SP" is satisfied). Options for the gateway:
+  1. **מערך הדיגיטל hosted SP** — if מערך הדיגיטל fronts the service ("שירות המתארח
+     במערך הדיגיטל"), their components act as SP and route back to a non-identified
+     URL. Ask your integration contact whether our Salesforce site can be fronted this way.
+  2. **The authority's existing identity gateway / broker** (e.g. an API gateway,
+     reverse proxy, or IdP broker already certified as a SAML SP).
+  3. A thin **off-the-shelf SAML SP** stood up by the authority (e.g. Keycloak /
+     SimpleSAMLphp / Shibboleth) acting only as this gateway.
+- **Single auth:** the citizen authenticates once — at the gateway. The form never
+  logs anyone in.
+- **Token hand-off (step 5–7):** the gateway mints a **short-lived, signed** token
+  (JWT signed with the gateway's private key, or HMAC with a shared secret) carrying
+  the verified `IDNum`, `HebName`, `HebLastName`, `LOA`, and a one-time `nonce`
+  bound to our audience. Salesforce **verifies the signature** (public key / secret
+  configured in a protected custom setting) — this is ordinary trusted-token
+  verification, **not** SAML protocol handling, so it does not count as a
+  self-developed SP.
+
+> If the chosen gateway can instead pass identity server-to-server (POST the verified
+> attributes to a guest Apex REST endpoint keyed by a nonce, form reads by nonce),
+> that avoids putting the token in the URL. Either variant is supported by the same
+> Salesforce-side verifier.
+
+## IdP endpoints (from the annex) — used BY THE GATEWAY
 
 | Purpose | Test (st) | Production |
 |---|---|---|
@@ -32,96 +77,58 @@ technical annex *"נספח טכני ללקוחות — חיבור למערכת �
 | Single Logout (SLO) | `https://st.login.gov.il/nidp/saml2/slo` | `https://login.gov.il/nidp/saml2/slo` |
 | Simple logout redirect | `https://st.gov.il/mw/logout.html?forwardURL=<url>` | `https://gov.il/mw/logout.html?forwardURL=<url>` |
 
-These are centralized in `classes/NationalAuthConfig.cls` (switch env there).
+Mirrored in `classes/NationalAuthConfig.cls`.
 
-## Attributes returned in the assertion
+## Attributes returned in the assertion (gateway receives; relays to us)
 
-`NameID` (format **unspecified**) = the 9-digit national ID. Attributes:
+`NameID` (format **unspecified**) = the 9-digit national ID. Attributes: `IDNum`
+(required, = NameID), `HebName`, `HebLastName`, `LOA` (3–4), `PreferredLang`,
+`Mobile`, `Mail`; smart-card adds `CardType`,`Cert`. Every field except `IDNum` is
+optional (some clouds relay only the ID). The gateway forwards the subset we request
+(minimum: `IDNum`, `HebName`, `HebLastName`, `LOA`).
 
-| XML field | Meaning | Required | Notes |
-|---|---|---|---|
-| `IDNum` | מספר זהות | yes | 9 digits — also the NameID |
-| `HebName` | שם פרטי (עברית) | yes | ≤255 UTF-8 |
-| `HebLastName` | שם משפחה (עברית) | yes | ≤255 UTF-8 |
-| `LOA` | רמת הבטחת אימות (רב״א) | yes | one digit 3–4 |
-| `PreferredLang` | שפה מועדפת | no | Hebrew/Arabic/Russian/English |
-| `Mobile` | טלפון נייד | no | may be empty |
-| `Mail` | דוא"ל | no | may be empty |
-| `CardType`,`Cert` | כרטיס חכם | (smart-card only) | Comsign/PersonalID/Tamuz/IsraelID + base64 cert |
+## Certificates & crypto (mandatory — at the GATEWAY)
 
-> **Cloud caveat:** some clouds (AWS/GCP) can't decrypt the SAML assertion; in that
-> case **only the national ID** is delivered, no other attributes. Salesforce
-> supports an assertion-decryption certificate, so full attributes are expected —
-> but the code treats every attribute except `IDNum` as optional.
+Signing **RSA-SHA256**, encryption **AES256**; SP cert from a recognized CA or a
+Tamuz cert; self-signed allowed **in test only**. AuthnRequest/LogoutRequest signed
+by the SP (gateway) private key. These are the **gateway's** responsibility. On the
+Salesforce side we only hold the **gateway's public key / shared secret** used to
+verify the hand-off token.
 
-Salesforce SAML→field mapping is implemented in `classes/NationalAuthJitHandler.cls`
-(when Phase 2 lands): `IDNum→FederationIdentifier`, `HebName→FirstName`,
-`HebLastName→LastName`, `Mail→Email`, `Mobile→MobilePhone`.
+## Salesforce side — what this repo builds (license-free, guest-safe)
 
-## Certificates & crypto (mandatory)
+- `classes/NationalAuthConfig.cls` — IdP endpoints + min LOA (reference/config).
+- `classes/NationalIdentityController.cls` — returns the verified identity to the
+  form. **Backbone today** reads it from the running user (harmless no-op for guests);
+  **Phase 2** adds `verifyToken(token)` that validates the gateway's signed token and
+  returns `{idNumber, firstName, lastName, loa}` for a guest session — no login, no user.
+- `lwc/dynamicForm` *(Phase 2)* — when `Identity_Mode__c=Identified`, gate the form
+  behind a "כניסה עם הזדהות לאומית" button that redirects to the gateway; on return,
+  verify the token and **pre-fill + lock** the ID/first/last fields; show the identity
+  notice. `Applicant_Choice` offers it but allows anonymous.
+- `lwc/nationalAuthButton` *(Phase 2)* — the styled button (per the gov design spec),
+  the user explanation, open-in-new-window, and a logout link to `mw/logout.html`.
+- **No** JIT/Registration handler, **no** External Identity users, **no** Salesforce
+  SAML SSO setting — deliberately, because there are no citizen licenses.
 
-- Signing: **RSA-SHA256**. Encryption: **AES256**.
-- SP certificate must be issued by a recognized **CA** or be a **Tamuz** cert from
-  מערך הדיגיטל. **Self-signed is allowed in the test env only — never in production.**
-- The AuthnRequest and LogoutRequest must be **signed with the SP private key**.
-- SP cert validity used must not exceed 3 years. The IdP certs rotate ~every 5
-  years (current validity 02/2028) — the SP owner must refresh them and re-send
-  updated metadata to מערך הדיגיטל.
+## Mandatory client-side features (annex §5) — mapped to our side
 
-## Salesforce Setup steps (SP side) — done in Setup, not deployable
-
-1. **My Domain** deployed (required for SAML).
-2. **Certificate & Key Management** → create the SP signing/decryption cert
-   (self-signed for test; CA/Tamuz for prod).
-3. **Single Sign-On Settings** → *New from Metadata* using the IdP metadata URL, then set:
-   - Issuer / **Entity Id** = the SP entityID (should contain the site URL, e.g.
-     `https://<mydomain>.my.site.com/vforcesite`).
-   - Identity Location = **Subject / NameID**, SAML Identity Type = **FederationId**,
-     NameID format = **unspecified**.
-   - Request Signing Certificate = the SP cert; Request Signature Method = **RSA-SHA256**.
-   - Assertion Decryption Certificate = the SP cert (AES256).
-   - Enable **Single Logout**, SLO URL = the IdP `.../slo`, binding HTTP-POST/Redirect.
-   - Just-in-Time provisioning = **enabled**, handler = `NationalAuthJitHandler`.
-4. **Experience Cloud site** → Administration → Login & Registration → add the
-   SAML SSO setting as a login option; set the "login with national auth" button.
-5. **Generate SP metadata** (Salesforce provides it on the SSO setting page / the
-   `.../login?so=<orgId>` endpoint) and send it to מערך הדיגיטל to establish Trust.
-   Ensure the metadata has: `entityID`, `NameIDFormat=unspecified`, signing +
-   encryption `KeyDescriptor` (base64 X509), `AssertionConsumerService`
-   (HTTP-POST, isDefault), `SingleLogoutService`. Remove any `validUntil` tag.
-
-## Mandatory client-side features (annex § 5)
-
-- [x] Styled "מעבר להזדהות לאומית" button (per the גוב design spec) — `lwc/nationalAuthButton` (Phase 2).
-- [x] Explanation to the user before redirect + open in a separate window/popup.
-- [x] Logout button → SLO / `mw/logout.html?forwardURL=`.
-- [x] Session renewal for the identified user (session managed by the SP/Experience site).
-- National-auth session length is 20 min (IdP-controlled; not changeable per app).
-
-## Input-validation regex on incoming fields (annex § "בדיקות קלט")
-
-The service already validates incoming fields; the form mirrors the important ones
-(national ID check digit, Hebrew name `[א-ת\s\'\"\-\(\)]{2,25}`, phone). These live
-in `FormValidationService` / `dynamicForm` and are reused for the locked fields.
+- [ ] Styled "מעבר להזדהות לאומית" button + user explanation + open in a separate window.
+- [ ] Logout link → `mw/logout.html?forwardURL=<non-identified page>`.
+- [ ] The identified session is short (form-scoped): the token is short-lived; no long session to renew.
+- National-auth session length is 20 min (IdP-controlled).
 
 ## Onboarding checklist with מערך הדיגיטל (critical path — start now)
 
-1. [ ] Submit the "בקשת חיבור" onboarding form to מערך הדיגיטל; get an integration contact.
-2. [ ] Provide the SP **entityID** and **ACS URL(s)** (Experience site) for registration.
-3. [ ] Request **IP whitelisting** for the test env (`st.login.gov.il` is closed).
-4. [ ] Obtain/issue the SP **certificate** (self-signed for test; CA/Tamuz for prod).
-5. [ ] Exchange **metadata** (send SP metadata, import IdP metadata).
-6. [ ] Register test identities (test env accepts fictitious identities).
-7. [ ] Run integration tests; capture with **SAML Tracer** if debugging.
-8. [ ] For production: fill the "סיום פיתוח ומוכנות לייצור" form, attach **PT** results,
-       pass compatibility checks (§5.1–5.5), get connection approval, coordinate go-live.
-
-## Code in this repo
-
-- `classes/NationalAuthConfig.cls` — endpoints/entityID/env + min LOA (single switch point).
-- `classes/NationalIdentityController.cls` — `getIdentity()` returns the current
-  Experience user's verified national ID + name (guest-safe: returns not-identified).
-- `classes/NationalAuthJitHandler.cls` *(Phase 2)* — `Auth.SamlJitHandler` mapping.
-- `lwc/dynamicForm` *(Phase 2)* — pre-fill + lock identity fields when identified;
-  gate the form / show the login button when `Identity_Mode__c = Identified` and guest.
-- `lwc/nationalAuthButton` *(Phase 2)* — styled login/logout button + explanation.
+1. [ ] Submit the "בקשת חיבור" onboarding form (draft: `docs/national-auth/onboarding-request.md`).
+2. [ ] **Confirm the gateway** (decision needed): מערך-הדיגיטל-hosted SP, the authority's
+       existing broker, or a stand-up off-the-shelf SP. This determines the SP metadata + token format.
+3. [ ] Provide the gateway's SP **entityID** and **ACS URL(s)** for registration.
+4. [ ] Request **IP whitelisting** for the test env (`st.login.gov.il` is closed) — the
+       gateway's public IP(s).
+5. [ ] Obtain/issue the gateway **SP certificate** (self-signed for test; CA/Tamuz for prod).
+6. [ ] Exchange **metadata** (gateway SP ↔ IdP).
+7. [ ] Agree the **hand-off token** contract (JWT public key / shared secret, claims, TTL, audience).
+8. [ ] Register test identities (test env accepts fictitious identities); test end-to-end.
+9. [ ] Production: "סיום פיתוח ומוכנות לייצור" form + **PT** results + compatibility checks
+       (§5.1–5.5) + connection approval + go-live coordination.

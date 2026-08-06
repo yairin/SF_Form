@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SP metadata TEMPLATE for the national-auth Gateway (NOT Salesforce).
+  Produced by / for the off-the-shelf SAML SP that fronts the form. Replace every
+  {{PLACEHOLDER}}, then send to מערך הדיגיטל to establish Trust. Per annex v2.4:
+    - NameIDFormat = unspecified (the NameID value is the 9-digit national ID)
+    - signing = RSA-SHA256, encryption = AES256
+    - AssertionConsumerService: prefer HTTP-POST, one isDefault
+    - do NOT include a validUntil attribute
+    - the X509Certificate is the SP public cert in base64 (DER), no PEM header/newlines
+-->
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+                     entityID="{{SP_ENTITY_ID}}">
+  <md:SPSSODescriptor AuthnRequestsSigned="true"
+                      WantAssertionsSigned="true"
+                      protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data><ds:X509Certificate>{{SP_SIGNING_CERT_BASE64}}</ds:X509Certificate></ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+
+    <md:KeyDescriptor use="encryption">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data><ds:X509Certificate>{{SP_ENCRYPTION_CERT_BASE64}}</ds:X509Certificate></ds:X509Data>
+      </ds:KeyInfo>
+      <!-- AES256 -->
+      <md:EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#aes256-cbc"/>
+    </md:KeyDescriptor>
+
+    <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+                            Location="{{SP_SLO_URL}}"
+                            ResponseLocation="{{SP_SLO_RESPONSE_URL}}"/>
+    <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+                            Location="{{SP_SLO_URL}}"
+                            ResponseLocation="{{SP_SLO_RESPONSE_URL}}"/>
+
+    <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified</md:NameIDFormat>
+
+    <md:AssertionConsumerService index="0" isDefault="true"
+                                 Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+                                 Location="{{SP_ACS_URL}}"/>
+  </md:SPSSODescriptor>
+</md:EntityDescriptor>
