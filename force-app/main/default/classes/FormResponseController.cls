@@ -46,6 +46,10 @@ public without sharing class FormResponseController {
             Email__c            = clip(email, 255),
             Phone__c            = clip(phone, 40),
             Subject__c          = clip(subject, 255),
+            // Derived from the authenticated session (FederationIdentifier), NOT from
+            // client input — so an Ask-Once / הזדהות-לאומית submission is recorded as
+            // verified and it can't be spoofed by the browser (directive 5.35 §6).
+            Identity_Verified__c = currentUserIdentified(),
             Status__c           = 'New'
         );
         insert r;
@@ -59,5 +63,21 @@ public without sharing class FormResponseController {
     private static String clip(String v, Integer max) {
         if (v == null) return null;
         return v.length() > max ? v.substring(0, max) : v;
+    }
+
+    // True when the current Experience user carries a national-auth FederationIdentifier
+    // (i.e. authenticated via the national identity system). Anonymous Guest users
+    // return false. Never throws — a lookup failure is treated as "not verified".
+    @TestVisible
+    private static Boolean currentUserIdentified() {
+        try {
+            List<User> us = [
+                SELECT FederationIdentifier FROM User
+                WHERE Id = :UserInfo.getUserId() LIMIT 1
+            ];
+            return !us.isEmpty() && String.isNotBlank(us[0].FederationIdentifier);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

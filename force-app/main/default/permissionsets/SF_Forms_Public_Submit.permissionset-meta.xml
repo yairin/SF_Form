@@ -20,6 +20,14 @@
         <apexClass>FormFileValidationService</apexClass>
         <enabled>true</enabled>
     </classAccesses>
+    <classAccesses>
+        <apexClass>NationalIdentityController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>TaxAuthorityController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <description>Guest create-only access for public form submissions: create on Form_Response__c and read on Form_Template__c (for rendering). Form_Answer__c is populated by the after-insert trigger (system context).</description>
     <fieldPermissions>
         <field>Form_Response__c.Form_Name__c</field>
@@ -63,6 +71,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <field>Form_Response__c.Source_IP__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Form_Response__c.Identity_Verified__c</field>
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>

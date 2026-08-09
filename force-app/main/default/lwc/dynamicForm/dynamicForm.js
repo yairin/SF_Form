@@ -8,6 +8,8 @@ import attachFiles from '@salesforce/apex/FormFileService.attachFiles';
 import validateFile from '@salesforce/apex/FormFileValidationService.validateFile';
 import searchCities from '@salesforce/apex/AddressLookupController.searchCities';
 import searchStreets from '@salesforce/apex/AddressLookupController.searchStreets';
+import getIdentity from '@salesforce/apex/NationalIdentityController.getIdentity';
+import getIncomeData from '@salesforce/apex/TaxAuthorityController.getIncomeData';
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024; // ~4MB per file (Apex heap/base64 guard)
 const DEFAULT_ACCEPT = ['pdf', 'png', 'jpg', 'jpeg'];
@@ -149,6 +151,12 @@ export default class DynamicForm extends LightningElement {
     addrLoading = {};      // key -> bool (lookup in flight)
     _addrTimer = {};       // key -> debounce handle
 
+    // ---- Ask-Once / national-identity + tax-authority prefill state ----
+    identified = false;        // the current Experience user is national-auth verified
+    identityFullName = '';     // display name of the identified applicant
+    taxPending = false;        // tax-authority income API returned "not available yet"
+    taxMessage = '';           // Hebrew note shown for pending/failed income lookup
+
     get isWizard() { return this.stepTitles.length > 1; }
 
     // ---- Conditional field visibility (schema key: visibleWhen {field,op,value}) ----
@@ -226,6 +234,7 @@ export default class DynamicForm extends LightningElement {
                     rowKey: f.key + '-r' + ri,
                     index: ri,
                     removeLabel: 'הסר שורה ' + (ri + 1),
+                    canRemove: !f.readOnly, // locked (tax-sourced) rows can't be removed
                     cells: (f.columns || []).map((c) => {
                         const cv = (row && row[c.key] != null) ? row[c.key] : '';
                         return {
@@ -234,6 +243,7 @@ export default class DynamicForm extends LightningElement {
                             label: c.label,
                             cellInputType: c.cellInputType,
                             isSelectCol: c.isSelectCol,
+                            disabled: !!f.readOnly, // locked when populated from an authoritative source
                             value: cv,
                             cellOptions: (c.cellOptions || []).map((o) => ({
                                 label: o.label, value: o.value, selected: o.value === cv
@@ -262,6 +272,10 @@ export default class DynamicForm extends LightningElement {
                 wrapClass,
                 repeaterRows,
                 viewOptions,
+                // computed 106 total (read-only display); rows locked → hide "add row"
+                computedDisplay: f.isComputedSum ? this.formatSum(this.sumValue(f)) : null,
+                canEditRows: f.isRepeater && !f.readOnly,
+                emptyReadOnly: f.readOnly && !f.isComputedSum && this.isEmpty(this.values[f.key]),
                 isChecked: curStr === 'כן',
                 status: this.fileStatus[f.key],
                 fieldError: this.fieldErrors[f.key],
@@ -353,7 +367,9 @@ export default class DynamicForm extends LightningElement {
         return this.stepTitles.map((title, si) => {
             const flds = this.fields.filter((f) => f.step === si && vis[f.key] !== false).map((f) => {
                 let display;
-                if (f.isSignature) {
+                if (f.isComputedSum) {
+                    display = this.formatSum(this.sumValue(f));
+                } else if (f.isSignature) {
                     display = this.isEmpty(this.values[f.key]) ? '—' : 'נחתם ✓';
                 } else if (f.isFile) {
                     const items = this.files[f.key] || [];
@@ -391,7 +407,12 @@ export default class DynamicForm extends LightningElement {
         fieldsToCheck.forEach((f) => {
             delete errs[f.key];
             if (vis[f.key] === false) return; // hidden fields never block submission
+            if (f.isComputedSum) return;      // auto-calculated, never user input
             const val = this.values[f.key];
+            // A locked, system-populated field (identity / tax income) that is still
+            // empty can't be filled by the applicant — don't raise an unactionable
+            // "required" error. When populated it is format-validated below.
+            if (f.readOnly && this.isEmpty(val)) return;
             let m;
             if (f.required && this.isEmpty(val)) m = 'שדה חובה';
             else if (!this.isEmpty(val)) {
@@ -414,6 +435,7 @@ export default class DynamicForm extends LightningElement {
     validateOne(f) {
         if (!f) return;
         if (this.visibleKeySet[f.key] === false) return;
+        if (f.isComputedSum || f.readOnly) return; // system-populated / auto-calculated
         const val = this.values[f.key];
         let m;
         if (f.required && this.isEmpty(val)) m = 'שדה חובה';
@@ -524,9 +546,101 @@ export default class DynamicForm extends LightningElement {
             this.applyAppearance(t.Appearance_JSON__c);
             this.identityMode = t.Identity_Mode__c || 'Anonymous';
             this.applySchema(t.Name, t.Description__c, t.Schema_JSON__c);
+            // Ask-Once: on an identified form, pull the verified identity and (once
+            // the national-auth Gateway is connected) the authoritative income data.
+            if (this.identityMode !== 'Anonymous') await this.loadIdentity();
         } catch (e) {
             this.notFound = true;
         }
+    }
+
+    // ---- Ask-Once prefill: national identity → locked personal fields; ----
+    // ---- tax authority → locked income fields (seam; API not yet live). ----
+    async loadIdentity() {
+        try {
+            const id = await getIdentity();
+            this.identified = !!(id && id.identified);
+            this.identityFullName = (id && id.fullName) || '';
+            if (this.identified) {
+                this.prefillFromIdentity(id);
+                // Only pull income for a form that actually has tax-sourced fields
+                // (so identified users on other forms never see a tax notice).
+                if (this.fields.some((f) => f.source === 'tax106')) {
+                    await this.loadIncome(id.idNumber);
+                }
+            }
+        } catch (e) {
+            this.identified = false; // never break the form on an identity lookup failure
+        }
+    }
+
+    // Map the verified identity onto locked fields, by field type (idNumber /
+    // firstName / lastName / email). Only fields marked source:'identity' are touched.
+    prefillFromIdentity(id) {
+        const byType = {
+            idNumber: id.idNumber, firstName: id.firstName,
+            lastName: id.lastName, email: id.email
+        };
+        const next = { ...this.values };
+        this.fields.forEach((f) => {
+            if (f.source === 'identity' && byType[f.type] != null && byType[f.type] !== '') {
+                next[f.key] = byType[f.type];
+            }
+        });
+        this.values = next;
+    }
+
+    async loadIncome(idNumber) {
+        try {
+            const data = await getIncomeData({ idNumber });
+            if (data && data.available) {
+                this.prefillFromTax(data);
+                this.taxPending = false;
+                this.taxMessage = '';
+            } else {
+                this.taxPending = true;
+                this.taxMessage = (data && data.message)
+                    || 'נתוני ההכנסה יימשכו אוטומטית ממערכת רשות המסים לאחר חיבור הממשק.';
+            }
+        } catch (e) {
+            this.taxPending = true;
+            this.taxMessage = 'לא ניתן למשוך נתוני הכנסה כעת. יש לצרף את מסמכי המקור.';
+        }
+    }
+
+    // Populate the locked 106 repeater (source:'tax106') from the authoritative
+    // income payload: one row per employer with the taxable-income column.
+    prefillFromTax(data) {
+        const rows = Array.isArray(data.form106) ? data.form106 : [];
+        const next = { ...this.values };
+        this.fields.forEach((f) => {
+            if (f.source !== 'tax106' || !f.isRepeater) return;
+            const cols = f.columns || [];
+            const empKey = (cols[0] && cols[0].key) || 'employer';
+            const incKey = (cols[1] && cols[1].key) || 'taxableIncome';
+            next[f.key] = rows.map((r) => ({
+                [empKey]: r.employer == null ? '' : r.employer,
+                [incKey]: r.taxableIncome == null ? '' : r.taxableIncome
+            }));
+        });
+        this.values = next;
+    }
+
+    // ---- Computed 106 total (type:'computedSum', sumOf:{repeater,column} | {keys:[]}) ----
+    sumValue(f) {
+        const cfg = f.sumOf || {};
+        let total = 0;
+        if (cfg.repeater && cfg.column) {
+            const rows = Array.isArray(this.values[cfg.repeater]) ? this.values[cfg.repeater] : [];
+            rows.forEach((r) => { const n = Number(r && r[cfg.column]); if (!isNaN(n)) total += n; });
+        } else if (Array.isArray(cfg.keys)) {
+            cfg.keys.forEach((k) => { const n = Number(this.values[k]); if (!isNaN(n)) total += n; });
+        }
+        return total;
+    }
+    formatSum(n) {
+        const num = Number(n) || 0;
+        try { return num.toLocaleString('he-IL') + ' ₪'; } catch (e) { return num + ' ₪'; }
     }
 
     applyAppearance(json) {
@@ -566,6 +680,12 @@ export default class DynamicForm extends LightningElement {
                     step: si,
                     required: !!f.required,
                     mapTo: f.mapTo,
+                    // Ask-Once: locked (system-populated) fields, computed 106 total, and
+                    // prefill source ('identity' | 'tax106') consumed after national-auth.
+                    readOnly: !!f.readOnly,
+                    source: f.source || null,
+                    isComputedSum: f.type === 'computedSum',
+                    sumOf: f.sumOf || null,
                     options: (f.options || []).map((o) => ({ label: o, value: o })),
                     // optional per-field validation config (used by constraintError)
                     min: f.min, max: f.max, minLen: f.minLen, maxLen: f.maxLen,
@@ -594,6 +714,10 @@ export default class DynamicForm extends LightningElement {
                     accept: '.' + (Array.isArray(f.accept) && f.accept.length ? f.accept : DEFAULT_ACCEPT).join(',.'),
                     docLabel: f.docLabel || f.label,
                     verifyKeys: Array.isArray(f.verify) && f.verify.length ? f.verify : null,
+                    // Opt a file field OUT of the external AI/LLM content check (schema
+                    // aiCheck:false) — required for sensitive PII documents (e.g. tax
+                    // reports) that must not leave the org (directive 5.35 §1/§4.1.3).
+                    aiCheck: f.aiCheck !== false,
                     // conditional visibility rule (optional in schema)
                     visibleWhen: (f.visibleWhen && f.visibleWhen.field) ? f.visibleWhen : null
                 });
@@ -673,10 +797,19 @@ export default class DynamicForm extends LightningElement {
     // ---- National-identity mode (infrastructure for הזדהות לאומית SSO) ----
     get identityRequired() { return this.identityMode === 'Identified'; }
     get identityChoice() { return this.identityMode === 'Applicant_Choice'; }
-    get showIdentityNotice() { return this.identityRequired || this.identityChoice; }
+    get showIdentityNotice() { return (this.identityRequired || this.identityChoice) && !this.identified; }
+    get identityConnected() { return this.identified; }
+    get identityConnectedText() {
+        return 'מזוהה: ' + (this.identityFullName || 'משתמש/ת מאומת/ת') + ' — הפרטים האישיים ונתוני ההכנסה מולאו אוטומטית ונעולים לעריכה.';
+    }
+    // An Identified form must not be submitted anonymously: block submit until the
+    // national-auth session is present (Gateway connected). Applicant_Choice never blocks.
+    get identityGateBlocked() { return this.identityRequired && !this.identified; }
+    get submitDisabled() { return this.loading || this.identityGateBlocked; }
+    get showTaxPending() { return this.identified && this.taxPending && !!this.taxMessage; }
     get identityNoticeText() {
         return this.identityRequired
-            ? 'טופס זה דורש הזדהות באמצעות מערכת ההזדהות הלאומית. הפרטים האישיים ימולאו אוטומטית לאחר ההזדהות.'
+            ? 'טופס זה דורש הזדהות באמצעות מערכת ההזדהות הלאומית. לאחר ההזדהות הפרטים האישיים ונתוני ההכנסה ימולאו אוטומטית. לא ניתן לשלוח את הבקשה ללא הזדהות.'
             : 'ניתן להזדהות באמצעות מערכת ההזדהות הלאומית למילוי אוטומטי של הפרטים, או להמשיך ללא הזדהות.';
     }
 
@@ -991,8 +1124,14 @@ export default class DynamicForm extends LightningElement {
         Promise.all(fileList.map((file) => this.readFile(file))).then((read) => {
             this.files = { ...this.files, [key]: read };
             this.values[key] = read.map((r) => r.name).join('; ');
-            // AI content check (correct document type + details match applicant) on upload
-            this.verifyFile(f, read[0]);
+            if (f && f.aiCheck === false) {
+                // Sensitive PII document: type already checked client-side; do NOT send
+                // its contents to the external AI model. Accept locally.
+                this.setFileStatus(key, { ok: true, message: 'הקובץ צורף.' });
+            } else {
+                // AI content check (correct document type + details match applicant) on upload
+                this.verifyFile(f, read[0]);
+            }
         });
     }
 
@@ -1010,8 +1149,12 @@ export default class DynamicForm extends LightningElement {
         if (arr.length) {
             this.values[key] = arr.map((r) => r.name).join('; ');
             const f = this.fields.find((x) => x.key === key);
-            this.setFileStatus(key, { checking: true, message: 'בודק את הקובץ…' });
-            this.verifyFile(f, arr[0]);
+            if (f && f.aiCheck === false) {
+                this.setFileStatus(key, { ok: true, message: 'הקובץ צורף.' });
+            } else {
+                this.setFileStatus(key, { checking: true, message: 'בודק את הקובץ…' });
+                this.verifyFile(f, arr[0]);
+            }
         } else {
             delete this.values[key];
             const st = { ...this.fileStatus };
@@ -1085,6 +1228,11 @@ export default class DynamicForm extends LightningElement {
 
     async handleSubmit() {
         this.error = undefined;
+        // An Identified form can't be submitted without a national-auth session.
+        if (this.identityGateBlocked) {
+            this.error = 'יש להזדהות באמצעות מערכת ההזדהות הלאומית לפני שליחת הבקשה.';
+            return;
+        }
         // full-form validation with inline per-field errors; jump to the first step with an error
         if (this.validateFields(this.fields)) {
             const firstBad = this.fields.find((f) => this.fieldErrors[f.key]);
@@ -1114,6 +1262,7 @@ export default class DynamicForm extends LightningElement {
         const vis = this.visibleKeySet;
         for (const f of this.fields) {
             if (vis[f.key] === false) continue; // never submit values for hidden fields
+            if (f.isComputedSum) { payload[f.key] = String(this.sumValue(f)); continue; } // auto-calculated total
             let v = this.values[f.key];
             if (this.isEmpty(v)) continue;
             if (f.isRepeater) {

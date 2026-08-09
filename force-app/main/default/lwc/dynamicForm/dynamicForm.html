@@ -75,6 +75,20 @@
                 </div>
             </template>
 
+            <template lwc:if={identityConnected}>
+                <div class="slds-box slds-box_x-small slds-m-bottom_small slds-theme_success" role="status">
+                    <lightning-icon icon-name="utility:identity" size="x-small" alternative-text=""
+                        class="slds-m-left_xx-small"></lightning-icon>
+                    <span class="slds-text-body_small">{identityConnectedText}</span>
+                </div>
+            </template>
+
+            <template lwc:if={showTaxPending}>
+                <div class="slds-box slds-box_x-small slds-m-bottom_small slds-theme_warning" role="status" aria-live="polite">
+                    <p class="slds-text-body_small">{taxMessage}</p>
+                </div>
+            </template>
+
             <template lwc:if={draftFound}>
                 <div class="slds-box slds-box_x-small slds-theme_shade slds-m-bottom_small" role="status" aria-live="polite">
                     <p class="slds-p-bottom_xx-small">נמצאה טיוטה שמורה מתאריך {draftDate}. להמשיך מהמקום שבו הפסקת?</p>
@@ -177,7 +191,13 @@
                             <template lwc:if={f.required}><abbr class="slds-required" title="חובה">* </abbr></template>{f.label}
                         </label>
                         <div class="slds-form-element__control">
-                            <template lwc:if={f.isAutocomplete}>
+                            <template lwc:if={f.isComputedSum}>
+                                <div class="form-computed-sum slds-box slds-box_xx-small slds-theme_shade"
+                                    role="status" aria-live="polite">
+                                    <span class="form-computed-sum__value slds-text-heading_small">{f.computedDisplay}</span>
+                                </div>
+                            </template>
+                            <template lwc:elseif={f.isAutocomplete}>
                                 <div class="form-autocomplete" role="combobox" aria-expanded={f.suggestExpanded} aria-haspopup="listbox">
                                     <input type="text" id={f.key} data-key={f.key} class="slds-input" autocomplete="off"
                                         role="textbox" aria-autocomplete="list"
@@ -200,7 +220,7 @@
                             </template>
                             <template lwc:elseif={f.isText}>
                                 <input type={f.inputType} id={f.key} data-key={f.key} class="slds-input"
-                                    value={f.currentValue}
+                                    value={f.currentValue} readonly={f.readOnly}
                                     aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid}
                                     aria-describedby={f.describedBy} onchange={handleChange} />
                             </template>
@@ -254,13 +274,13 @@
                             </template>
                             <template lwc:elseif={f.isTextarea}>
                                 <textarea id={f.key} data-key={f.key} class="slds-textarea"
-                                    value={f.currentValue}
+                                    value={f.currentValue} readonly={f.readOnly}
                                     aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid}
                                     aria-describedby={f.describedBy} onchange={handleChange}></textarea>
                             </template>
                             <template lwc:elseif={f.isSelect}>
                                 <div class="slds-select_container">
-                                    <select id={f.key} data-key={f.key} class="slds-select"
+                                    <select id={f.key} data-key={f.key} class="slds-select" disabled={f.readOnly}
                                         aria-required={f.ariaRequired} aria-invalid={f.ariaInvalid}
                                         aria-describedby={f.describedBy} onchange={handleChange}>
                                         <option value="">— בחר —</option>
@@ -272,6 +292,10 @@
                             </template>
                             <template lwc:elseif={f.isRepeater}>
                                 <div class="form-repeater">
+                                    <template lwc:if={f.emptyReadOnly}>
+                                        <p class="slds-text-body_small slds-text-color_weak">
+                                            אין נתונים להצגה. הנתונים יימשכו ממערכת רשות המסים לאחר חיבור הממשק.</p>
+                                    </template>
                                     <template for:each={f.repeaterRows} for:item="row">
                                         <div key={row.rowKey} class="form-repeater__row">
                                             <template for:each={row.cells} for:item="cell">
@@ -279,7 +303,8 @@
                                                     <label class="form-repeater__cell-label">{cell.label}</label>
                                                     <template lwc:if={cell.isSelectCol}>
                                                         <select class="slds-select" data-key={f.key} data-row={row.index}
-                                                            data-col={cell.colKey} onchange={handleRepeaterCell}>
+                                                            data-col={cell.colKey} disabled={cell.disabled}
+                                                            onchange={handleRepeaterCell}>
                                                             <option value="">— בחר —</option>
                                                             <template for:each={cell.cellOptions} for:item="o">
                                                                 <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
@@ -289,17 +314,21 @@
                                                     <template lwc:else>
                                                         <input type={cell.cellInputType} class="slds-input" value={cell.value}
                                                             data-key={f.key} data-row={row.index} data-col={cell.colKey}
-                                                            onchange={handleRepeaterCell} />
+                                                            disabled={cell.disabled} onchange={handleRepeaterCell} />
                                                     </template>
                                                 </div>
                                             </template>
-                                            <button type="button" class="form-repeater__remove" data-key={f.key}
-                                                data-row={row.index} onclick={removeRepeaterRow}
-                                                aria-label={row.removeLabel} title={row.removeLabel}>×</button>
+                                            <template lwc:if={row.canRemove}>
+                                                <button type="button" class="form-repeater__remove" data-key={f.key}
+                                                    data-row={row.index} onclick={removeRepeaterRow}
+                                                    aria-label={row.removeLabel} title={row.removeLabel}>×</button>
+                                            </template>
                                         </div>
                                     </template>
-                                    <button type="button" class="slds-button slds-button_neutral form-repeater__add"
-                                        data-key={f.key} onclick={addRepeaterRow}>+ הוסף שורה</button>
+                                    <template lwc:if={f.canEditRows}>
+                                        <button type="button" class="slds-button slds-button_neutral form-repeater__add"
+                                            data-key={f.key} onclick={addRepeaterRow}>+ הוסף שורה</button>
+                                    </template>
                                 </div>
                             </template>
                         </div>
@@ -354,7 +383,7 @@
                 <div>
                     <template lwc:if={isLastStep}>
                         <button class="slds-button slds-button_brand" style={brandBtnStyle} onclick={handleSubmit}
-                            disabled={loading} aria-busy={ariaBusy}>שליחה</button>
+                            disabled={submitDisabled} aria-busy={ariaBusy}>שליחה</button>
                     </template>
                     <template lwc:else>
                         <button class="slds-button slds-button_brand" style={brandBtnStyle} onclick={nextStep}

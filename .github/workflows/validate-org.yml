@@ -66,5 +66,6 @@ jobs:
             --tests AuthorityScopeTest \
             --tests PersonAccountServiceTest \
             --tests NationalIdentityControllerTest \
+            --tests TaxAuthorityControllerTest \
             --target-org target \
             --wait 30

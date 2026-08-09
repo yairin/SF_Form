@@ -1,8 +1,29 @@
 # אפיון — טופס בקשת הנחה בארנונה לפי עקרון "שאל פעם אחת" (Once-Only)
 
-> **סטטוס: אפיון בהמתנה (Design — On Hold).** אין לפתח קוד פיצ'ר עד הכרעת ה-Gateway
-> להזדהות (ראה `docs/NATIONAL_AUTH.md`). מסמך זה מקבע את ההחלטות שסוכמו, כדי שהבנייה
-> תתחיל מייד עם הסרת החסמים. תאריך הסיכום: 2026-08-09.
+> **סטטוס: נבנה (Built) — ממתין לחיבור החסמים החיצוניים להפעלה מלאה.** הטופס והתשתית
+> נבנו נייטיבית (LWC + Apex + Seed). מילוי-מוקדם של הזהות דורש חיבור ה-Gateway; מילוי
+> נתוני ההכנסה דורש את ה-API של רשות המסים. עד אז הטופס מציג מצב "ממתין" ואינו ניתן
+> לשליחה ללא הזדהות (gate). תאריך: 2026-08-09.
+
+## מה נבנה (מיפוי לקוד)
+| רכיב | קובץ |
+|---|---|
+| שדות נעולים (readOnly), טיפוס `computedSum` לסיכום 106, מילוי-מוקדם מזהות+מס, gate הזדהות, ביטול בדיקת-AI למסמכי PII | `force-app/main/default/lwc/dynamicForm/dynamicForm.{js,html}` |
+| Seam ל-API רשות המסים (stub "ממתין", ולידציית קלט, מוכן ל-Named Credential) | `force-app/main/default/classes/TaxAuthorityController.cls` (+Test) |
+| קביעת `Identity_Verified__c` בצד-שרת מתוך ה-Session (לא מהלקוח) | `force-app/main/default/classes/FormResponseController.cls` |
+| הרשאות Guest ל-seams | `permissionsets/SF_Forms_Public_Submit.permissionset-meta.xml` |
+| תבנית הטופס + ניתוב למחלקת ארנונה | `scripts/seed-arnona-discount.apex` |
+
+**הרצת ה-Seed (לאחר פריסת המטא-דאטה):**
+```bash
+sf apex run --file scripts/seed-arnona-discount.apex --target-org <alias>
+```
+הטופס יפורסם תחת `?formId=arnona-discount`.
+
+**להפעלה מלאה בעתיד (הסרת החסמים):**
+1. חיבור ה-Gateway → משתמשי Experience מזוהים יקבלו `FederationIdentifier` → הזהות תמולא ותינעל.
+2. מימוש הקריאה ב-`TaxAuthorityController.getIncomeData` דרך **Named Credential** → נתוני ה-106 יימשכו ויסוכמו.
+3. **טרם production:** להוסיף סריקת אנטי-וירוס לקבצים (5.35 §8) והצפנת Shield לשדות ת״ז/הכנסה.
 
 ## 1. מטרה
 טופס בקשת הנחה בארנונה שבו התושב מזדהה **פעם אחת** (הזדהות ממשלתית), נתוני ההכנסה

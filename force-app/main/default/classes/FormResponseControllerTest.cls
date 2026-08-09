@@ -325,4 +325,36 @@ private class FormResponseControllerTest {
         System.assertNotEquals(null, a.id);
         System.assertNotEquals(null, b.id);
     }
+
+    // Ask-Once: an anonymous submission (running test user has no FederationIdentifier)
+    // is recorded as NOT identity-verified — the flag is derived server-side.
+    @isTest
+    static void identityVerifiedFalseForAnonymous() {
+        FormResponseController.Result r = FormResponseController.submitResponse(
+            'טופס', 'preview', '{"x":"1"}', null, null, null, null);
+        Form_Response__c saved = [SELECT Identity_Verified__c FROM Form_Response__c WHERE Id = :r.id];
+        System.assertEquals(false, saved.Identity_Verified__c, 'no FederationIdentifier → not verified');
+    }
+
+    // A national-auth session (FederationIdentifier set) is recognised as verified.
+    @isTest
+    static void identityVerifiedTrueForFederatedUser() {
+        List<Profile> ps = [SELECT Id FROM Profile WHERE Name = 'Standard User' LIMIT 1];
+        System.assert(!ps.isEmpty(), 'Standard User profile exists');
+        User u = new User(
+            ProfileId = ps[0].Id,
+            LastName = 'מזוהה', FirstName = 'אזרח',
+            Email = 'askonce.fed@example.gov.il',
+            Username = 'askonce.fed.' + DateTime.now().getTime() + '@example.gov.il',
+            Alias = 'fed1', TimeZoneSidKey = 'Asia/Jerusalem',
+            LocaleSidKey = 'iw_IL', EmailEncodingKey = 'UTF-8', LanguageLocaleKey = 'iw',
+            FederationIdentifier = '000000018'
+        );
+        insert u;
+        Boolean verified;
+        System.runAs(u) {
+            verified = FormResponseController.currentUserIdentified();
+        }
+        System.assertEquals(true, verified, 'FederationIdentifier present → verified');
+    }
 }
