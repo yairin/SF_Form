@@ -9,3 +9,4 @@ Force fresh deploy + Experience republish (signature/width bundles) 20260721T060
 Signature repaint marker on canvas element (fix blank-after-navigation) 20260721T061500Z
 National auth (הזדהות לאומית) backbone: config + identity controller + runbook 20260721T063000Z
 Fix national-auth test: deterministic no-DML mapping test 20260806T061500Z
+Arnona Ask-Once: identity/tax prefill + 106 computedSum + readOnly locks + gate; TaxAuthority seam; server-derived Identity_Verified; deploy after org-independent test fix 20260809T210000Z
