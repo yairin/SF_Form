@@ -16,6 +16,7 @@
 // anti-virus scanning for uploaded files, and Shield encryption for the stored ID /
 // income data.
 final String EXT = 'arnona-discount';
+final String LOGO = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNjAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMzYwIDEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSLXoteZ16jXmdeZ16og157Xldeg15nXpNeV16jXoSDigJQgTXVuaUZvcmNlIENpdHkiPgogIDxkZWZzPgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJtZlNoaWVsZCIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMyYTZmYzQiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMTIzZjc4Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJtZlNreSIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNlYWYyZmIiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjY2ZlMGY0Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KCiAgPCEtLSBFbWJsZW06IGNpdmljIHNoaWVsZCB3aXRoIGEgY2l0eSBza3lsaW5lICsgcmlzaW5nIHN1biAtLT4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNCwxMCkiPgogICAgPHBhdGggZD0iTTUwIDIgTDk0IDE2IFY1MiBDOTQgNzggNzQgOTYgNTAgMTA0IEMyNiA5NiA2IDc4IDYgNTIgVjE2IFoiCiAgICAgICAgICBmaWxsPSJ1cmwoI21mU2hpZWxkKSIgc3Ryb2tlPSIjMGUzMzVmIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxwYXRoIGQ9Ik01MCAxMCBMODYgMjEgVjUyIEM4NiA3MyA3MCA4OCA1MCA5NSBDMzAgODggMTQgNzMgMTQgNTIgVjIxIFoiCiAgICAgICAgICBmaWxsPSJ1cmwoI21mU2t5KSIvPgogICAgPCEtLSByaXNpbmcgc3VuIC0tPgogICAgPGNpcmNsZSBjeD0iNTAiIGN5PSI0NCIgcj0iMTAiIGZpbGw9IiNmNGE3MmMiLz4KICAgIDxnIHN0cm9rZT0iI2Y0YTcyYyIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+CiAgICAgIDxsaW5lIHgxPSI1MCIgeTE9IjI0IiB4Mj0iNTAiIHkyPSIzMCIvPgogICAgICA8bGluZSB4MT0iMzQiIHkxPSIzMCIgeDI9IjM4IiB5Mj0iMzQiLz4KICAgICAgPGxpbmUgeDE9IjY2IiB5MT0iMzAiIHgyPSI2MiIgeTI9IjM0Ii8+CiAgICA8L2c+CiAgICA8IS0tIHNreWxpbmU6IHRocmVlIG11bmljaXBhbCBidWlsZGluZ3MgKyBjZW50cmFsIHRvd2VyIC0tPgogICAgPGcgZmlsbD0iIzFjNWFhOCI+CiAgICAgIDxyZWN0IHg9IjI0IiB5PSI1OCIgd2lkdGg9IjE0IiBoZWlnaHQ9IjI2IiByeD0iMS41Ii8+CiAgICAgIDxyZWN0IHg9IjYyIiB5PSI1OCIgd2lkdGg9IjE0IiBoZWlnaHQ9IjI2IiByeD0iMS41Ii8+CiAgICAgIDxyZWN0IHg9IjQyIiB5PSI0NiIgd2lkdGg9IjE2IiBoZWlnaHQ9IjM4IiByeD0iMS41Ii8+CiAgICAgIDxyZWN0IHg9IjQ4LjUiIHk9IjM2IiB3aWR0aD0iMyIgaGVpZ2h0PSIxMiIvPgogICAgICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjM1IiByPSIyLjQiIGZpbGw9IiNmNGE3MmMiLz4KICAgIDwvZz4KICAgIDwhLS0gd2luZG93cyAtLT4KICAgIDxnIGZpbGw9IiNlYWYyZmIiPgogICAgICA8cmVjdCB4PSIyNyIgeT0iNjIiIHdpZHRoPSIzIiBoZWlnaHQ9IjMiLz48cmVjdCB4PSIzMiIgeT0iNjIiIHdpZHRoPSIzIiBoZWlnaHQ9IjMiLz4KICAgICAgPHJlY3QgeD0iMjciIHk9IjY4IiB3aWR0aD0iMyIgaGVpZ2h0PSIzIi8+PHJlY3QgeD0iMzIiIHk9IjY4IiB3aWR0aD0iMyIgaGVpZ2h0PSIzIi8+CiAgICAgIDxyZWN0IHg9IjY1IiB5PSI2MiIgd2lkdGg9IjMiIGhlaWdodD0iMyIvPjxyZWN0IHg9IjcwIiB5PSI2MiIgd2lkdGg9IjMiIGhlaWdodD0iMyIvPgogICAgICA8cmVjdCB4PSI2NSIgeT0iNjgiIHdpZHRoPSIzIiBoZWlnaHQ9IjMiLz48cmVjdCB4PSI3MCIgeT0iNjgiIHdpZHRoPSIzIiBoZWlnaHQ9IjMiLz4KICAgICAgPHJlY3QgeD0iNDUiIHk9IjUyIiB3aWR0aD0iMy41IiBoZWlnaHQ9IjMuNSIvPjxyZWN0IHg9IjUxLjUiIHk9IjUyIiB3aWR0aD0iMy41IiBoZWlnaHQ9IjMuNSIvPgogICAgICA8cmVjdCB4PSI0NSIgeT0iNjAiIHdpZHRoPSIzLjUiIGhlaWdodD0iMy41Ii8+PHJlY3QgeD0iNTEuNSIgeT0iNjAiIHdpZHRoPSIzLjUiIGhlaWdodD0iMy41Ii8+CiAgICAgIDxyZWN0IHg9IjQ1IiB5PSI2OCIgd2lkdGg9IjMuNSIgaGVpZ2h0PSIzLjUiLz48cmVjdCB4PSI1MS41IiB5PSI2OCIgd2lkdGg9IjMuNSIgaGVpZ2h0PSIzLjUiLz4KICAgIDwvZz4KICA8L2c+CgogIDwhLS0gV29yZG1hcmsgLS0+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTIyLDApIiBmb250LWZhbWlseT0iJ1J1YmlrJywnU2Vnb2UgVUknLCdBc3Npc3RhbnQnLEFyaWFsLHNhbnMtc2VyaWYiPgogICAgPHRleHQgeD0iMCIgeT0iNTIiIGZvbnQtc2l6ZT0iMjkiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMxMjNmNzgiPtei15nXqNeZ15nXqiDXnteV16DXmdek15XXqNehPC90ZXh0PgogICAgPHRleHQgeD0iMCIgeT0iNzgiIGZvbnQtc2l6ZT0iMTciIGZvbnQtd2VpZ2h0PSI2MDAiIGxldHRlci1zcGFjaW5nPSIxLjUiIGZpbGw9IiMxYzVhYTgiPk1VTklGT1JDRSBDSVRZPC90ZXh0PgogICAgPHRleHQgeD0iMCIgeT0iOTgiIGZvbnQtc2l6ZT0iMTEuNSIgZm9udC13ZWlnaHQ9IjUwMCIgZmlsbD0iIzVhNmI4MiI+16nXmdeo15XXqteZ150g15PXmdeS15nXmNec15nXmdedINec16rXldep15E8L3RleHQ+CiAgPC9nPgo8L3N2Zz4K';
 
 // ---- Routing target: ארנונה / גבייה department + service type (idempotent) ----
 List<Department__c> deps = [SELECT Id FROM Department__c WHERE Name = 'ארנונה / גבייה' LIMIT 1];
@@ -30,13 +31,15 @@ Service_Type__c st = sts.isEmpty()
     : sts[0];
 if (sts.isEmpty()) insert st; else { st.Department__c = dep.Id; update st; }
 
-// ---- Appearance ----
+// ---- Appearance: MuniForce City emblem + a vivid, professional municipal palette ----
+// Rich blue page gradient (matches the emblem's shield/sun) behind a clean white card,
+// vivid pill call-to-action buttons, and the civic sun accent.
 Map<String, Object> appearance = new Map<String, Object>{
-    'bgType' => 'gradient', 'bgColor' => '#eef4fb', 'bgColor2' => '#dbe7f6',
-    'overlay' => 0, 'accentColor' => '#0b5cab', 'cardColor' => '#ffffff',
+    'bgType' => 'gradient', 'bgColor' => '#0a4c8a', 'bgColor2' => '#0e7bc4',
+    'overlay' => 0, 'accentColor' => '#1565c0', 'cardColor' => '#ffffff',
     'textColor' => '#16202e', 'fontFamily' => '"Rubik","Assistant",sans-serif',
-    'maxWidth' => 720, 'buttonStyle' => 'rounded', 'cornerRadius' => 14,
-    'headingAlign' => 'right', 'preset' => 'blue', 'align' => 'center'
+    'maxWidth' => 720, 'buttonStyle' => 'pill', 'cornerRadius' => 18,
+    'headingAlign' => 'right', 'logoUrl' => LOGO, 'preset' => 'blue', 'align' => 'center'
 };
 
 // ---- Step 1: personal details (identified → locked, prefilled from national auth) ----
