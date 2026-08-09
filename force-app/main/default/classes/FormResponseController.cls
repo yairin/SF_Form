@@ -75,9 +75,17 @@ public without sharing class FormResponseController {
                 SELECT FederationIdentifier FROM User
                 WHERE Id = :UserInfo.getUserId() LIMIT 1
             ];
-            return !us.isEmpty() && String.isNotBlank(us[0].FederationIdentifier);
+            return !us.isEmpty() && identifiedFrom(us[0]);
         } catch (Exception e) {
             return false;
         }
+    }
+
+    // Pure mapping (no DML/SOQL) so the rule is deterministically unit-testable
+    // without creating an org-specific User. A national-auth session sets
+    // FederationIdentifier to the 9-digit id; anonymous/non-SSO users leave it blank.
+    @TestVisible
+    private static Boolean identifiedFrom(User u) {
+        return u != null && String.isNotBlank(u.FederationIdentifier);
     }
 }

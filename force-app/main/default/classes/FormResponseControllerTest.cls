@@ -336,25 +336,18 @@ private class FormResponseControllerTest {
         System.assertEquals(false, saved.Identity_Verified__c, 'no FederationIdentifier → not verified');
     }
 
-    // A national-auth session (FederationIdentifier set) is recognised as verified.
+    // A national-auth session (FederationIdentifier set) is recognised as verified;
+    // an anonymous / non-SSO user is not. Pure rule — no org-specific User needed.
     @isTest
-    static void identityVerifiedTrueForFederatedUser() {
-        List<Profile> ps = [SELECT Id FROM Profile WHERE Name = 'Standard User' LIMIT 1];
-        System.assert(!ps.isEmpty(), 'Standard User profile exists');
-        User u = new User(
-            ProfileId = ps[0].Id,
-            LastName = 'מזוהה', FirstName = 'אזרח',
-            Email = 'askonce.fed@example.gov.il',
-            Username = 'askonce.fed.' + DateTime.now().getTime() + '@example.gov.il',
-            Alias = 'fed1', TimeZoneSidKey = 'Asia/Jerusalem',
-            LocaleSidKey = 'iw_IL', EmailEncodingKey = 'UTF-8', LanguageLocaleKey = 'iw',
-            FederationIdentifier = '000000018'
-        );
-        insert u;
-        Boolean verified;
-        System.runAs(u) {
-            verified = FormResponseController.currentUserIdentified();
-        }
-        System.assertEquals(true, verified, 'FederationIdentifier present → verified');
+    static void identifiedFromReadsFederationIdentifier() {
+        System.assertEquals(true,
+            FormResponseController.identifiedFrom(new User(FederationIdentifier = '000000018')),
+            'FederationIdentifier present → verified');
+        System.assertEquals(false,
+            FormResponseController.identifiedFrom(new User()),
+            'blank FederationIdentifier → not verified');
+        System.assertEquals(false,
+            FormResponseController.identifiedFrom(null),
+            'null user → not verified');
     }
 }
