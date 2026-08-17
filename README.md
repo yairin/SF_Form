@@ -2,8 +2,7 @@
 
 אפליקציית ווב (RTL, עברית) לניהול חיי הבית המשותפים: **מטלות בית, דמי כיס, רשימת קניות וסקרים/החלטות**.
 נגישה מכל מכשיר, עם הזדהות פשוטה של שם + קוד PIN והבחנה בין **הורה** (מנהל) ל**ילד/ה**.
-
-> הפרויקט אינו קשור יותר ל-Salesforce — הוא אפליקציה עצמאית שמאחסנת את הנתונים בענן (Postgres) או בקובץ מקומי.
+הנתונים נשמרים ב-**Firebase (Firestore)** בענן, והתראות נשלחות ב-**WhatsApp**.
 
 ## היכולות
 
@@ -17,24 +16,28 @@
 - **קישור מטלות ← דמי כיס**: אישור מטלה עם שווי (₪) זוקף אוטומטית זיכוי דמי כיס לילד שביצע.
 - **אלוף/ת הבית**: סיכום שבועי עם דירוג לפי מטלות שהושלמו ונקודות שנצברו.
 - **הרשאות צפייה**: דמי הכיס של כל ילד פרטיים כברירת מחדל; ההורה יכול לחשוף אותם לאחים.
+- **התראות WhatsApp**: הקצאת מטלה (לילד), סיום מטלה (להורים), אישור מטלה (לילד), ובקשת קנייה (להורים).
 
 ## Tech Stack
 
 - **Backend**: Node.js + Express, JWT + PIN (bcrypt)
 - **Frontend**: HTML / CSS / Vanilla JS (RTL, עברית), ללא שלב build
-- **אחסון**: שכבת נתונים מופשטת —
-  - **Postgres** בענן כשמוגדר `DATABASE_URL` (טבלת `collections` נוצרת אוטומטית),
+- **אחסון**: שכבת נתונים מופשטת עם בחירת backend לפי הסביבה —
+  - **Firestore (Firebase)** — כשמוגדר `FIREBASE_PROJECT_ID` / `USE_FIRESTORE=true` (מומלץ, בענן),
+  - **Postgres** — כשמוגדר `DATABASE_URL` (חלופה),
   - אחרת **קובץ JSON מקומי** (`data/db.json`) — נוח לפיתוח והרצה מהירה.
+- **התראות**: WhatsApp Cloud API (Meta). ללא הגדרה — מצב dry-run שרושם ל-console.
 
 ## התקנה והרצה מקומית
 
 ```bash
 npm install
-cp .env.example .env      # ערוך את JWT_SECRET (וב-DATABASE_URL אם רוצים Postgres)
-npm start                 # או: npm run dev (עם hot reload)
+cp .env.example .env      # ערוך את JWT_SECRET (השאר Firestore/WhatsApp ריקים כדי לרוץ מקומית)
+npm start                 # או: npm run dev
 ```
 
-האפליקציה תעלה בכתובת **http://localhost:3000**. בכניסה הראשונה תתבקש להקים את הבית (יצירת הורה מנהל).
+ללא הגדרות ענן, האפליקציה עולה ב-**http://localhost:3000**, שומרת ל-`data/db.json`,
+וההתראות נרשמות ל-console. בכניסה הראשונה תוקם הבית (יצירת הורה מנהל).
 
 ### בדיקות
 
@@ -43,35 +46,68 @@ npm start                 # בטרמינל אחד
 npm run test:api          # בטרמינל שני — בדיקת עשן מקצה לקצה של ה-API
 ```
 
-## פריסה לענן (מומלץ: Railway)
+## פריסה ל-Firebase
 
-Railway מספק גם שרת Node וגם Postgres מנוהל, עם פריסה אוטומטית מ-git:
+הארכיטקטורה: **Firebase Hosting** מגיש את הפרונט (CDN), הבקשות ל-`/api/**` מנותבות
+לשרת ה-Express שרץ ב-**Cloud Run**, והנתונים נשמרים ב-**Firestore**.
 
-1. פתח חשבון ב-[railway.app](https://railway.app) וחבר את מאגר ה-git.
-2. הוסף **PostgreSQL** לפרויקט (Railway יגדיר `DATABASE_URL` אוטומטית).
-3. הגדר משתני סביבה:
-   - `JWT_SECRET` — מחרוזת אקראית ארוכה (חובה).
-   - `PGSSL=true` (ברירת מחדל מתאימה לרוב הספקים).
-   - `SETUP_CODE` — אופציונלי, קוד שנדרש כדי להקים את הבית (הורה ראשון).
-4. Railway יריץ `npm start` וייתן כתובת ציבורית נגישה מכל מקום.
+### הכנה חד-פעמית
+```bash
+npm install -g firebase-tools
+firebase login
+cp .firebaserc.example .firebaserc     # החלף ב-Project ID שלך
+```
+בקונסולת Firebase: צור פרויקט, הפעל **Firestore** (מצב production), ושדרג לתוכנית **Blaze**
+(נדרש ל-Cloud Run ולקריאות רשת יוצאות ל-WhatsApp).
 
-> אותה תצורה עובדת גם ב-**Render** / **Fly.io** / **Supabase (Postgres)** — כל מה שצריך הוא להזין `DATABASE_URL` ו-`JWT_SECRET`.
+### 1) פריסת שרת ה-API ל-Cloud Run
+```bash
+gcloud run deploy bait-echad \
+  --source . \
+  --region me-west1 \
+  --allow-unauthenticated \
+  --set-env-vars JWT_SECRET=<סוד-אקראי-ארוך>,FIREBASE_PROJECT_ID=<PROJECT_ID>,WHATSAPP_TOKEN=<טוקן>,WHATSAPP_PHONE_ID=<phone-id>
+```
+> `serviceId` ו-`region` ב-`firebase.json` חייבים להתאים לשם ולאזור כאן (ברירת מחדל: `bait-echad` / `me-west1`).
+> ב-Cloud Run הרשאות Firestore נטענות אוטומטית — אין צורך בקובץ מפתח.
+
+### 2) פריסת הפרונט וכללי Firestore
+```bash
+firebase deploy --only hosting,firestore:rules
+```
+כתובת ה-Hosting נגישה מכל מקום. הכללים (`firestore.rules`) נועלים גישה ישירה של הלקוח —
+כל הגישה עוברת דרך ה-API (Admin SDK), כך שהנתונים מוגנים.
+
+## הגדרת התראות WhatsApp
+
+1. ב-[Meta for Developers](https://developers.facebook.com/) צור אפליקציה מסוג **Business**
+   והוסף את מוצר **WhatsApp**.
+2. קבל **Phone Number ID** ו-**access token** → הגדר `WHATSAPP_PHONE_ID` ו-`WHATSAPP_TOKEN`.
+3. הזן מספר טלפון לכל בן משפחה (במסך "משפחה"). מספר מקומי (05...) מומר אוטומטית לפורמט בינלאומי (972...).
+
+> שליחת טקסט חופשי מותרת בחלון 24 השעות מאז הודעת המשתמש האחרונה; ליזום מחוץ לחלון נדרשת
+> תבנית (template) מאושרת. ללא הגדרת המפתחות המערכת פועלת ב-dry-run (רישום ל-console).
 
 ## מבנה הפרויקט
 
 ```
 SF_Form/
 ├── server.js                 # נקודת כניסה + חיבור הנתיבים
+├── Dockerfile                # פריסת ה-API ל-Cloud Run
+├── firebase.json             # Hosting + ניתוב /api ל-Cloud Run + כללי Firestore
+├── firestore.rules           # נעילת גישה ישירה (הכול דרך ה-API)
+├── .firebaserc.example       # תבנית Project ID
 ├── src/
-│   ├── store.js              # שכבת נתונים ברמה גבוהה
+│   ├── store.js              # שכבת נתונים ובחירת backend
 │   ├── auth.js               # PIN + JWT + הרשאות
+│   ├── notify.js             # התראות WhatsApp (Cloud API)
 │   ├── backends/
-│   │   ├── json.js           # אחסון קובץ מקומי
-│   │   └── pg.js             # אחסון Postgres (ענן)
+│   │   ├── firestore.js      # אחסון Firestore (Firebase)
+│   │   ├── pg.js             # אחסון Postgres (חלופה)
+│   │   └── json.js           # אחסון קובץ מקומי (פיתוח)
 │   └── routes/               # auth, tasks, allowance, shopping, surveys, summary
 ├── public/                   # ממשק המשתמש (index.html, styles.css, app.js)
-├── scripts/smoke.js          # בדיקת עשן ל-API
-└── .env.example
+└── scripts/smoke.js          # בדיקת עשן ל-API
 ```
 
 ## API עיקרי
@@ -90,5 +126,5 @@ SF_Form/
 
 ## הרחבות עתידיות
 
-- התראות וסיכום שבועי ל-WhatsApp/Telegram (המבנה מוכן — סיכום זמין ב-`/api/summary/weekly`).
+- סיכום WhatsApp שבועי אוטומטי (הנתונים כבר זמינים ב-`/api/summary/weekly`).
 - מטלות מחזוריות אוטומטיות.

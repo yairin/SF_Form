@@ -2,10 +2,15 @@
 
 const express = require('express');
 const store = require('../store');
+const notify = require('../notify');
 const { authenticate, requireParent } = require('../auth');
 
 const router = express.Router();
 router.use(authenticate);
+
+async function parents() {
+  return (await store.listMembers()).filter((m) => m.role === 'parent');
+}
 
 // רשימת מטלות — הורה רואה הכל, ילד רואה רק את שלו.
 router.get('/', async (req, res) => {
@@ -35,6 +40,10 @@ router.post('/', requireParent, async (req, res) => {
     status: 'open',
     createdBy: req.member.id,
   });
+  if (task.assignedTo) {
+    const assignee = await store.getMember(task.assignedTo);
+    notify.toMember(assignee, `🏠 בית אחד: הוקצתה לך מטלה חדשה — "${task.title}"${task.points > 0 ? ` (שווי ${task.points} ₪)` : ''}`);
+  }
   res.status(201).json(task);
 });
 
@@ -53,6 +62,7 @@ router.post('/:id/submit', async (req, res) => {
     submittedAt: new Date().toISOString(),
     submittedBy: req.member.id,
   });
+  notify.toMembers(await parents(), `🏠 בית אחד: ${req.member.name} סימן/ה שסיים/ה את המטלה "${task.title}" — ממתין לאישורך.`);
   res.json(updated);
 });
 
@@ -78,6 +88,10 @@ router.post('/:id/approve', requireParent, async (req, res) => {
       taskId: task.id,
       createdBy: req.member.id,
     });
+  }
+  if (task.assignedTo) {
+    const assignee = await store.getMember(task.assignedTo);
+    notify.toMember(assignee, `🎉 בית אחד: המטלה "${task.title}" אושרה!${Number(task.points) > 0 ? ` זוכית ב-${task.points} ₪ בדמי הכיס.` : ''}`);
   }
   res.json(updated);
 });

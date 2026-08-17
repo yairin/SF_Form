@@ -32,7 +32,7 @@ router.post('/setup', async (req, res) => {
   if (members.length > 0) {
     return res.status(409).json({ error: 'הבית כבר אותחל. התחבר עם פרופיל קיים.' });
   }
-  const { name, pin, setupCode } = req.body || {};
+  const { name, pin, phone, setupCode } = req.body || {};
   if (process.env.SETUP_CODE && setupCode !== process.env.SETUP_CODE) {
     return res.status(403).json({ error: 'קוד הקמה שגוי' });
   }
@@ -48,6 +48,7 @@ router.post('/setup', async (req, res) => {
     pinHash: hashPin(pin),
     emoji: '👑',
     color: COLORS[0],
+    phone: phone ? String(phone).trim() : '',
     allowanceVisibleToSiblings: false,
   });
   const token = signToken(member);
@@ -93,7 +94,7 @@ router.get('/members', authenticate, async (req, res) => {
 
 // הוספת בן משפחה.
 router.post('/members', authenticate, requireParent, async (req, res) => {
-  const { name, pin, role, emoji, color, allowanceVisibleToSiblings } = req.body || {};
+  const { name, pin, role, emoji, color, phone, allowanceVisibleToSiblings } = req.body || {};
   if (!name || String(name).trim().length < 2) {
     return res.status(400).json({ error: 'שם נדרש (לפחות 2 תווים)' });
   }
@@ -113,6 +114,7 @@ router.post('/members', authenticate, requireParent, async (req, res) => {
     pinHash: hashPin(pin),
     emoji: emoji || (role === 'parent' ? '🧑' : '🧒'),
     color: color || COLORS[count % COLORS.length],
+    phone: phone ? String(phone).trim() : '',
     allowanceVisibleToSiblings: !!allowanceVisibleToSiblings,
   });
   res.status(201).json(publicMember(member));
@@ -124,13 +126,14 @@ router.patch('/members/:id', authenticate, requireParent, async (req, res) => {
   if (!target) return res.status(404).json({ error: 'בן המשפחה לא נמצא' });
 
   const patch = {};
-  const { name, emoji, color, role, pin, allowanceVisibleToSiblings } = req.body || {};
+  const { name, emoji, color, role, pin, phone, allowanceVisibleToSiblings } = req.body || {};
   if (name !== undefined) {
     if (String(name).trim().length < 2) return res.status(400).json({ error: 'שם קצר מדי' });
     patch.name = String(name).trim();
   }
   if (emoji !== undefined) patch.emoji = emoji;
   if (color !== undefined) patch.color = color;
+  if (phone !== undefined) patch.phone = String(phone).trim();
   if (role !== undefined) {
     if (!['parent', 'child'].includes(role)) return res.status(400).json({ error: 'תפקיד לא תקין' });
     patch.role = role;

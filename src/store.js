@@ -10,9 +10,18 @@
 
 const crypto = require('crypto');
 
-const backend = process.env.DATABASE_URL
-  ? require('./backends/pg')
-  : require('./backends/json');
+function selectBackend() {
+  // עדיפות: Firestore (Firebase) → Postgres → קובץ JSON מקומי.
+  if (process.env.USE_FIRESTORE === 'true' || process.env.FIREBASE_PROJECT_ID || process.env.FIREBASE_SERVICE_ACCOUNT) {
+    return require('./backends/firestore');
+  }
+  if (process.env.DATABASE_URL) {
+    return require('./backends/pg');
+  }
+  return require('./backends/json');
+}
+
+const backend = selectBackend();
 
 // מנעול כתיבה גלובלי — מבטיח שפעולות load-modify-save לא ירוצו במקביל וידרסו זו את זו.
 let writeChain = Promise.resolve();

@@ -2,6 +2,7 @@
 
 const express = require('express');
 const store = require('../store');
+const notify = require('../notify');
 const { authenticate, requireParent } = require('../auth');
 
 const router = express.Router();
@@ -30,6 +31,10 @@ router.post('/', async (req, res) => {
     requestedBy: req.member.id,
     approvedBy: isParent ? req.member.id : null,
   });
+  if (!isParent) {
+    const parents = (await store.listMembers()).filter((m) => m.role === 'parent');
+    notify.toMembers(parents, `🛒 בית אחד: ${req.member.name} מבקש/ת להוסיף "${item.name}"${item.qty ? ` (${item.qty})` : ''} לרשימת הקניות — ממתין לאישור.`);
+  }
   res.status(201).json(item);
 });
 

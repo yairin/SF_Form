@@ -633,6 +633,7 @@ function memberForm(id) {
       <option value="parent" ${m && m.role === 'parent' ? 'selected' : ''}>הורה</option></select></div>
     <div class="field"><label>אימוג'י</label><input id="m-emoji" value="${m ? esc(m.emoji) : '🧒'}" style="width:70px;text-align:center;font-size:22px" readonly />
       <div class="pin-pad" style="grid-template-columns:repeat(8,1fr);margin-top:8px">${emojiPick}</div></div>
+    <div class="field"><label>טלפון להתראות WhatsApp (אופציונלי)</label><input id="m-phone" type="tel" inputmode="tel" value="${m && m.phone ? esc(m.phone) : ''}" placeholder="050-0000000" /></div>
     <div class="checkbox-row"><input type="checkbox" id="m-vis" ${m && m.allowanceVisibleToSiblings ? 'checked' : ''} />
       <label for="m-vis">דמי הכיס גלויים לאחים/אחיות</label></div>
     <div class="field"><label>${m ? 'איפוס קוד PIN (השאר ריק כדי לא לשנות)' : 'קוד PIN (4-8 ספרות)'}</label><input id="m-pin" type="password" inputmode="numeric" placeholder="••••" /></div>
@@ -648,6 +649,7 @@ async function memberSave(id) {
     name: $('#m-name').value.trim(),
     role: $('#m-role').value,
     emoji: $('#m-emoji').value,
+    phone: $('#m-phone').value.trim(),
     allowanceVisibleToSiblings: $('#m-vis').checked,
   };
   const pin = $('#m-pin').value.trim();
