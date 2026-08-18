@@ -142,6 +142,15 @@ const store = {
   updateShoppingItem: (sid, patch) => update('shopping', sid, patch),
   deleteShoppingItem: (sid) => remove('shopping', sid),
 
+  // ---- Task templates (רשימת מטלות קבועה) ----
+  async listTaskTemplates() {
+    const rows = await all('taskTemplates');
+    return rows.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'he'));
+  },
+  getTaskTemplate: (tid) => findById('taskTemplates', tid),
+  createTaskTemplate: (fields) => insert('taskTemplates', fields),
+  deleteTaskTemplate: (tid) => remove('taskTemplates', tid),
+
   // ---- Surveys (סקרים והחלטות) ----
   async listSurveys() {
     const rows = await all('surveys');

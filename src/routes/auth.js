@@ -94,7 +94,7 @@ router.get('/members', authenticate, async (req, res) => {
 
 // הוספת בן משפחה.
 router.post('/members', authenticate, requireParent, async (req, res) => {
-  const { name, pin, role, emoji, color, phone, allowanceVisibleToSiblings } = req.body || {};
+  const { name, pin, role, emoji, color, phone, monthlyAllowance, allowanceVisibleToSiblings } = req.body || {};
   if (!name || String(name).trim().length < 2) {
     return res.status(400).json({ error: 'שם נדרש (לפחות 2 תווים)' });
   }
@@ -115,6 +115,8 @@ router.post('/members', authenticate, requireParent, async (req, res) => {
     emoji: emoji || (role === 'parent' ? '🧑' : '🧒'),
     color: color || COLORS[count % COLORS.length],
     phone: phone ? String(phone).trim() : '',
+    monthlyAllowance: Math.max(0, Number(monthlyAllowance) || 0),
+    lastStipendMonth: null,
     allowanceVisibleToSiblings: !!allowanceVisibleToSiblings,
   });
   res.status(201).json(publicMember(member));
@@ -126,7 +128,7 @@ router.patch('/members/:id', authenticate, requireParent, async (req, res) => {
   if (!target) return res.status(404).json({ error: 'בן המשפחה לא נמצא' });
 
   const patch = {};
-  const { name, emoji, color, role, pin, phone, allowanceVisibleToSiblings } = req.body || {};
+  const { name, emoji, color, role, pin, phone, monthlyAllowance, allowanceVisibleToSiblings } = req.body || {};
   if (name !== undefined) {
     if (String(name).trim().length < 2) return res.status(400).json({ error: 'שם קצר מדי' });
     patch.name = String(name).trim();
@@ -134,6 +136,7 @@ router.patch('/members/:id', authenticate, requireParent, async (req, res) => {
   if (emoji !== undefined) patch.emoji = emoji;
   if (color !== undefined) patch.color = color;
   if (phone !== undefined) patch.phone = String(phone).trim();
+  if (monthlyAllowance !== undefined) patch.monthlyAllowance = Math.max(0, Number(monthlyAllowance) || 0);
   if (role !== undefined) {
     if (!['parent', 'child'].includes(role)) return res.status(400).json({ error: 'תפקיד לא תקין' });
     patch.role = role;

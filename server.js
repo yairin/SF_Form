@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 
 const store = require('./src/store');
+const stipend = require('./src/stipend');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -52,8 +53,17 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'אירעה שגיאה בשרת' });
 });
 
+// זיכוי דמי הכיס החודשיים (ראש חודש עברי) — נבדק באתחול ואז כל כמה שעות,
+// כך שאין תלות בשירות תזמון חיצוני; ההשוואה מול lastStipendMonth שומרת על אידמפוטנטיות.
+function scheduleMonthlyStipend() {
+  const check = () => stipend.ensureMonthlyAllowances().catch((err) => console.error('כשל בזיכוי דמי כיס חודשיים:', err.message));
+  check();
+  setInterval(check, 6 * 60 * 60 * 1000);
+}
+
 async function main() {
   await store.init();
+  scheduleMonthlyStipend();
   app.listen(PORT, () => {
     console.log(`בית אחד — השרת פועל על http://localhost:${PORT} (אחסון: ${store.kind})`);
   });

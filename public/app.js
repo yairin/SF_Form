@@ -331,8 +331,9 @@ async function viewTasks() {
   if (isParent()) {
     $('#fab').innerHTML = `<div class="fab"><button class="btn primary" onclick="taskForm()">➕ מטלה</button></div>`;
   }
+  const quickBtn = isParent() ? `<button class="btn outline block" onclick="quickAssignForm()" style="margin-bottom:12px">📋 הקצאה מהירה מרשימת מטלות</button>` : '';
   if (!tasks.length) {
-    view.innerHTML = emptyState('✅', 'אין מטלות עדיין', isParent() ? 'הוסף מטלה ראשונה עם הכפתור למטה' : 'כל הכבוד, אין מה לעשות כרגע!');
+    view.innerHTML = quickBtn + emptyState('✅', 'אין מטלות עדיין', isParent() ? 'הוסף מטלה ראשונה עם הכפתור למטה' : 'כל הכבוד, אין מה לעשות כרגע!');
     return;
   }
   const groups = {
@@ -344,7 +345,7 @@ async function viewTasks() {
   if (groups.submitted.length) html += taskGroup('⏳ ממתין לאישור', groups.submitted);
   if (groups.open.length) html += taskGroup('📝 לביצוע', groups.open);
   if (groups.approved.length) html += taskGroup('✅ הושלמו', groups.approved.slice(0, 12));
-  view.innerHTML = html;
+  view.innerHTML = quickBtn + html;
 }
 function taskGroup(title, list) {
   return `<div class="section-title">${title}</div><div class="card">${list.map(taskRow).join('')}</div>`;
@@ -366,10 +367,11 @@ function taskRow(t) {
   }
   const sub = [
     assignee ? `${assignee.emoji} ${esc(assignee.name)}` : 'לא הוקצה',
-    t.points > 0 ? money(t.points) : null,
     t.dueDate ? '📅 ' + esc(t.dueDate) : null,
     t.rejectNote ? '↩︎ ' + esc(t.rejectNote) : null,
   ].filter(Boolean).join(' · ');
+  const isPaid = t.type === 'paid';
+  const typeBadge = `<span class="badge ${isPaid ? 'points' : 'duty'}">${isPaid ? money(t.points) : 'ללא תשלום'}</span>`;
   return `<div class="item">
     ${assignee ? avatar(assignee) : '<div class="avatar-sm" style="background:#ccc">?</div>'}
     <div class="item-main">
@@ -377,39 +379,155 @@ function taskRow(t) {
       <div class="item-sub">${sub}</div>
       ${t.notes ? `<div class="item-sub">${esc(t.notes)}</div>` : ''}
     </div>
-    <div class="item-actions"><span class="badge ${t.status}">${statusLabel}</span>${actions}</div>
+    <div class="item-actions">${typeBadge}<span class="badge ${t.status}">${statusLabel}</span>${actions}</div>
   </div>`;
 }
+let taskFormState = null;
 function taskForm(t) {
-  const kids = state.members;
-  const opts = kids.map((m) => `<option value="${m.id}" ${t && t.assignedTo === m.id ? 'selected' : ''}>${esc(m.name)}</option>`).join('');
-  openModal(`
-    <h3>${t ? 'עריכת מטלה' : 'מטלה חדשה'}</h3>
-    <div class="field"><label>כותרת</label><input id="t-title" value="${t ? esc(t.title) : ''}" placeholder="לדוגמה: לסדר את החדר" /></div>
-    <div class="field"><label>למי מוקצה</label><select id="t-assignee"><option value="">— ללא —</option>${opts}</select></div>
+  taskFormState = {
+    editId: t ? t.id : '',
+    title: t ? t.title : '',
+    assignedTo: t ? (t.assignedTo || '') : '',
+    type: t ? (t.type || 'duty') : 'duty',
+    points: t ? (t.points || 0) : 0,
+    dueDate: t && t.dueDate ? t.dueDate : '',
+    notes: t ? (t.notes || '') : '',
+    addToLibrary: false,
+  };
+  openModal(renderTaskForm());
+}
+function renderTaskForm() {
+  const s = taskFormState;
+  const opts = state.members.map((m) => `<option value="${m.id}" ${s.assignedTo === m.id ? 'selected' : ''}>${esc(m.name)}</option>`).join('');
+  return `
+    <h3>${s.editId ? 'עריכת מטלה' : 'מטלה חדשה'}</h3>
+    <div class="field"><label>כותרת</label><input id="t-title" value="${esc(s.title)}" oninput="taskFormState.title=this.value" placeholder="לדוגמה: לסדר את החדר" /></div>
+    <div class="field"><label>למי מוקצה</label><select id="t-assignee" onchange="taskFormState.assignedTo=this.value"><option value="">— ללא —</option>${opts}</select></div>
     <div class="field-row">
-      <div class="field"><label>שווי בדמי כיס (₪)</label><input id="t-points" type="number" min="0" value="${t ? t.points : 0}" /></div>
-      <div class="field"><label>תאריך יעד</label><input id="t-due" type="date" value="${t && t.dueDate ? esc(t.dueDate) : ''}" /></div>
+      <div class="field"><label>סוג מטלה</label>
+        <select id="t-type" onchange="taskFormTypeChange(this.value)">
+          <option value="duty" ${s.type === 'duty' ? 'selected' : ''}>חובה (ללא תשלום)</option>
+          <option value="paid" ${s.type === 'paid' ? 'selected' : ''}>בתשלום</option>
+        </select>
+      </div>
+      ${s.type === 'paid' ? `<div class="field"><label>סכום (₪)</label><input id="t-points" type="number" min="0" value="${s.points}" oninput="taskFormState.points=Number(this.value)||0" /></div>` : ''}
     </div>
-    <div class="field"><label>הערות</label><textarea id="t-notes" rows="2">${t ? esc(t.notes || '') : ''}</textarea></div>
+    <div class="field"><label>תאריך יעד <span class="optional">(אופציונלי)</span></label><input id="t-due" type="date" value="${esc(s.dueDate)}" oninput="taskFormState.dueDate=this.value" /></div>
+    <div class="field"><label>הערות</label><textarea id="t-notes" rows="2" oninput="taskFormState.notes=this.value">${esc(s.notes)}</textarea></div>
+    ${!s.editId ? `<div class="checkbox-row"><input type="checkbox" id="t-addlib" onchange="taskFormState.addToLibrary=this.checked" /><label for="t-addlib">הוסף לרשימת המטלות הקבועה</label></div>` : ''}
     <div class="modal-actions">
       <button class="btn ghost" onclick="closeModal()">ביטול</button>
-      <button class="btn primary" onclick="taskSave('${t ? t.id : ''}')">שמירה</button>
-    </div>`);
+      <button class="btn primary" onclick="taskSave()">שמירה</button>
+    </div>`;
 }
-async function taskSave(id) {
+function taskFormTypeChange(v) {
+  taskFormState.type = v;
+  if (v === 'duty') taskFormState.points = 0;
+  $('.modal').innerHTML = renderTaskForm();
+}
+async function taskSave() {
+  const s = taskFormState;
   const body = {
-    title: $('#t-title').value.trim(),
-    assignedTo: $('#t-assignee').value || null,
-    points: Number($('#t-points').value) || 0,
-    dueDate: $('#t-due').value || null,
-    notes: $('#t-notes').value.trim(),
+    title: s.title.trim(),
+    assignedTo: s.assignedTo || null,
+    type: s.type,
+    points: s.type === 'paid' ? Number(s.points) || 0 : 0,
+    dueDate: s.dueDate || null,
+    notes: s.notes.trim(),
   };
   if (body.title.length < 2) return toast('נא להזין כותרת', 'err');
+  if (!s.editId) body.addToLibrary = !!s.addToLibrary;
   try {
-    if (id) await api('PATCH', '/tasks/' + id, body);
+    if (s.editId) await api('PATCH', '/tasks/' + s.editId, body);
     else await api('POST', '/tasks', body);
     closeModal(); toast('נשמר', 'ok'); viewTasks(); loadChampion();
+  } catch (err) { toast(err.message, 'err'); }
+}
+
+/* ---------- הקצאה מהירה מרשימת מטלות קבועה ---------- */
+let quickAssignState = null;
+async function quickAssignForm() {
+  const templates = await api('GET', '/tasks/templates');
+  const firstChild = state.members.find((m) => m.role === 'child');
+  quickAssignState = {
+    assignedTo: firstChild ? firstChild.id : '',
+    selected: new Set(),
+    templates,
+    newTitle: '',
+    newType: 'duty',
+    newPoints: 0,
+  };
+  openModal(renderQuickAssign());
+}
+function renderQuickAssign() {
+  const s = quickAssignState;
+  const kids = state.members.filter((m) => m.role === 'child');
+  const kidOpts = kids.length
+    ? kids.map((m) => `<option value="${m.id}" ${s.assignedTo === m.id ? 'selected' : ''}>${esc(m.name)}</option>`).join('')
+    : '<option value="">אין ילדים במשפחה</option>';
+  const rows = s.templates.length
+    ? s.templates.map((t) => `
+      <div class="item" style="padding:8px 2px">
+        <input type="checkbox" style="width:18px;height:18px;margin-top:3px" ${s.selected.has(t.id) ? 'checked' : ''} onchange="quickAssignToggle('${t.id}', this.checked)" />
+        <div class="item-main"><div class="item-title" style="font-size:14px">${esc(t.title)}</div></div>
+        <span class="badge ${t.type === 'paid' ? 'points' : 'duty'}">${t.type === 'paid' ? money(t.points) : 'ללא תשלום'}</span>
+        <button class="link" onclick="quickAssignDeleteTemplate('${t.id}')">🗑️</button>
+      </div>`).join('')
+    : '<div class="empty">הרשימה ריקה — הוסיפו מטלה למטה</div>';
+  return `<h3>📋 הקצאה מרשימת מטלות</h3>
+    <div class="field"><label>למי מקצים</label><select id="qa-child" onchange="quickAssignState.assignedTo=this.value">${kidOpts}</select></div>
+    <label style="font-size:13px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:6px">בחרו מהרשימה</label>
+    <div class="card" style="max-height:220px;overflow-y:auto;padding:6px 10px">${rows}</div>
+    <div class="spacer"></div>
+    <div class="field">
+      <label>הוספת מטלה חדשה לרשימה</label>
+      <div class="field-row">
+        <input id="qa-new-title" placeholder="שם המטלה" value="${esc(s.newTitle)}" oninput="quickAssignState.newTitle=this.value" style="flex:2" />
+        <select id="qa-new-type" onchange="quickAssignState.newType=this.value; quickAssignRefresh()" style="flex:1">
+          <option value="duty" ${s.newType === 'duty' ? 'selected' : ''}>חובה</option>
+          <option value="paid" ${s.newType === 'paid' ? 'selected' : ''}>בתשלום</option>
+        </select>
+      </div>
+      ${s.newType === 'paid' ? `<input id="qa-new-points" type="number" min="0" placeholder="סכום (₪)" value="${s.newPoints}" oninput="quickAssignState.newPoints=Number(this.value)||0" style="margin-top:8px" />` : ''}
+      <button class="link" style="margin-top:10px" onclick="quickAssignAddTemplate()">➕ הוספה לרשימה</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">ביטול</button>
+      <button class="btn primary" onclick="quickAssignSubmit()">הקצאה (${s.selected.size})</button>
+    </div>`;
+}
+function quickAssignRefresh() { $('.modal').innerHTML = renderQuickAssign(); }
+function quickAssignToggle(id, checked) {
+  if (checked) quickAssignState.selected.add(id); else quickAssignState.selected.delete(id);
+  quickAssignRefresh();
+}
+async function quickAssignAddTemplate() {
+  const s = quickAssignState;
+  if (!s.newTitle || s.newTitle.trim().length < 2) return toast('נא להזין שם מטלה', 'err');
+  try {
+    const created = await api('POST', '/tasks/templates', { title: s.newTitle.trim(), type: s.newType, points: s.newPoints });
+    s.templates.push(created);
+    s.newTitle = ''; s.newPoints = 0;
+    quickAssignRefresh();
+    toast('נוסף לרשימה', 'ok');
+  } catch (err) { toast(err.message, 'err'); }
+}
+async function quickAssignDeleteTemplate(id) {
+  if (!confirm('להסיר את המטלה מהרשימה הקבועה?')) return;
+  try {
+    await api('DELETE', '/tasks/templates/' + id);
+    quickAssignState.templates = quickAssignState.templates.filter((t) => t.id !== id);
+    quickAssignState.selected.delete(id);
+    quickAssignRefresh();
+  } catch (err) { toast(err.message, 'err'); }
+}
+async function quickAssignSubmit() {
+  const s = quickAssignState;
+  if (!s.assignedTo) return toast('נא לבחור ילד/ה', 'err');
+  if (!s.selected.size) return toast('נא לבחור לפחות מטלה אחת', 'err');
+  try {
+    await api('POST', '/tasks/assign-from-templates', { assignedTo: s.assignedTo, templateIds: Array.from(s.selected) });
+    closeModal(); toast('המטלות הוקצו', 'ok'); viewTasks(); loadChampion();
   } catch (err) { toast(err.message, 'err'); }
 }
 async function taskSubmit(id) { await act(() => api('POST', `/tasks/${id}/submit`), 'סומן כבוצע ✓', viewTasks); }
@@ -608,7 +726,7 @@ async function viewFamily() {
     membersHtml = `<div class="section-title">👪 בני המשפחה</div><div class="card">` +
       state.members.map((m) => `<div class="item">${avatar(m)}
         <div class="item-main"><div class="item-title">${esc(m.name)} ${m.role === 'parent' ? '👑' : ''}</div>
-        <div class="item-sub">${m.role === 'parent' ? 'הורה' : 'ילד/ה'}${m.role === 'child' ? ' · דמי כיס גלויים לאחים: ' + (m.allowanceVisibleToSiblings ? 'כן' : 'לא') : ''}</div></div>
+        <div class="item-sub">${m.role === 'parent' ? 'הורה' : 'ילד/ה'}${m.role === 'child' ? ' · חודשי: ' + money(m.monthlyAllowance || 0) + ' · גלוי לאחים: ' + (m.allowanceVisibleToSiblings ? 'כן' : 'לא') : ''}</div></div>
         <div class="item-actions"><button class="btn ghost sm" onclick="memberForm('${m.id}')">עריכה</button></div></div>`).join('') +
       `</div><button class="btn primary block" onclick="memberForm()">➕ הוסף בן/בת משפחה</button>`;
   }
@@ -628,12 +746,16 @@ function memberForm(id) {
   const emojiPick = EMOJIS.map((e) => `<button type="button" class="pin-key" style="padding:8px;font-size:20px" onclick="pickEmoji('${e}')">${e}</button>`).join('');
   openModal(`<h3>${m ? 'עריכת בן משפחה' : 'הוספת בן משפחה'}</h3>
     <div class="field"><label>שם</label><input id="m-name" value="${m ? esc(m.name) : ''}" /></div>
-    <div class="field"><label>תפקיד</label><select id="m-role">
+    <div class="field"><label>תפקיד</label><select id="m-role" onchange="document.getElementById('m-allowance-wrap').classList.toggle('hidden', this.value==='parent')">
       <option value="child" ${m && m.role === 'child' ? 'selected' : ''}>ילד/ה</option>
       <option value="parent" ${m && m.role === 'parent' ? 'selected' : ''}>הורה</option></select></div>
     <div class="field"><label>אימוג'י</label><input id="m-emoji" value="${m ? esc(m.emoji) : '🧒'}" style="width:70px;text-align:center;font-size:22px" readonly />
       <div class="pin-pad" style="grid-template-columns:repeat(8,1fr);margin-top:8px">${emojiPick}</div></div>
     <div class="field"><label>טלפון להתראות WhatsApp (אופציונלי)</label><input id="m-phone" type="tel" inputmode="tel" value="${m && m.phone ? esc(m.phone) : ''}" placeholder="050-0000000" /></div>
+    <div id="m-allowance-wrap" class="field ${m && m.role === 'parent' ? 'hidden' : ''}">
+      <label>דמי כיס חודשיים קבועים (₪) <span class="optional">— ייזקפו אוטומטית בכל ראש חודש עברי</span></label>
+      <input id="m-allowance" type="number" min="0" value="${m ? (m.monthlyAllowance || 0) : 0}" />
+    </div>
     <div class="checkbox-row"><input type="checkbox" id="m-vis" ${m && m.allowanceVisibleToSiblings ? 'checked' : ''} />
       <label for="m-vis">דמי הכיס גלויים לאחים/אחיות</label></div>
     <div class="field"><label>${m ? 'איפוס קוד PIN (השאר ריק כדי לא לשנות)' : 'קוד PIN (4-8 ספרות)'}</label><input id="m-pin" type="password" inputmode="numeric" placeholder="••••" /></div>
@@ -650,6 +772,7 @@ async function memberSave(id) {
     role: $('#m-role').value,
     emoji: $('#m-emoji').value,
     phone: $('#m-phone').value.trim(),
+    monthlyAllowance: Number($('#m-allowance').value) || 0,
     allowanceVisibleToSiblings: $('#m-vis').checked,
   };
   const pin = $('#m-pin').value.trim();

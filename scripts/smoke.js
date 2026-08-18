@@ -79,13 +79,41 @@ async function main() {
   });
   check('child forbidden from creating members', forbidden.status === 403, forbidden.data);
 
-  // Parent creates a task assigned to child with points
+  // Parent creates a duty task (no payment) assigned to the child
+  const dutyTask = await api('POST', '/api/tasks', {
+    token: parentToken,
+    body: { title: 'לסדר את המיטה', assignedTo: childId, type: 'duty', points: 999, notes: 'כל בוקר' },
+  });
+  check('create duty task', dutyTask.status === 201 && dutyTask.data.type === 'duty', dutyTask.data);
+  check('duty task ignores points', dutyTask.data.points === 0, dutyTask.data);
+
+  // Parent creates a paid task assigned to child, and adds it to the templates library
   const task = await api('POST', '/api/tasks', {
     token: parentToken,
-    body: { title: 'להוציא את הזבל', assignedTo: childId, points: 10, notes: 'כל ערב' },
+    body: { title: 'להוציא את הזבל', assignedTo: childId, type: 'paid', points: 10, notes: 'כל ערב', addToLibrary: true },
   });
-  check('create task', task.status === 201, task.data);
+  check('create paid task', task.status === 201 && task.data.type === 'paid' && task.data.points === 10, task.data);
   const taskId = task.data.id;
+
+  // Approving the duty task must NOT credit allowance
+  const dutySubmit = await api('POST', `/api/tasks/${dutyTask.data.id}/submit`, { token: childToken });
+  check('duty task submit', dutySubmit.status === 200, dutySubmit.data);
+  const dutyApprove = await api('POST', `/api/tasks/${dutyTask.data.id}/approve`, { token: parentToken });
+  check('duty task approve', dutyApprove.status === 200, dutyApprove.data);
+  const balBeforePaid = await api('GET', `/api/allowance/${childId}`, { token: parentToken });
+  check('duty task did not credit allowance', balBeforePaid.status === 200 && balBeforePaid.data.balance === 0, balBeforePaid.data);
+
+  // Templates library: the paid task should have been saved to the library
+  const templates = await api('GET', '/api/tasks/templates', { token: parentToken });
+  check('templates list includes new template', templates.status === 200 && templates.data.some((t) => t.title === 'להוציא את הזבל' && t.type === 'paid'), templates.data);
+  const templateId = templates.data.find((t) => t.title === 'להוציא את הזבל').id;
+
+  // Quick-assign from templates: bulk-assign the template to the child
+  const bulk = await api('POST', '/api/tasks/assign-from-templates', {
+    token: parentToken,
+    body: { assignedTo: childId, templateIds: [templateId] },
+  });
+  check('assign from templates', bulk.status === 201 && bulk.data.length === 1 && bulk.data[0].templateId === templateId, bulk.data);
 
   // Child sees only own tasks
   const childTasks = await api('GET', '/api/tasks', { token: childToken });
