@@ -55,5 +55,12 @@ async function main() {
 
 main().catch((err) => {
   console.error('Discovery failed:', err.message);
+  // "authentication failure" from the OAuth2 endpoint has no further detail in
+  // err.message — dump whatever else is on the error object (error/error_description
+  // fields from Salesforce's token response) since that's where the real reason is.
+  const extra = Object.keys(err).filter((k) => k !== 'message');
+  if (extra.length) {
+    console.error('Additional error detail:', JSON.stringify(err, extra, 2));
+  }
   process.exit(1);
 });
