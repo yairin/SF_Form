@@ -40,14 +40,23 @@ async function createCase(input) {
       Description: buildDescription(input),
       Municipal__c: input.municipal,
       AnonymousCase__c: !input.accountId,
+      // Required field (reference -> Group, User) — no sane code default, must come
+      // from .env (SF_CASE_DEFAULT_OWNER_ID) or be overridden per-request.
+      OwnerId: input.ownerId || config.caseDefaultOwnerId,
     };
     if (input.accountId) record.AccountId = input.accountId;
-    if (input.categoryId) record[config.caseFields.category] = input.categoryId;
-    if (input.topicId) record[config.caseFields.topic] = input.topicId;
-    if (input.subtopicId) record[config.caseFields.subtopic] = input.subtopicId;
+    // Category__c/Topic__c/Sub_Topic__c are plain picklists, not lookups — pass the
+    // AI-selected label straight through (see config.js caseFields comment).
+    if (input.category) record[config.caseFields.category] = input.category;
+    if (input.topic) record[config.caseFields.topic] = input.topic;
+    if (input.subtopic) record[config.caseFields.subtopic] = input.subtopic;
     if (input.caseRouteId) record[config.caseFields.caseRoute] = input.caseRouteId;
     if (input.locationId) record[config.caseFields.location] = input.locationId;
     if (input.addressId) record[config.caseFields.address] = input.addressId;
+    // Id_number__c is a Number field — only fits IsraeliID, not alphanumeric passports.
+    if (input.idType === 'IsraeliID' && input.idNumber && /^\d+$/.test(input.idNumber)) {
+      record.Id_number__c = Number(input.idNumber);
+    }
 
     const res = await conn.sobject('Case').create(record);
     if (!res.success) throw new Error(`Case creation failed: ${JSON.stringify(res.errors)}`);

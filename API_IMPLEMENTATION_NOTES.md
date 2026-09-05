@@ -38,7 +38,7 @@ Authorization: Bearer <token>
 
 {
   "callId": "call-98765",
-  "municipality": "0011t000...",
+  "municipality": "634",
   "language": "עברית",
   "callReceivedAt": "2026-09-05T10:00:00Z",
   "caller": {
@@ -59,9 +59,9 @@ Authorization: Bearer <token>
     "subject": "בור בכביש הרצל",
     "type": "service case",
     "description": "סיכום שיחה שנכתב ע\"י הבינה המלאכותית...",
-    "categoryId": "<Salesforce record Id, אופציונלי>",
-    "topicId": "<Salesforce record Id, אופציונלי>",
-    "subtopicId": "<Salesforce record Id, אופציונלי>",
+    "category": "Infrastructure - 634",
+    "topic": "Roads and sidewalks - 634",
+    "subtopic": "Pit in the road / pothole - 634",
     "locationId": "<Salesforce record Id, אופציונלי>",
     "addressId": "<Salesforce record Id, אופציונלי>"
   },
@@ -78,17 +78,28 @@ Authorization: Bearer <token>
 - שגיאת ולידציה: `400` `{ "success": false, "errors": [...], "code": "VALIDATION_ERROR" }`
 - שגיאת Salesforce: `502` `{ "success": false, "error": "...", "code": "SF_ERROR", "routeToHuman": true }`
 
-## החלטות עיצוב ופערים שדורשים אישור מנהל ה-ORG
+## ✅ הסכימה אושרה מול ה-Sandbox האמיתי (2026-09-06, `npm run discover-sf-schema`)
 
-המסמך המקורי מגדיר את רוב השדות במדויק, אבל משאיר כמה נקודות פתוחות. המימוש הנוכחי בנוי כך שהכל ניתן לקונפיגורציה (`.env`), אבל **אלה חייבים אימות לפני production**:
+הרצה מוצלחת מול הסנדבוקס האמיתי חשפה כמה דברים שהמסמך המקורי ניחש לא נכון, ותוקנו בקוד:
 
-1. **שדות ה-Lookup על Case** (`RegulatoryAuthorizationType__r__IssuingDepartment__PrimaryType__c` וכו') — כפי שמופיעים במסמך המקורי נראים כמו נתיב יחסים ב-SOQL (`__r__`) ולא כשם API אמיתי של שדה לכתיבה. ב-`src/config.js` יש ברירת מחדל סבירה (`PrimaryType__c`, `IssuingDepartmentId__c`, `RegulatoryAuthorizationType__c`) — **יש לאמת מול Object Manager** את שמות ה-API האמיתיים ולעדכן ב-`.env`.
-2. **CaseRoute__c** — המסמך עצמו קובע שזהו שדה שיתמלא ע"י אוטומציה (Flow) שתיבנה בתוך Salesforce, לא ע"י ה-AI. ה-API תומך בקבלת `caseRouteId` אם הוא כן יגיע, אך לא ממציא לוגיקת שיוך — זה תלוי בפיתוח ה-Flow בצד Salesforce.
-3. **Location / Address** — אותו עיקרון: המסמך אומר שהתאמת השם שה-AI יספק לרשומה בפועל תתבצע ע"י אוטומציה בתוך Salesforce. ה-API כרגע מקבל רק `locationId`/`addressId` (Id ישיר) — אם ה-AI לא יכול לספק Id ישיר (רק שם טקסטואלי), צריך להחליט האם ה-Flow יעבוד על שדה טקסט זמני, ואם כן — מהו שם ה-API שלו.
-4. **Person Account Record Type** — `SF_PERSON_ACCOUNT_RECORD_TYPE_ID` חובה כדי ש-`Account.create` יצליח כראוי; יש לאתר את ה-Id הנכון (Setup → Object Manager → Account → Record Types).
-5. **CASE_TYPES / Origin** — הערכים `Info case` / `service case` הועתקו כלשונם מהמסמך (כולל חוסר האחידות ב-casing); ו-`טלפון` כערך Origin. מומלץ לאמת מול ה-picklist בפועל שאלה אכן הערכים המדויקים.
-6. **טיפול בשגיאות** (שדה חובה חסר / ערך פיקליסט לא תקין / timeout מוניפורס) — המסמך המקורי מציין שאין הגדרה לכך. המימוש הנוכחי: ולידציה מקדימה מחזירה `400` עם פירוט; כל כשל אחר (כולל timeout מול Salesforce) מוחזר כ-`502 SF_ERROR` עם `routeToHuman: true`, כדי שהמערכת הטלפונית תדע להעביר למענה אנושי. יש לאשר שזו ההתנהגות הרצויה.
-7. **SLA (תגובה תוך שנייה)** — עם קריאות API סינכרוניות מול Salesforce (חיפוש Account, חיפוש פניה פתוחה, יצירת/עדכון ContactPointPhone, יצירת Case) קשה להבטיח פחות משנייה בכל תרחיש; לכן העלאת הקבצים המצורפים מתבצעת אחרי מתן התשובה, לא לפניה.
+- **`Case.Origin` = `"Phone"` (אנגלית), לא `"טלפון"`.** הניחוש המקורי היה שגוי לגמרי — `src/constants.js` תוקן. זה היה באג שהיה שובר כל יצירת Case.
+- **Category/Topic/Sub-Topic הם פיקליסטים רגילים, לא Lookup.** שמות ה-API האמיתיים: `Category__c`, `Topic__c`, `Sub_Topic__c` (לא `RegulatoryAuthorizationType__r__...` כפי שהמסמך המקורי רמז). הערכים כוללים סיומת רשות, למשל `"Infrastructure - 634"` — כלומר כל רשות רואה קטלוג ערכים שונה. ה-API כעת מקבל את אלה כמחרוזת חופשית (`case.category`/`case.topic`/`case.subtopic`) ומעביר ישירות ל-Salesforce, בלי לאמת מול רשימה סגורה (כי היא תלוית-רשות).
+- **`CaseRoute__c`, `Location__c`, `Address__c` — כולם מאושרים כשמות API נכונים** (Lookup fields, `CaseRoute__c`/`Location`/`Address` בהתאמה).
+- **`Municipal__c` (גם ב-Account וגם ב-Case) — ערכי הפיקליסט האמיתיים**: `משמ, 634, 1200, 6600, 229, 8400, 4000, 9100, 2034, 4203, 12345, 6100, 494, 195`. `src/validation.js` עכשיו מאמת מול הרשימה הזו.
+- **`Case.Type` = `Info case` / `service case`** — מאושר, בדיוק כפי שניחשנו.
+- **Person Account Record Type ("חשבון אישי") — `012Wn0000004InxIAE`.** גם הדיפולט של האובייקט, ולכן `Account.create` כנראה יעבוד גם בלעדיו, אבל הוגדר במפורש ב-`.env.example`.
+- **`Case.OwnerId` הוא שדה חובה** (`reference -> Group, User`) — לא היה מטופל בקוד בכלל לפני העדכון הזה! נוסף `SF_CASE_DEFAULT_OWNER_ID` (`config.caseDefaultOwnerId`), אבל **אין לו עדיין ערך אמיתי** — צריך Id של Queue (למשל `Moked_Queue` שכבר קיים בארגון) או User. **בלי זה, כל יצירת Case תיכשל.**
+- **`Case.Id_number__c` קיים** (type=Number) — שדה למספר ת"ז/דרכון ישירות על ה-Case. מוזן רק כש-`idType=IsraeliID` וה-idNumber מספרי (Number לא תומך בדרכון עם אותיות) — אם `IdentificationType` הוא Passport, השדה הזה נשאר ריק.
+- **`ContactPointPhone` מחזיר `NOT_FOUND`.** האובייקט לא קיים/לא נגיש בארגון הזה, בניגוד למה שהמסמך המקורי תיאר. `src/routes/cases.js` עכשיו "בולע" את השגיאה הזו (log בלבד, לא נכשל) כדי לא לחסום את כל תהליך יצירת ה-Case — אבל **זו עדיין שאלה פתוחה**: איפה בפועל אמור להישמר מספר הטלפון של הפונה?
+
+## פערים שנותרו פתוחים
+
+1. **`SF_CASE_DEFAULT_OWNER_ID` — חוסם, אין לו ערך.** צריך Id אמיתי של Queue/User מהארגון (למשל למצוא את ה-Id של `Moked_Queue`).
+2. **`ContactPointPhone` NOT_FOUND** — צריך תשובה: האם להפעיל את האובייקט בארגון, או לאחסן את הטלפון בשדה אחר (יש כמה מועמדים על Account/Case כמו `Contact_Person_Phone__pc`, `WebMobile__c` — אבל אף אחד לא תואם בדיוק לתיאור במסמך המקורי).
+3. **`CaseRoute__c`** — עדיין באחריות אוטומציה שתיבנה בתוך Salesforce (Flow), לא ה-API הזה. ה-API תומך בקבלת `caseRouteId` אם יסופק ישירות.
+4. **Category/Topic/Sub-Topic תלויי-רשות** — כרגע אין ולידציה מול רשימה סגורה (כי היא משתנה לפי `municipality`); Salesforce עצמו ידחה ערך פיקליסט לא תקין ביצירת ה-Case (יחזור כ-`502 SF_ERROR` כללי, לא `400` ממוקד — פוטנציאל לשיפור עתידי).
+5. **טיפול בשגיאות** (שדה חובה חסר / timeout מוניפורס) — המסמך המקורי מציין שאין הגדרה לכך. ההתנהגות הנוכחית: ולידציה מקדימה → `400`; כל כשל אחר → `502 SF_ERROR` עם `routeToHuman: true`.
+6. **SLA (תגובה תוך שנייה)** — קשה להבטיח עם קריאות API סינכרוניות מרובות; העלאת קבצים מצורפים כבר זזה להיות אחרי התשובה כדי לצמצם את זה.
 
 ## משתני סביבה חדשים
 
@@ -102,18 +113,16 @@ Authorization: Bearer <token>
 עבור חיבור API/login (jsforce), יש להשתמש בכתובת ה-My Domain המקבילה — `https://<domain>--<sandbox>.sandbox.my.salesforce.com` במקום `.lightning.force.com` — כלומר:
 `https://localgovernmenteconomicserviceslt2--mashamdev.sandbox.my.salesforce.com`
 
-זהו כרגע ברירת המחדל ב-`.env.example`. **זה עדיין לא נבדק בפועל** — עדיין חסרים username/password/security token (או Connected App consumer key/secret) כדי לבצע login אמיתי.
+זהו כרגע ברירת המחדל ב-`.env.example`, **ומאושר עובד** — `npm run discover-sf-schema` התחבר בהצלחה עם הכתובת הזו.
 
-### "Use Any API Auth" — התחברות דרך Connected App במקום login() קלאסי
+### "Use Any API Auth" — פתרון סופי: הרשאת מערכת, לא Connected App
 
 ניסיון login ראשון נגד ה-Sandbox האמיתי נכשל עם:
 `INSUFFICIENT_ACCESS: SOAP API login() requires the Use Any API Auth user permission.`
 
-זו הגבלת אבטחה סטנדרטית בארגונים חדשים יותר — קריאת ה-SOAP `login()` הקלאסית (username+password+token, בלי Connected App) חסומה כברירת מחדל אלא אם למשתמש/פרופיל יש את ההרשאה `Use Any API Client`. **הפתרון שיושם: להשתמש בזרימת OAuth2 username-password המקושרת ל-Connected App ספציפי**, שלא כפופה להגבלה הזו.
+נוסה תחילה מעבר ל-OAuth2 username-password flow דרך External Client App (הגרסה החדשה ל-Connected App) — **זה התברר כמבוי סתום**: היסטוריית הכניסות של המשתמש הראתה `"זרימת שם משתמש-סיסמה מושבתת"` — ה-org חוסם את זרימת ה-OAuth2 username-password הזו לגמרי, ברמת הארגון, ללא קשר להגדרות ה-App הספציפי.
 
-`src/salesforceClient.js` עודכן: אם `SF_CLIENT_ID`/`SF_CLIENT_SECRET` מוגדרים ב-`.env`, ההתחברות עוברת דרך `jsforce.OAuth2` (מוגבל ל-Connected App הזה בלבד) במקום ה-SOAP login הקלאסי. `SF_CLIENT_ID`/`SF_CLIENT_SECRET` הפכו בפועל **מחייבים**, לא אופציונליים.
-
-**מה נדרש כדי שזה יעבוד:** Connected App פעיל ב-Sandbox (Setup → App Manager → New Connected App, עם OAuth מופעל וה-scopes `api` + `refresh_token`) — זה בדיוק הצעד הראשון שמתואר ב-README. יש להעתיק את ה-Consumer Key/Secret שלו ל-`.env`. אם עדיין אין Connected App כזה בסנדבוקס — זה מה שצריך ליצור עכשיו לפני הרצה חוזרת של `npm run discover-sf-schema`.
+**הפתרון בפועל: תת ההרשאה החסרה, "Use Any API Client" (בעברית: "השתמש באימות API כלשהו"), ניתנה כ-System Permission דרך Permission Set חדש שהוקצה למשתמש** — ואז ה-SOAP `login()` הקלאסי (username+password+token, בלי Connected App בכלל) עבד. `SF_CLIENT_ID`/`SF_CLIENT_SECRET` צריכים **להישאר ריקים** ב-`.env` — `src/salesforceClient.js` נופל אוטומטית לזרימת ה-SOAP הישנה כשהם ריקים, וזו הדרך הנכונה כרגע בארגון הזה.
 
 ### כלי לגילוי הסכימה בפועל — `npm run discover-sf-schema`
 
@@ -125,7 +134,7 @@ cp .env.example .env   # למלא SF_LOGIN_URL/SF_USERNAME/SF_PASSWORD/SF_SECURI
 npm run discover-sf-schema
 ```
 
-**מגבלה חשובה:** לא ניתן להריץ את זה מתוך סביבת הפיתוח הנוכחית (Claude Code על הענן) כי הרשת שלה חוסמת גישה ל-salesforce.com (ראו למעלה). יש להריץ את זה ממחשב/סביבה עם גישת רשת רגילה לאינטרנט — מי שיש לו/לה את ה-credentials של ה-Sandbox יכול להריץ את זה תוך דקה ולשלוח את הפלט בחזרה.
+**מגבלה חשובה:** לא ניתן להריץ את זה מתוך סביבת הפיתוח הנוכחית (Claude Code על הענן) כי הרשת שלה חוסמת גישה ל-salesforce.com (ראו למטה). **הורץ בהצלחה** ממחשב עם גישת רשת רגילה (`C:\Users\yair\SF_Form`) ב-2026-09-06, והפלט המלא של Account/Case מתועד בסעיף "הסכימה אושרה" למעלה.
 
 ### בדיקות אוטומטיות — `npm test`
 

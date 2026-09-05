@@ -14,21 +14,30 @@ module.exports = {
     // lacks "Use Any API Client" (see API_IMPLEMENTATION_NOTES.md).
     clientId: process.env.SF_CLIENT_ID || '',
     clientSecret: process.env.SF_CLIENT_SECRET || '',
-    // Person Account record type — required to create Account records correctly.
-    // Needs to be confirmed with the org admin (see API_IMPLEMENTATION_NOTES.md).
+    // Person Account record type ("חשבון אישי") — confirmed via discover-sf-schema
+    // against the real sandbox: 012Wn0000004InxIAE (also the org's default Account
+    // record type, so Salesforce would likely apply it even if left unset — set
+    // explicitly anyway for clarity).
     personAccountRecordTypeId: process.env.SF_PERSON_ACCOUNT_RECORD_TYPE_ID || '',
     // OwnerId to stamp on newly created ContactPointPhone records ("יוזר מערכת שיוקצה לכך").
     contactPointOwnerId: process.env.SF_CONTACT_POINT_OWNER_ID || '',
   },
 
-  // Case lookup field API names. The source document gives some of these as
-  // SOQL relationship paths (e.g. RegulatoryAuthorizationType__r__IssuingDepartment__PrimaryType__c)
-  // rather than real field API names — these defaults are best-effort and MUST
-  // be confirmed with the org admin before going live (see API_IMPLEMENTATION_NOTES.md).
+  // Case.OwnerId is a REQUIRED field (reference -> Group, User) in this org — confirmed
+  // via discover-sf-schema. Must be set to a real User or Queue Id before case creation
+  // will succeed; there is no sane code default, so this must come from .env.
+  caseDefaultOwnerId: process.env.SF_CASE_DEFAULT_OWNER_ID || '',
+
+  // Case field API names — confirmed against the real sandbox via discover-sf-schema.
+  // category/topic/subtopic are plain PICKLISTS (not lookups, despite what the source
+  // doc implied with its RegulatoryAuthorizationType__r__... relationship-path names) —
+  // their valid values are municipality-specific (e.g. suffixed "- 634"), supplied to
+  // the AI as a catalog per the source spec, so we pass whatever string arrives straight
+  // through rather than validating against a fixed list.
   caseFields: {
-    category: process.env.SF_CASE_FIELD_CATEGORY || 'PrimaryType__c',
-    topic: process.env.SF_CASE_FIELD_TOPIC || 'IssuingDepartmentId__c',
-    subtopic: process.env.SF_CASE_FIELD_SUBTOPIC || 'RegulatoryAuthorizationType__c',
+    category: process.env.SF_CASE_FIELD_CATEGORY || 'Category__c',
+    topic: process.env.SF_CASE_FIELD_TOPIC || 'Topic__c',
+    subtopic: process.env.SF_CASE_FIELD_SUBTOPIC || 'Sub_Topic__c',
     caseRoute: process.env.SF_CASE_FIELD_CASE_ROUTE || 'CaseRoute__c',
     location: process.env.SF_CASE_FIELD_LOCATION || 'Location__c',
     address: process.env.SF_CASE_FIELD_ADDRESS || 'Address__c',

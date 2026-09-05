@@ -14,14 +14,19 @@ const ACCOUNT_TYPES = [
   'HouseHold', 'External Contractor', 'Business Owner', 'External Contact',
 ];
 
-// Verbatim from the source spec ("פניית מידע (Info case)" / "פניית שירות (service case)").
-// Casing looks inconsistent between the two — confirm the exact stored values with the org admin.
+// Confirmed against the real sandbox via `npm run discover-sf-schema` (Case.Type picklist).
 const CASE_TYPES = { info: 'Info case', service: 'service case' };
 
-const CASE_ORIGIN_PHONE = 'טלפון';
+// Confirmed real picklist value on Case.Origin — NOT 'טלפון' (Hebrew) as originally
+// guessed from the source doc. Case.Origin values in this org are English:
+// [Email, Phone, Authority website/form, Facebook Messenger message, WhatsApp, Manual]
+const CASE_ORIGIN_PHONE = 'Phone';
 
 const USAGE_TYPES = ['Home', 'Work', 'Temporary', 'Other'];
 const USAGE_PHONES = ['Home', 'Mobile', 'spouse'];
+
+// Confirmed real picklist values on Account.Municipal__c / Case.Municipal__c.
+const MUNICIPAL_VALUES = ['משמ', '634', '1200', '6600', '229', '8400', '4000', '9100', '2034', '4203', '12345', '6100', '494', '195'];
 
 module.exports = {
   IDENTIFICATION_TYPES,
@@ -30,4 +35,5 @@ module.exports = {
   CASE_ORIGIN_PHONE,
   USAGE_TYPES,
   USAGE_PHONES,
+  MUNICIPAL_VALUES,
 };

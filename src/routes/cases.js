@@ -50,11 +50,22 @@ router.post('/', requireAuth, async (req, res) => {
         });
       }
 
-      await findOrCreateContactPointPhone({ accountId, phone, municipal: municipality });
+      // ContactPointPhone came back NOT_FOUND against the real sandbox (confirmed via
+      // discover-sf-schema) — the object isn't present/enabled in this org, despite
+      // the source spec describing it. Non-fatal: log and continue rather than
+      // blocking case creation on a step this org can't currently support. Needs
+      // follow-up with the org admin on where the phone number should actually live.
+      try {
+        await findOrCreateContactPointPhone({ accountId, phone, municipal: municipality });
+      } catch (err) {
+        console.warn('ContactPointPhone step skipped (object unavailable in this org):', err.message);
+      }
     }
 
     const created = await createCase({
       accountId,
+      idType: caller.idType,
+      idNumber: caller.idNumber,
       subject: kase.subject,
       type: kase.type,
       language,
@@ -62,9 +73,9 @@ router.post('/', requireAuth, async (req, res) => {
       openedAt,
       summary: kase.description,
       municipal: municipality,
-      categoryId: kase.categoryId,
-      topicId: kase.topicId,
-      subtopicId: kase.subtopicId,
+      category: kase.category,
+      topic: kase.topic,
+      subtopic: kase.subtopic,
       caseRouteId: kase.caseRouteId,
       locationId: kase.locationId,
       addressId: kase.addressId,

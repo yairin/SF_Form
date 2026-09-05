@@ -1,4 +1,4 @@
-const { IDENTIFICATION_TYPES, ACCOUNT_TYPES, CASE_TYPES, USAGE_TYPES, USAGE_PHONES } = require('./constants');
+const { IDENTIFICATION_TYPES, ACCOUNT_TYPES, CASE_TYPES, USAGE_TYPES, USAGE_PHONES, MUNICIPAL_VALUES } = require('./constants');
 
 function validateCasePayload(body) {
   const errors = [];
@@ -7,7 +7,11 @@ function validateCasePayload(body) {
   const kase = body.case || {};
 
   if (!body.callId) errors.push('callId נדרש');
-  if (!body.municipality) errors.push('municipality (רשות) נדרש');
+  if (!body.municipality) {
+    errors.push('municipality (רשות) נדרש');
+  } else if (!MUNICIPAL_VALUES.includes(body.municipality)) {
+    errors.push(`municipality אינו ערך פיקליסט תקין (חייב להיות אחד מ: ${MUNICIPAL_VALUES.join(', ')})`);
+  }
 
   if (!caller.anonymous) {
     if (!IDENTIFICATION_TYPES.includes(caller.idType)) {

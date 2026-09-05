@@ -15,7 +15,7 @@ test('validateCasePayload rejects an empty payload with every required-field err
 test('validateCasePayload accepts a minimal anonymous payload', () => {
   const errors = validateCasePayload({
     callId: 'c1',
-    municipality: 'city-1',
+    municipality: 'משמ',
     caller: { anonymous: true },
     case: { subject: 'x', type: 'Info case', description: 'y' },
   });
@@ -25,7 +25,7 @@ test('validateCasePayload accepts a minimal anonymous payload', () => {
 test('validateCasePayload requires caller/phone fields when not anonymous', () => {
   const errors = validateCasePayload({
     callId: 'c1',
-    municipality: 'city-1',
+    municipality: 'משמ',
     caller: { anonymous: false },
     case: { subject: 'x', type: 'service case', description: 'y' },
   });
@@ -37,7 +37,7 @@ test('validateCasePayload requires caller/phone fields when not anonymous', () =
 test('validateCasePayload rejects an invalid phone number format', () => {
   const errors = validateCasePayload({
     callId: 'c1',
-    municipality: 'city-1',
+    municipality: 'משמ',
     caller: { anonymous: false, idType: 'IsraeliID', idNumber: '123', firstName: 'a', lastName: 'b' },
     phone: { number: '123' },
     case: { subject: 'x', type: 'Info case', description: 'y' },
