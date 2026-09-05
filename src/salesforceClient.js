@@ -3,12 +3,19 @@ const config = require('./config');
 
 let connPromise = null;
 
+// Uses the OAuth2 username-password flow (scoped to a Connected App) when
+// SF_CLIENT_ID/SF_CLIENT_SECRET are set; otherwise falls back to the legacy
+// SOAP login() call. Many orgs now reject the legacy call with
+// "INSUFFICIENT_ACCESS: ... requires the Use Any API Auth user permission"
+// unless that profile permission is explicitly granted — the Connected App
+// flow avoids needing it at all.
 async function connect() {
-  const conn = new jsforce.Connection({ loginUrl: config.salesforce.loginUrl });
-  await conn.login(
-    config.salesforce.username,
-    config.salesforce.password + config.salesforce.securityToken
-  );
+  const { loginUrl, username, password, securityToken, clientId, clientSecret } = config.salesforce;
+  const conn = clientId && clientSecret
+    ? new jsforce.Connection({ oauth2: new jsforce.OAuth2({ loginUrl, clientId, clientSecret }) })
+    : new jsforce.Connection({ loginUrl });
+
+  await conn.login(username, password + securityToken);
   return conn;
 }
 
@@ -38,4 +45,4 @@ async function withConnection(fn) {
   }
 }
 
-module.exports = { withConnection };
+module.exports = { withConnection, connect };

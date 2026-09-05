@@ -8,6 +8,12 @@ module.exports = {
     username: process.env.SF_USERNAME,
     password: process.env.SF_PASSWORD,
     securityToken: process.env.SF_SECURITY_TOKEN || '',
+    // Connected App consumer key/secret. When set, login uses the OAuth2
+    // username-password flow scoped to this Connected App instead of the
+    // legacy SOAP login() call — required by orgs where the user's profile
+    // lacks "Use Any API Client" (see API_IMPLEMENTATION_NOTES.md).
+    clientId: process.env.SF_CLIENT_ID || '',
+    clientSecret: process.env.SF_CLIENT_SECRET || '',
     // Person Account record type — required to create Account records correctly.
     // Needs to be confirmed with the org admin (see API_IMPLEMENTATION_NOTES.md).
     personAccountRecordTypeId: process.env.SF_PERSON_ACCOUNT_RECORD_TYPE_ID || '',

@@ -6,8 +6,7 @@
 //
 // Usage: cp .env.example .env, fill in SF_LOGIN_URL/SF_USERNAME/SF_PASSWORD/
 // SF_SECURITY_TOKEN, then: npm run discover-sf-schema
-require('dotenv').config();
-const jsforce = require('jsforce');
+const { connect } = require('../src/salesforceClient');
 
 const OBJECTS_TO_DESCRIBE = ['Account', 'Case', 'ContactPointPhone'];
 const ALWAYS_SHOW_FIELDS = new Set([
@@ -28,9 +27,8 @@ function describeField(f) {
 }
 
 async function main() {
-  const conn = new jsforce.Connection({ loginUrl: process.env.SF_LOGIN_URL || 'https://test.salesforce.com' });
-  await conn.login(process.env.SF_USERNAME, `${process.env.SF_PASSWORD}${process.env.SF_SECURITY_TOKEN || ''}`);
-  console.log(`Connected as ${process.env.SF_USERNAME} -> ${conn.instanceUrl}`);
+  const conn = await connect();
+  console.log(`Connected as ${conn.userInfo.id} -> ${conn.instanceUrl}`);
 
   for (const objectName of OBJECTS_TO_DESCRIBE) {
     const describe = await conn.sobject(objectName).describe();

@@ -104,6 +104,17 @@ Authorization: Bearer <token>
 
 זהו כרגע ברירת המחדל ב-`.env.example`. **זה עדיין לא נבדק בפועל** — עדיין חסרים username/password/security token (או Connected App consumer key/secret) כדי לבצע login אמיתי.
 
+### "Use Any API Auth" — התחברות דרך Connected App במקום login() קלאסי
+
+ניסיון login ראשון נגד ה-Sandbox האמיתי נכשל עם:
+`INSUFFICIENT_ACCESS: SOAP API login() requires the Use Any API Auth user permission.`
+
+זו הגבלת אבטחה סטנדרטית בארגונים חדשים יותר — קריאת ה-SOAP `login()` הקלאסית (username+password+token, בלי Connected App) חסומה כברירת מחדל אלא אם למשתמש/פרופיל יש את ההרשאה `Use Any API Client`. **הפתרון שיושם: להשתמש בזרימת OAuth2 username-password המקושרת ל-Connected App ספציפי**, שלא כפופה להגבלה הזו.
+
+`src/salesforceClient.js` עודכן: אם `SF_CLIENT_ID`/`SF_CLIENT_SECRET` מוגדרים ב-`.env`, ההתחברות עוברת דרך `jsforce.OAuth2` (מוגבל ל-Connected App הזה בלבד) במקום ה-SOAP login הקלאסי. `SF_CLIENT_ID`/`SF_CLIENT_SECRET` הפכו בפועל **מחייבים**, לא אופציונליים.
+
+**מה נדרש כדי שזה יעבוד:** Connected App פעיל ב-Sandbox (Setup → App Manager → New Connected App, עם OAuth מופעל וה-scopes `api` + `refresh_token`) — זה בדיוק הצעד הראשון שמתואר ב-README. יש להעתיק את ה-Consumer Key/Secret שלו ל-`.env`. אם עדיין אין Connected App כזה בסנדבוקס — זה מה שצריך ליצור עכשיו לפני הרצה חוזרת של `npm run discover-sf-schema`.
+
 ### כלי לגילוי הסכימה בפועל — `npm run discover-sf-schema`
 
 כדי לצמצם את הצורך בבדיקה ידנית ב-Object Manager, נוסף `scripts/discoverSalesforceSchema.js`: מתחבר לסיילספורס עם ה-credentials מ-`.env` ומדפיס בשורה אחת של פקודה את כל מה שהיה עד עכשיו "צריך לשאול את מנהל ה-ORG" — Record Types של Account (כולל ה-Id של Person Account), כל השדות ה-custom על Account/Case/ContactPointPhone (כולל type, שדה שאליו מצביע כל Lookup, וערכי הפיקליסטים בפועל).
