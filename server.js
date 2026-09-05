@@ -4,6 +4,9 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 
+const authRouter = require('./src/routes/auth');
+const casesRouter = require('./src/routes/cases');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SF_OID = '00DWm000001yNaf';
@@ -11,8 +14,19 @@ const SF_WEB_TO_LEAD = 'https://test.salesforce.com/servlet/servlet.WebToLead?en
 
 app.set('trust proxy', 1);
 app.use(cors());
-app.use(express.json());
+// Higher limit than the default 100kb: the AI case-opening API can carry a base64
+// call recording. Prefer attachments.recordingUrl over recordingBase64 where possible.
+app.use(express.json({ limit: '20mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+const aiApiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  message: { success: false, error: 'Too many requests', code: 'RATE_LIMITED' },
+});
+
+app.use('/oauth', aiApiLimiter, authRouter);
+app.use('/api/cases', aiApiLimiter, casesRouter);
 
 const submitLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

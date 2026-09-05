@@ -76,8 +76,10 @@ SF_Form/
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/submit` | שליחת הטופס → יוצר Lead בSalesforce |
+| `POST` | `/api/submit` | שליחת הטופס → יוצר Lead בSalesforce (Web-to-Lead) |
 | `GET`  | `/api/health` | בדיקת חיבור לSalesforce |
+| `POST` | `/oauth/token` | הנפקת Bearer token (client_credentials) עבור מערכת ה-AI הטלפונית |
+| `POST` | `/api/cases` | פתיחת פניה (Case) בסיילספורס דרך ה-API האמיתי (jsforce) — ראו `API_IMPLEMENTATION_NOTES.md` |
 
 ### דוגמה לשליחה ידנית
 
