@@ -6,6 +6,7 @@ const path = require('path');
 
 const authRouter = require('./src/routes/auth');
 const casesRouter = require('./src/routes/cases');
+const residentsRouter = require('./src/routes/residents');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,6 +28,7 @@ const aiApiLimiter = rateLimit({
 
 app.use('/oauth', aiApiLimiter, authRouter);
 app.use('/api/cases', aiApiLimiter, casesRouter);
+app.use('/api/residents', aiApiLimiter, residentsRouter);
 
 const submitLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

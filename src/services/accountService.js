@@ -82,4 +82,4 @@ async function findOrCreateContactPointPhone({ accountId, phone, municipal }) {
   });
 }
 
-module.exports = { findOrCreateAccount, findOrCreateContactPointPhone };
+module.exports = { findAccountByIdentification, findOrCreateAccount, findOrCreateContactPointPhone };

@@ -94,6 +94,9 @@ Authorization: Bearer <token>
 
 ראו `.env.example` — נוספו `SF_PERSON_ACCOUNT_RECORD_TYPE_ID`, `SF_CONTACT_POINT_OWNER_ID`, `SF_CASE_FIELD_*`, ו-`AI_CLIENT_ID`/`AI_CLIENT_SECRET`/`JWT_SECRET` (להנפקת טוקן OAuth למערכת ה-AI).
 
-## מה עוד לא מכוסה (מכוון)
+## `GET /api/residents/:idNumber?idType=IsraeliID|Passport`
 
-- Endpoint נפרד לבדיקת תושב לפי ת"ז (המסמך מתאר יכולת כזו: "הבינה המלאכותית תפנה עם ת"ז למערכת סיילספורס באמצעות API שתחזיר פרטים על התושב") — כרגע בדיקת הכפילות מובנית בתוך `POST /api/cases` עצמו. אם צריך גם בדיקה עצמאית באמצע השיחה (לפני שהוחלט לפתוח פניה), זו תוספת נפרדת.
+Endpoint נפרד לבדיקת תושב לפי ת"ז/דרכון, בלי לפתוח פניה — תואם לסעיף "העברת מידע מזהה (ת״ז)" במסמך: "הבינה המלאכותית תפנה עם ת"ז למערכת סיילספורס באמצעות API, שתחזיר פרטים על התושב". מאפשר ל-AI לפנות לתושב בשמו ולהזהיר על פניה פתוחה קיימת **באמצע השיחה**, לפני שהוחלט אם ואיך לפתוח פניה חדשה — בנוסף לבדיקת הכפילות המובנית בתוך `POST /api/cases` עצמו.
+
+תשובה (נמצא): `{ "success": true, "found": true, "resident": { "firstName", "lastName", "callerType", "municipality" }, "openCase": { "caseNumber", "subject" } | null }`
+תשובה (לא נמצא): `{ "success": true, "found": false }`
