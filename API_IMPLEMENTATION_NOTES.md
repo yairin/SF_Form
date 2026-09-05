@@ -94,6 +94,20 @@ Authorization: Bearer <token>
 
 ראו `.env.example` — נוספו `SF_PERSON_ACCOUNT_RECORD_TYPE_ID`, `SF_CONTACT_POINT_OWNER_ID`, `SF_CASE_FIELD_*`, ו-`AI_CLIENT_ID`/`AI_CLIENT_SECRET`/`JWT_SECRET` (להנפקת טוקן OAuth למערכת ה-AI).
 
+## ה-Sandbox אותר — `SF_LOGIN_URL` עודכן
+
+אושר שה-Sandbox האמיתי הוא:
+`https://localgovernmenteconomicserviceslt2--mashamdev.sandbox.lightning.force.com` (Lightning UI).
+
+עבור חיבור API/login (jsforce), יש להשתמש בכתובת ה-My Domain המקבילה — `https://<domain>--<sandbox>.sandbox.my.salesforce.com` במקום `.lightning.force.com` — כלומר:
+`https://localgovernmenteconomicserviceslt2--mashamdev.sandbox.my.salesforce.com`
+
+זהו כרגע ברירת המחדל ב-`.env.example`. **זה עדיין לא נבדק בפועל** — עדיין חסרים username/password/security token (או Connected App consumer key/secret) כדי לבצע login אמיתי.
+
+### חיבור לרשת מתוך סביבת הפיתוח הזו
+
+ניסיתי לבדוק connectivity ל-domain הזה (`curl` פשוט, ללא credentials) מתוך סביבת ה-sandbox של הסשן הזה, וקיבלתי `403` מה-proxy היוצא (`gateway answered 403 to CONNECT — policy denial`). כלומר **הרשת של סביבת הפיתוח הזו חוסמת גישה ל-domains של salesforce.com**, ולכן אי אפשר לבדוק את החיבור בפועל מתוך הסשן הנוכחי — לא משנה אם ה-credentials נכונים או לא. בדיקת אינטגרציה אמיתית תצטרך לקרות מתוך סביבה שיש לה גישת רשת ל-Salesforce (למשל אחרי פריסה ל-Railway, או מ-laptop/סביבת CI עם גישה חיצונית רגילה).
+
 ## `GET /api/residents/:idNumber?idType=IsraeliID|Passport`
 
 Endpoint נפרד לבדיקת תושב לפי ת"ז/דרכון, בלי לפתוח פניה — תואם לסעיף "העברת מידע מזהה (ת״ז)" במסמך: "הבינה המלאכותית תפנה עם ת"ז למערכת סיילספורס באמצעות API, שתחזיר פרטים על התושב". מאפשר ל-AI לפנות לתושב בשמו ולהזהיר על פניה פתוחה קיימת **באמצע השיחה**, לפני שהוחלט אם ואיך לפתוח פניה חדשה — בנוסף לבדיקת הכפילות המובנית בתוך `POST /api/cases` עצמו.
