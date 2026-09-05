@@ -82,6 +82,8 @@ SF_Form/
 | `POST` | `/api/cases` | פתיחת פניה (Case) בסיילספורס דרך ה-API האמיתי (jsforce) — ראו `API_IMPLEMENTATION_NOTES.md` |
 | `GET`  | `/api/residents/:idNumber` | בדיקת תושב לפי ת"ז/דרכון (לפני פתיחת פניה), כולל פניה פתוחה קיימת |
 
+מדריך אינטגרציה מלא לגורם חיצוני (אימות, endpoints, דוגמאות, ערכי פיקליסט): `EXTERNAL_INTEGRATION_GUIDE.md`.
+
 ### דוגמה לשליחה ידנית
 
 ```bash
