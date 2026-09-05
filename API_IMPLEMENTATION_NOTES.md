@@ -104,6 +104,22 @@ Authorization: Bearer <token>
 
 זהו כרגע ברירת המחדל ב-`.env.example`. **זה עדיין לא נבדק בפועל** — עדיין חסרים username/password/security token (או Connected App consumer key/secret) כדי לבצע login אמיתי.
 
+### כלי לגילוי הסכימה בפועל — `npm run discover-sf-schema`
+
+כדי לצמצם את הצורך בבדיקה ידנית ב-Object Manager, נוסף `scripts/discoverSalesforceSchema.js`: מתחבר לסיילספורס עם ה-credentials מ-`.env` ומדפיס בשורה אחת של פקודה את כל מה שהיה עד עכשיו "צריך לשאול את מנהל ה-ORG" — Record Types של Account (כולל ה-Id של Person Account), כל השדות ה-custom על Account/Case/ContactPointPhone (כולל type, שדה שאליו מצביע כל Lookup, וערכי הפיקליסטים בפועל).
+
+הרצה:
+```bash
+cp .env.example .env   # למלא SF_LOGIN_URL/SF_USERNAME/SF_PASSWORD/SF_SECURITY_TOKEN
+npm run discover-sf-schema
+```
+
+**מגבלה חשובה:** לא ניתן להריץ את זה מתוך סביבת הפיתוח הנוכחית (Claude Code על הענן) כי הרשת שלה חוסמת גישה ל-salesforce.com (ראו למעלה). יש להריץ את זה ממחשב/סביבה עם גישת רשת רגילה לאינטרנט — מי שיש לו/לה את ה-credentials של ה-Sandbox יכול להריץ את זה תוך דקה ולשלוח את הפלט בחזרה.
+
+### בדיקות אוטומטיות — `npm test`
+
+נוסף `test/unit.test.js` (Node's built-in test runner, ללא תלות חדשה) שמכסה את כל הלוגיקה שלא תלויה בחיבור חי לסיילספורס: ולידציית ה-payload (`validateCasePayload`) ובניית Subject/Description (`buildSubject`/`buildDescription`, כולל הקיצוץ ל-255/1000/32000 תווים). 6/6 עוברים. זה לא מחליף בדיקת אינטגרציה אמיתית מול Sandbox — זה רק מוודא שהלוגיקה הפנימית (שכן ניתן לבדוק בלי רשת) נכונה.
+
 ### חיבור לרשת מתוך סביבת הפיתוח הזו
 
 ניסיתי לבדוק connectivity ל-domain הזה (`curl` פשוט, ללא credentials) מתוך סביבת ה-sandbox של הסשן הזה, וקיבלתי `403` מה-proxy היוצא (`gateway answered 403 to CONNECT — policy denial`). כלומר **הרשת של סביבת הפיתוח הזו חוסמת גישה ל-domains של salesforce.com**, ולכן אי אפשר לבדוק את החיבור בפועל מתוך הסשן הנוכחי — לא משנה אם ה-credentials נכונים או לא. בדיקת אינטגרציה אמיתית תצטרך לקרות מתוך סביבה שיש לה גישת רשת ל-Salesforce (למשל אחרי פריסה ל-Railway, או מ-laptop/סביבת CI עם גישה חיצונית רגילה).
