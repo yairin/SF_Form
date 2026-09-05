@@ -11,7 +11,13 @@ let connPromise = null;
 // flow avoids needing it at all.
 async function connect() {
   const { loginUrl, username, password, securityToken, clientId, clientSecret } = config.salesforce;
-  const conn = clientId && clientSecret
+  const useOAuth2 = Boolean(clientId && clientSecret);
+
+  // Logged explicitly because "which path did this actually take" is otherwise
+  // invisible from the outside, and the two paths fail with different errors.
+  console.log(useOAuth2 ? 'Connecting via OAuth2 Connected App...' : 'Connecting via legacy SOAP login()...');
+
+  const conn = useOAuth2
     ? new jsforce.Connection({ oauth2: new jsforce.OAuth2({ loginUrl, clientId, clientSecret }) })
     : new jsforce.Connection({ loginUrl });
 
