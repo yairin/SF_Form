@@ -88,13 +88,13 @@ Authorization: Bearer <token>
 - **`Municipal__c` (גם ב-Account וגם ב-Case) — ערכי הפיקליסט האמיתיים**: `משמ, 634, 1200, 6600, 229, 8400, 4000, 9100, 2034, 4203, 12345, 6100, 494, 195`. `src/validation.js` עכשיו מאמת מול הרשימה הזו.
 - **`Case.Type` = `Info case` / `service case`** — מאושר, בדיוק כפי שניחשנו.
 - **Person Account Record Type ("חשבון אישי") — `012Wn0000004InxIAE`.** גם הדיפולט של האובייקט, ולכן `Account.create` כנראה יעבוד גם בלעדיו, אבל הוגדר במפורש ב-`.env.example`.
-- **`Case.OwnerId` הוא שדה חובה** (`reference -> Group, User`) — לא היה מטופל בקוד בכלל לפני העדכון הזה! נוסף `SF_CASE_DEFAULT_OWNER_ID` (`config.caseDefaultOwnerId`), אבל **אין לו עדיין ערך אמיתי** — צריך Id של Queue (למשל `Moked_Queue` שכבר קיים בארגון) או User. **בלי זה, כל יצירת Case תיכשל.**
+- **`Case.OwnerId` הוא שדה חובה** (`reference -> Group, User`) לפי `describe()`. **עודכן:** הגורם הפונה/ה-API לא אמור לקבוע בעלות על הפניה — זה תפקיד האוטומציה/הניתוב הקיים בארגון (Flow שרץ לפני ה-insert יכול למלא שדה חובה עוד לפני שסיילספורס בודק את זה). לכן `Case.create()` כרגע **לא שולח `OwnerId` בכלל** אלא אם הוגדר `SF_CASE_DEFAULT_OWNER_ID` (אופציונלי, override בלבד) — האוטומציה של הארגון אמורה למלא את זה. אם בפועל יתברר שאין כזו אוטומציה ויצירת Case תיכשל עם `REQUIRED_FIELD_MISSING` על `OwnerId`, זה הסימן להגדיר את משתנה הסביבה.
 - **`Case.Id_number__c` קיים** (type=Number) — שדה למספר ת"ז/דרכון ישירות על ה-Case. מוזן רק כש-`idType=IsraeliID` וה-idNumber מספרי (Number לא תומך בדרכון עם אותיות) — אם `IdentificationType` הוא Passport, השדה הזה נשאר ריק.
 - **`ContactPointPhone` מחזיר `NOT_FOUND`.** האובייקט לא קיים/לא נגיש בארגון הזה, בניגוד למה שהמסמך המקורי תיאר. `src/routes/cases.js` עכשיו "בולע" את השגיאה הזו (log בלבד, לא נכשל) כדי לא לחסום את כל תהליך יצירת ה-Case — אבל **זו עדיין שאלה פתוחה**: איפה בפועל אמור להישמר מספר הטלפון של הפונה?
 
 ## פערים שנותרו פתוחים
 
-1. **`SF_CASE_DEFAULT_OWNER_ID` — חוסם, אין לו ערך.** צריך Id אמיתי של Queue/User מהארגון (למשל למצוא את ה-Id של `Moked_Queue`).
+1. **`Case.OwnerId`** — כרגע לא נשלח כלל מה-API; מניחים שהאוטומציה הקיימת בארגון תמלא אותו. **צריך אימות בפועל** (יצירת Case אמיתי) שזה נכון; אם לא — יש `SF_CASE_DEFAULT_OWNER_ID` כ-override (אפשר Id של `Moked_Queue`).
 2. **`ContactPointPhone` NOT_FOUND** — צריך תשובה: האם להפעיל את האובייקט בארגון, או לאחסן את הטלפון בשדה אחר (יש כמה מועמדים על Account/Case כמו `Contact_Person_Phone__pc`, `WebMobile__c` — אבל אף אחד לא תואם בדיוק לתיאור במסמך המקורי).
 3. **`CaseRoute__c`** — עדיין באחריות אוטומציה שתיבנה בתוך Salesforce (Flow), לא ה-API הזה. ה-API תומך בקבלת `caseRouteId` אם יסופק ישירות.
 4. **Category/Topic/Sub-Topic תלויי-רשות** — כרגע אין ולידציה מול רשימה סגורה (כי היא משתנה לפי `municipality`); Salesforce עצמו ידחה ערך פיקליסט לא תקין ביצירת ה-Case (יחזור כ-`502 SF_ERROR` כללי, לא `400` ממוקד — פוטנציאל לשיפור עתידי).

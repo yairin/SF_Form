@@ -40,11 +40,17 @@ async function createCase(input) {
       Description: buildDescription(input),
       Municipal__c: input.municipal,
       AnonymousCase__c: !input.accountId,
-      // Required field (reference -> Group, User) — no sane code default, must come
-      // from .env (SF_CASE_DEFAULT_OWNER_ID) or be overridden per-request.
-      OwnerId: input.ownerId || config.caseDefaultOwnerId,
     };
     if (input.accountId) record.AccountId = input.accountId;
+    // OwnerId is required=true per describe(), but the caller doesn't determine
+    // ownership — that's decided by the org's own assignment/routing automation
+    // (a before-insert Flow can populate a required field before Salesforce's
+    // required-field check runs). So we only set it if explicitly configured/
+    // overridden; otherwise we omit the key entirely and let the org's own
+    // automation fill it in.
+    if (input.ownerId || config.caseDefaultOwnerId) {
+      record.OwnerId = input.ownerId || config.caseDefaultOwnerId;
+    }
     // Category__c/Topic__c/Sub_Topic__c are plain picklists, not lookups — pass the
     // AI-selected label straight through (see config.js caseFields comment).
     if (input.category) record[config.caseFields.category] = input.category;
