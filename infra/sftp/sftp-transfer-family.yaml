@@ -1,0 +1,184 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  SFTP server (AWS Transfer Family) backed by a private, encrypted S3 bucket.
+  Each user is locked (chroot) to their own folder: s3://<bucket>/<username>/
+
+Parameters:
+  BucketName:
+    Type: String
+    Default: ''
+    Description: S3 bucket name for the files (leave empty to auto-generate)
+  SftpUserName:
+    Type: String
+    Default: sftpuser
+    AllowedPattern: '^[a-zA-Z0-9_][a-zA-Z0-9_@.-]{2,99}$'
+    Description: Name of the first SFTP user
+  SftpUserPublicKey:
+    Type: String
+    Description: SSH public key of the first user (e.g. "ssh-ed25519 AAAA... user@host")
+  LogRetentionDays:
+    Type: Number
+    Default: 90
+    AllowedValues: [7, 14, 30, 60, 90, 180, 365]
+    Description: CloudWatch log retention in days
+
+Conditions:
+  AutoBucketName: !Equals [!Ref BucketName, '']
+
+Resources:
+  # ---------- Storage ----------
+  SftpBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !If [AutoBucketName, !Ref AWS::NoValue, !Ref BucketName]
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireOldVersions
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 30
+
+  SftpBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SftpBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource:
+              - !GetAtt SftpBucket.Arn
+              - !Sub '${SftpBucket.Arn}/*'
+            Condition:
+              Bool:
+                aws:SecureTransport: 'false'
+
+  # ---------- Logging ----------
+  SftpLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/transfer/${AWS::StackName}'
+      RetentionInDays: !Ref LogRetentionDays
+
+  SftpLoggingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: transfer.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      Policies:
+        - PolicyName: TransferLogging
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                Resource: '*'
+
+  # ---------- SFTP server ----------
+  SftpServer:
+    Type: AWS::Transfer::Server
+    Properties:
+      Domain: S3
+      EndpointType: PUBLIC
+      IdentityProviderType: SERVICE_MANAGED
+      Protocols: [SFTP]
+      SecurityPolicyName: TransferSecurityPolicy-2024-01
+      LoggingRole: !GetAtt SftpLoggingRole.Arn
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  # ---------- Users ----------
+  SftpUserRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: transfer.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      Policies:
+        - PolicyName: SftpBucketAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: ListBucket
+                Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetBucketLocation
+                Resource: !GetAtt SftpBucket.Arn
+              - Sid: ObjectAccess
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                  - s3:GetObjectVersion
+                  - s3:GetObjectACL
+                  - s3:PutObjectACL
+                Resource: !Sub '${SftpBucket.Arn}/*'
+
+  SftpUser:
+    Type: AWS::Transfer::User
+    Properties:
+      ServerId: !GetAtt SftpServer.ServerId
+      UserName: !Ref SftpUserName
+      Role: !GetAtt SftpUserRole.Arn
+      HomeDirectoryType: LOGICAL
+      HomeDirectoryMappings:
+        - Entry: /
+          Target: !Sub '/${SftpBucket}/${SftpUserName}'
+      SshPublicKeys:
+        - !Ref SftpUserPublicKey
+
+Outputs:
+  SftpEndpoint:
+    Description: SFTP host name to connect to
+    Value: !Sub '${SftpServer.ServerId}.server.transfer.${AWS::Region}.amazonaws.com'
+  ServerId:
+    Value: !GetAtt SftpServer.ServerId
+  BucketName:
+    Value: !Ref SftpBucket
+  UserRoleArn:
+    Description: Role to reuse when adding more SFTP users
+    Value: !GetAtt SftpUserRole.Arn
+  ConnectExample:
+    Value: !Sub 'sftp -i ~/.ssh/id_ed25519 ${SftpUserName}@${SftpServer.ServerId}.server.transfer.${AWS::Region}.amazonaws.com'
